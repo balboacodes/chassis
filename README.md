@@ -1,6 +1,6 @@
-# <package>
+# Chassis
 
-[![publish](https://github.com/balboacodes/<package>/actions/workflows/publish.yml/badge.svg)](https://github.com/balboacodes/<package>/actions/workflows/publish.yml)
+[![publish](https://github.com/balboacodes/chassis/actions/workflows/publish.yml/badge.svg)](https://github.com/balboacodes/chassis/actions/workflows/publish.yml)
 
 ## About
 
@@ -8,7 +8,7 @@
 
 ## Installation
 
-`npm i @balboacodes/<package>`
+`npm i @balboacodes/chassis`
 
 ## Usage
 

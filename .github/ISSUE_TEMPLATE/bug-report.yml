@@ -3,7 +3,7 @@ description: "Report something that's broken"
 body:
     - type: markdown
       attributes:
-          value: 'Please read our [contribution guide](https://github.com/balboacodes/<package>/blob/main/.github/CONTRIBUTING.md) before submitting bug reports.'
+          value: 'Please read our [contribution guide](https://github.com/balboacodes/chassis/blob/main/.github/CONTRIBUTING.md) before submitting bug reports.'
     - type: input
       attributes:
           label: Version
