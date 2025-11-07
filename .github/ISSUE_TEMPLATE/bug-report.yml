@@ -1,0 +1,32 @@
+name: Bug report
+description: "Report something that's broken"
+body:
+    - type: markdown
+      attributes:
+          value: 'Please read our [contribution guide](https://github.com/balboacodes/<package>/blob/main/.github/CONTRIBUTING.md) before submitting bug reports.'
+    - type: input
+      attributes:
+          label: Version
+          description: Provide the version that you are using.
+          placeholder: 0.1.0
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Environment and version
+          description: Provide the environment and version that you are using.
+          placeholder: Chrome 141
+      validations:
+          required: true
+    - type: textarea
+      attributes:
+          label: Description
+          description: Provide a detailed description of the issue you are facing.
+      validations:
+          required: true
+    - type: textarea
+      attributes:
+          label: Steps to reproduce
+          description: Provide detailed steps to reproduce your issue. If necessary, please provide a GitHub repository to demonstrate your issue.
+      validations:
+          required: true

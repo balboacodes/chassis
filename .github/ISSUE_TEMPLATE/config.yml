@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+    - name: Feature request, support questions, and other
+      url: https://github.com/balboacodes/<package>/discussions
+      about: 'For feature requests, support, and other start a new discussion'
