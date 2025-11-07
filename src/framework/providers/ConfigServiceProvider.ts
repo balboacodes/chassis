@@ -5,7 +5,7 @@ import { Container } from '../Container.js';
 import { ServiceProvider } from './ServiceProvider.js';
 
 export class ConfigServiceProvider extends ServiceProvider {
-    async register(app: Container): Promise<void> {
+    public async register(app: Container): Promise<void> {
         dotenv.config();
 
         // Load config files

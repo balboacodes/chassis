@@ -1,6 +1,6 @@
 import { Application } from './Application.js';
 import { Config } from './Config.js';
-import { LoggerServiceProvider } from './providers/LoggerServiceProvider.js';
+import { Log } from './Log.js';
 
 let globalApp: Application | null = null;
 
@@ -23,7 +23,7 @@ export function app(): Application {
 }
 
 /**
- * Get a config value by key, e.g. config("app.port").
+ * Get a config value by key.
  */
 export function config<T = any>(key: string, defaultValue?: T): T {
     const config = app().make<Config>('config');
@@ -32,8 +32,8 @@ export function config<T = any>(key: string, defaultValue?: T): T {
 }
 
 /**
- * Get a logger instance (optional convenience).
+ * Get a Log instance.
  */
-export function logger(): LoggerServiceProvider {
-    return app().make<LoggerServiceProvider>('logger');
+export function logger(message: string): void {
+    return app().make<Log>('logger').log(message);
 }

@@ -20,7 +20,7 @@ export class RouteServiceProvider extends ServiceProvider {
     public async boot(app: Application): Promise<void> {
         this.patchRouter(app);
 
-        const routesDir = path.resolve(process.cwd(), 'src/app/routes');
+        const routesDir = path.resolve(process.cwd(), 'src/routes');
 
         if (!fs.existsSync(routesDir)) return;
 

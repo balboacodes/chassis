@@ -1,12 +1,9 @@
 import { ServiceProvider } from './ServiceProvider.js';
 import { Container } from '../Container.js';
+import { Log } from '../Log.js';
 
 export class LoggerServiceProvider extends ServiceProvider {
-    async register(app: Container) {
-        app.singleton(LoggerServiceProvider, () => ({
-            log(msg: string) {
-                console.log(`[INFO] ${msg}`);
-            },
-        }));
+    public register(app: Container): void {
+        app.singleton('logger', () => new Log());
     }
 }
