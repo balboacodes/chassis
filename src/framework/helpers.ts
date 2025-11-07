@@ -1,12 +1,13 @@
-import { Application } from './Application';
+import { Application } from './Application.js';
+import { Config } from './Config.js';
+import { LoggerServiceProvider } from './providers/LoggerServiceProvider.js';
 
 let globalApp: Application | null = null;
 
 /**
- * Assign the global app instance.
- * Called once during bootstrap.
+ * Assign the global app instance. Called once during bootstrap.
  */
-export function setAppInstance(app: Application) {
+export function setAppInstance(app: Application): void {
     globalApp = app;
 }
 
@@ -17,6 +18,7 @@ export function app(): Application {
     if (!globalApp) {
         throw new Error('Application instance not initialized yet.');
     }
+
     return globalApp;
 }
 
@@ -24,13 +26,14 @@ export function app(): Application {
  * Get a config value by key, e.g. config("app.port").
  */
 export function config<T = any>(key: string, defaultValue?: T): T {
-    const cfg = app().make<any>('config');
-    return cfg.get<T>(key, defaultValue);
+    const config = app().make<Config>('config');
+
+    return config.get<T>(key, defaultValue);
 }
 
 /**
  * Get a logger instance (optional convenience).
  */
-export function logger() {
-    return app().make<{ log: (msg: string) => void }>('logger');
+export function logger(): LoggerServiceProvider {
+    return app().make<LoggerServiceProvider>('logger');
 }

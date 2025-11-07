@@ -1,22 +1,24 @@
 import express from 'express';
-import { Container } from './Container';
-import { ServiceProvider } from './ServiceProvider';
+import { Express } from 'express-serve-static-core';
+import { Container } from './Container.js';
+import { ServiceProvider } from './providers/ServiceProvider.js';
 
 export class Application extends Container {
-    public app = express();
+    public app: Express = express();
+
     private providers: ServiceProvider[] = [];
 
-    register(provider: ServiceProvider) {
+    public register(provider: ServiceProvider): void {
         this.providers.push(provider);
     }
 
-    async boot() {
+    public async boot(): Promise<void> {
         for (const provider of this.providers) {
             if (provider.boot) await provider.boot(this);
         }
     }
 
-    listen(port: number) {
+    public listen(port: number): void {
         this.app.listen(port);
     }
 }

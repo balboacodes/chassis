@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
-export class ConfigManager {
-    private items: Record<string, any> = {};
+export class Config {
+    private items: Record<string, Record<string, any>> = {};
 
-    async loadConfigDir(configPath: string) {
+    public async loadConfigDir(configPath: string): Promise<void> {
         const files = fs.readdirSync(configPath);
 
         for (const file of files) {
@@ -13,20 +13,20 @@ export class ConfigManager {
             const key = path.basename(file, path.extname(file));
             const modulePath = path.resolve(configPath, file);
 
-            // ESM dynamic import
-            const configModule = await import(modulePath);
+            const configModule: Record<string, any> = await import(modulePath);
 
-            // Use default export if available, otherwise all exports
-            this.items[key] = configModule.default ?? configModule;
+            this.items[key] = configModule.default ?? {};
         }
     }
 
-    get<T = any>(key: string, defaultValue?: T): T {
+    public get<T = any>(key: string, defaultValue?: T): T {
         const [file, nestedKey] = key.split('.', 2);
         let value = this.items[file];
-        if (nestedKey && value) {
-            value = nestedKey.split('.').reduce((obj, k) => obj?.[k], value);
+
+        if (value && nestedKey) {
+            value = nestedKey.split('.').reduce((object, key) => object?.[key], value);
         }
+
         return (value ?? defaultValue) as T;
     }
 }

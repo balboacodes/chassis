@@ -1,12 +1,36 @@
 {
     "compilerOptions": {
-        "lib": ["es2024", "ESNext.Array", "ESNext.Collection", "ESNext.Iterator"],
-        "module": "nodenext",
+        // Output & module system
         "target": "es2022",
-        "strict": true,
-        "skipLibCheck": true,
-        "moduleResolution": "node16",
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        "lib": ["es2024", "ESNext.Array", "ESNext.Collection", "ESNext.Iterator"],
+
+        // Directories
+        "rootDir": "src",
+        "outDir": "dist",
+
+        // Interop
+        "esModuleInterop": true,
+
+        // Decorators (for IoC, routing, etc.)
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true
-    }
+        "emitDecoratorMetadata": true,
+
+        // Strictness & safety
+        "strict": true,
+        "noImplicitAny": true,
+
+        // Builds
+        "sourceMap": true,
+        "removeComments": true,
+        "declaration": true,
+        "declarationMap": true,
+
+        // Environment
+        "skipLibCheck": true,
+        "types": ["node"]
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules", "dist", "tests/**/*.ts"]
 }
