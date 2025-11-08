@@ -1,5 +1,4 @@
-import express from 'express';
-import { Express } from 'express-serve-static-core';
+import { Express, NextFunction, Request, Response, default as express } from 'express';
 import fs from 'fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
@@ -21,6 +20,8 @@ export default class Application extends Container {
         console.log(process.env.APP_NAME ? '✅ .env loaded' : '❗️ .env not loaded');
 
         await this.bootProviders();
+
+        this.setupMiddleware();
 
         return this;
     }
@@ -60,5 +61,19 @@ export default class Application extends Container {
         }
 
         console.log('✅ Service providers booted');
+    }
+
+    private setupMiddleware(): void {
+        this.router.use(express.static('public'));
+        console.log('✅ Serving static files from /public');
+
+        this.router.use((_req: Request, res: Response, _next: NextFunction) => {
+            res.status(404).send("Sorry can't find that!");
+        });
+
+        this.router.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+            console.error(err.stack);
+            res.status(500).send('Something broke!');
+        });
     }
 }

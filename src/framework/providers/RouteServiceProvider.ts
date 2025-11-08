@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import Application from '../Application.js';
-import ServiceProvider from './ServiceProvider.js';
 import { Class, Method, Route } from '../types.js';
+import ServiceProvider from './ServiceProvider.js';
 
 export default class RouteServiceProvider extends ServiceProvider {
     /**

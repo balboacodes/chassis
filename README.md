@@ -4,19 +4,13 @@
 
 ## About
 
-
-
 ## Installation
 
 `npm i @balboacodes/chassis`
 
 ## Usage
 
-
-
 ## Documentation
-
-
 
 ## Related
 
