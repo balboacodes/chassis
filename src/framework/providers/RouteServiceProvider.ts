@@ -31,19 +31,15 @@ export default class RouteServiceProvider extends ServiceProvider {
 
             routeModule.default(app);
         }
-
-        console.log('✅ Routes booted');
     }
 
     private patchRouter(app: Application): void {
-        const router = app.app;
-
         const methods: Method[] = ['get', 'post', 'put', 'patch', 'delete'];
 
         for (const method of methods) {
-            const original = router[method].bind(router);
+            const original = app.router[method].bind(app.router);
 
-            ((router as any)[method] as Route) = (
+            ((app.router as any)[method] as Route) = (
                 routePath: string,
                 controllerOrHandler: Class | Function,
                 methodName?: string,

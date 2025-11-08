@@ -11,7 +11,5 @@ export default class ConfigServiceProvider extends ServiceProvider {
         await config.loadConfigDir(configPath);
 
         app.singleton(Config, () => config);
-
-        console.log(app.bound(Config) ? '✅ Config registered' : '❗️ Config not registered');
     }
 }

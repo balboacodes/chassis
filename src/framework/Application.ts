@@ -1,36 +1,56 @@
 import express from 'express';
-import { loadEnvFile } from 'node:process';
 import { Express } from 'express-serve-static-core';
+import fs from 'fs';
+import path from 'node:path';
+import { loadEnvFile } from 'node:process';
 import Container from './Container.js';
-import ServiceProvider from './providers/ServiceProvider.js';
+import { setAppInstance } from './helpers.js';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.js';
 import LoggerServiceProvider from './providers/LoggerServiceProvider.js';
-import { Class } from './types.js';
 import RouteServiceProvider from './providers/RouteServiceProvider.js';
-import { setAppInstance } from './helpers.js';
 
 export default class Application extends Container {
-    public app: Express = express();
+    public router: Express = express();
 
-    private providers: Class<ServiceProvider>[] = [ConfigServiceProvider, LoggerServiceProvider, RouteServiceProvider];
+    private providers = new Set([ConfigServiceProvider, LoggerServiceProvider, RouteServiceProvider]);
 
-    public register(provider: Class<ServiceProvider>): void {
-        this.providers.push(provider);
-    }
+    public async boot(): Promise<this> {
+        setAppInstance(this);
 
-    public withProviders(providers: Class<ServiceProvider>[] = []): this {
-        for (const provider of providers) {
-            this.register(provider);
-        }
+        loadEnvFile();
+        console.log(process.env.APP_NAME ? '✅ .env loaded' : '❗️ .env not loaded');
+
+        await this.bootProviders();
 
         return this;
     }
 
-    public async boot(): Promise<this> {
-        setAppInstance(this);
-        loadEnvFile();
+    public listen(port: number): void {
+        const server = this.router.listen(port);
+        console.log(server.listening ? `🚀 Server running at http://localhost:${port}` : '❗️ Server not running');
+    }
 
-        console.log(process.env.APP_NAME ? '✅ .env loaded' : '❗️ .env not loaded');
+    private async bootProviders(): Promise<void> {
+        const providersDir = path.resolve(process.cwd(), 'app/providers');
+
+        if (!fs.existsSync(providersDir)) {
+            console.log('❗️ Service providers not booted');
+
+            return;
+        }
+
+        const files = fs.readdirSync(providersDir).filter((f) => f.endsWith('.ts') || f.endsWith('.js'));
+
+        for (const file of files) {
+            const modulePath = path.join(providersDir, file);
+            const providerModule = await import(modulePath);
+
+            if (typeof providerModule.default !== 'function') {
+                throw new Error(`❗️ ${file} — no default class exported`);
+            }
+
+            this.providers.add(providerModule.default);
+        }
 
         for (let provider of this.providers) {
             const p = new provider();
@@ -39,12 +59,6 @@ export default class Application extends Container {
             if (p.boot) await p.boot(this);
         }
 
-        return this;
-    }
-
-    public listen(port: number): void {
-        const server = this.app.listen(port);
-
-        console.log(server.listening ? `🚀 Server running at http://localhost:${port}` : '❗️ Server not running');
+        console.log('✅ Service providers booted');
     }
 }
