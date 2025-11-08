@@ -10,9 +10,11 @@ export class ConfigServiceProvider extends ServiceProvider {
 
         // Load config files
         const config = new Config();
-        const configPath = path.resolve(process.cwd(), 'src/config');
+        const configPath = path.resolve(process.cwd(), 'config');
         await config.loadConfigDir(configPath);
 
         app.singleton('config', () => config);
+
+        console.log('✅ Config registered successfully');
     }
 }

@@ -1,6 +1,6 @@
 import { HomeController } from '../app/http/controllers/HomeController.js';
-import { Application } from '../framework/Application.js';
-import { Route } from '../framework/providers/RouteServiceProvider.js';
+import { Application } from '../src/framework/Application.js';
+import { Route } from '../src/framework/providers/RouteServiceProvider.js';
 
 export default function (app: Application): void {
     (app.app.get as Route)('/', HomeController, 'index');

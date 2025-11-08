@@ -12,15 +12,13 @@ type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 export type Route = (routePath: string, controllerOrHandler: Class | Function, methodName?: string) => void;
 
 export class RouteServiceProvider extends ServiceProvider {
-    public register(): void {}
-
     /**
      * @throws {Error} If config file could not be loaded.
      */
     public async boot(app: Application): Promise<void> {
         this.patchRouter(app);
 
-        const routesDir = path.resolve(process.cwd(), 'src/routes');
+        const routesDir = path.resolve(process.cwd(), 'routes');
 
         if (!fs.existsSync(routesDir)) return;
 
@@ -29,13 +27,14 @@ export class RouteServiceProvider extends ServiceProvider {
         for (const file of files) {
             const modulePath = path.join(routesDir, file);
             const routeModule = await import(modulePath);
-
             if (typeof routeModule.default !== 'function') {
                 throw new Error(`❌ ${file} — no default function exported`);
             }
 
             routeModule.default(app);
         }
+
+        console.log('✅ Route booted successfully');
     }
 
     private patchRouter(app: Application): void {
