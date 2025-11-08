@@ -1,6 +1,6 @@
-import { Application } from './Application.js';
-import { Config } from './Config.js';
-import { Log } from './Log.js';
+import Application from './Application.js';
+import Config from './Config.js';
+import Log from './Log.js';
 
 let globalApp: Application | null = null;
 
@@ -26,7 +26,7 @@ export function app(): Application {
  * Get a config value by key.
  */
 export function config<T = any>(key: string, defaultValue?: T): T {
-    const config = app().make<Config>('config');
+    const config = app().make(Config);
 
     return config.get<T>(key, defaultValue);
 }
@@ -35,5 +35,5 @@ export function config<T = any>(key: string, defaultValue?: T): T {
  * Get a Log instance.
  */
 export function logger(message: string): void {
-    return app().make<Log>('logger').log(message);
+    return app().make(Log).log(message);
 }

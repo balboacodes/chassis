@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-export class Config {
+export default class Config {
     private items: Record<string, Record<string, any>> = {};
 
     public async loadConfigDir(configPath: string): Promise<void> {

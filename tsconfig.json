@@ -3,11 +3,11 @@
         // Output & module system
         "target": "es2022",
         "module": "nodenext",
-        "moduleResolution": "nodenext",
+        "moduleResolution": "node16",
         "lib": ["es2024", "ESNext.Array", "ESNext.Collection", "ESNext.Iterator"],
 
         // Directories
-        "rootDir": "src",
+        "rootDir": "./",
         "outDir": "dist",
 
         // Interop
@@ -31,6 +31,6 @@
         "skipLibCheck": true,
         "types": ["node"]
     },
-    "include": ["src/**/*.ts"],
+    "include": ["./**/*.ts"],
     "exclude": ["node_modules", "dist", "tests/**/*.ts"]
 }

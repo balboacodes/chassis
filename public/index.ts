@@ -1,4 +1,4 @@
 import 'reflect-metadata';
-import { Application } from '../src/framework/Application';
+import Application from '../src/framework/Application.js';
 
-(await Application.create().withProviders().boot()).listen(3000);
+(await new Application().withProviders().boot()).listen(3000);

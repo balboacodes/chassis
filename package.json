@@ -31,7 +31,8 @@
         "node": ">=22"
     },
     "scripts": {
-        "dev": "tsx watch public/index.ts"
+        "dev": "tsx watch public/index.ts",
+        "build": "tsc"
     },
     "devDependencies": {
         "@types/express": "^5.0.5",

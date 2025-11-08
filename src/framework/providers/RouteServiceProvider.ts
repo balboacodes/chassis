@@ -1,17 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { Application } from '../Application.js';
-import { ServiceProvider } from './ServiceProvider.js';
-import { Class } from '../types.js';
+import Application from '../Application.js';
+import ServiceProvider from './ServiceProvider.js';
+import { Class, Method, Route } from '../types.js';
 
-type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
-
-/**
- * @throws {Error} If controller could not be resolved from the container or method does not exist on the controller.
- */
-export type Route = (routePath: string, controllerOrHandler: Class | Function, methodName?: string) => void;
-
-export class RouteServiceProvider extends ServiceProvider {
+export default class RouteServiceProvider extends ServiceProvider {
     /**
      * @throws {Error} If config file could not be loaded.
      */
@@ -39,6 +32,7 @@ export class RouteServiceProvider extends ServiceProvider {
 
     private patchRouter(app: Application): void {
         const router = app.app;
+
         const methods: Method[] = ['get', 'post', 'put', 'patch', 'delete'];
 
         for (const method of methods) {

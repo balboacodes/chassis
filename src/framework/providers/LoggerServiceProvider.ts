@@ -1,11 +1,11 @@
-import { ServiceProvider } from './ServiceProvider.js';
-import { Container } from '../Container.js';
-import { Log } from '../Log.js';
+import ServiceProvider from './ServiceProvider.js';
+import Container from '../Container.js';
+import Log from '../Log.js';
 
-export class LoggerServiceProvider extends ServiceProvider {
+export default class LoggerServiceProvider extends ServiceProvider {
     public register(app: Container): void {
-        app.singleton('logger', () => new Log());
+        app.singleton(Log, () => new Log());
 
-        console.log('✅ Logger registered successfully');
+        console.log(app.bound(Log) ? '✅ Logger registered successfully' : '❌ Logger registered successfully');
     }
 }

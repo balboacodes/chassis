@@ -1,5 +1,5 @@
-export class Log {
-    public log(message: string) {
-        console.log(`[INFO] ${message}`);
+export default class Log {
+    public log(message: any) {
+        console.log(message);
     }
 }
