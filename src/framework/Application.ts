@@ -1,4 +1,5 @@
 import express from 'express';
+import { loadEnvFile } from 'node:process';
 import { Express } from 'express-serve-static-core';
 import Container from './Container.js';
 import ServiceProvider from './providers/ServiceProvider.js';
@@ -27,6 +28,9 @@ export default class Application extends Container {
 
     public async boot(): Promise<this> {
         setAppInstance(this);
+        loadEnvFile();
+
+        console.log(process.env.APP_NAME ? '✅ .env loaded' : '❗️ .env not loaded');
 
         for (let provider of this.providers) {
             const p = new provider();
@@ -39,8 +43,8 @@ export default class Application extends Container {
     }
 
     public listen(port: number): void {
-        this.app.listen(port);
+        const server = this.app.listen(port);
 
-        console.log('🚀 Server running at http://localhost:3000');
+        console.log(server.listening ? `🚀 Server running at http://localhost:${port}` : '❗️ Server not running');
     }
 }

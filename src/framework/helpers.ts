@@ -9,6 +9,8 @@ let globalApp: Application | null = null;
  */
 export function setAppInstance(app: Application): void {
     globalApp = app;
+
+    console.log(globalApp ? '✅ App instance set' : '❗️ App instance not set');
 }
 
 /**
@@ -16,7 +18,7 @@ export function setAppInstance(app: Application): void {
  */
 export function app(): Application {
     if (!globalApp) {
-        throw new Error('Application instance not initialized yet.');
+        throw new Error('❗️ Application instance not initialized yet.');
     }
 
     return globalApp;

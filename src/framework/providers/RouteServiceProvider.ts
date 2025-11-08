@@ -13,21 +13,26 @@ export default class RouteServiceProvider extends ServiceProvider {
 
         const routesDir = path.resolve(process.cwd(), 'routes');
 
-        if (!fs.existsSync(routesDir)) return;
+        if (!fs.existsSync(routesDir)) {
+            console.log('❗️ Routes not booted');
+
+            return;
+        }
 
         const files = fs.readdirSync(routesDir).filter((f) => f.endsWith('.ts') || f.endsWith('.js'));
 
         for (const file of files) {
             const modulePath = path.join(routesDir, file);
             const routeModule = await import(modulePath);
+
             if (typeof routeModule.default !== 'function') {
-                throw new Error(`❌ ${file} — no default function exported`);
+                throw new Error(`❗️ ${file} — no default function exported`);
             }
 
             routeModule.default(app);
         }
 
-        console.log('✅ Route booted successfully');
+        console.log('✅ Routes booted');
     }
 
     private patchRouter(app: Application): void {
@@ -45,7 +50,7 @@ export default class RouteServiceProvider extends ServiceProvider {
             ): void => {
                 if (!methodName && typeof controllerOrHandler !== 'function') {
                     // TODO: this throws for some Express stuff
-                    // throw new Error(`❌ Invalid route handler for path '${routePath}'`);
+                    // throw new Error(`❗️ Invalid route handler for path '${routePath}'`);
                     return;
                 }
 
@@ -57,7 +62,7 @@ export default class RouteServiceProvider extends ServiceProvider {
                     const method: Function | undefined = controller[methodName];
 
                     if (typeof method !== 'function') {
-                        throw new Error(`❌ Controller '${controllerOrHandler?.name}' has no method '${methodName}'`);
+                        throw new Error(`❗️ Controller '${controllerOrHandler?.name}' has no method '${methodName}'`);
                     }
 
                     handler = method.bind(controller);
