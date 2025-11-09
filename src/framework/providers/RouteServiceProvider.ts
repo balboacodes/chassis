@@ -14,7 +14,7 @@ export default class RouteServiceProvider extends ServiceProvider {
         const routesDir = path.resolve(process.cwd(), 'routes');
 
         if (!fs.existsSync(routesDir)) {
-            console.log('❗️ Routes not booted');
+            console.error('❗️ Routes not booted');
 
             return;
         }

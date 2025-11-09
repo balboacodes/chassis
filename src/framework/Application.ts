@@ -1,17 +1,16 @@
-import { Express, NextFunction, Request, Response, default as express } from 'express';
+import { Express, default as express } from 'express';
 import fs from 'fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
 import Container from './Container.js';
-import { setAppInstance } from './helpers.js';
+import { config, setAppInstance } from './helpers.js';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.js';
-import LoggerServiceProvider from './providers/LoggerServiceProvider.js';
 import RouteServiceProvider from './providers/RouteServiceProvider.js';
 
 export default class Application extends Container {
     public router: Express = express();
 
-    private providers = new Set([ConfigServiceProvider, LoggerServiceProvider, RouteServiceProvider]);
+    private providers = new Set([ConfigServiceProvider, RouteServiceProvider]);
 
     public async boot(): Promise<this> {
         setAppInstance(this);
@@ -26,7 +25,8 @@ export default class Application extends Container {
         return this;
     }
 
-    public listen(port: number): void {
+    public listen(): void {
+        const port = config('app.env') === 'development' ? 3000 : 443;
         const server = this.router.listen(port);
         console.log(server.listening ? `🚀 Server running at http://localhost:${port}` : '❗️ Server not running');
     }
@@ -63,17 +63,5 @@ export default class Application extends Container {
         console.log('✅ Service providers booted');
     }
 
-    private setupMiddleware(): void {
-        this.router.use(express.static('public'));
-        console.log('✅ Serving static files from /public');
-
-        this.router.use((_req: Request, res: Response, _next: NextFunction) => {
-            res.status(404).send("Sorry can't find that!");
-        });
-
-        this.router.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-            console.error(err.stack);
-            res.status(500).send('Something broke!');
-        });
-    }
+    private setupMiddleware(): void {}
 }

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { Arr } from './support/Arr.js';
 
 export default class Config {
     private items: Record<string, Record<string, any>> = {};
@@ -19,14 +20,21 @@ export default class Config {
         }
     }
 
-    public get<T = any>(key: string, defaultValue?: T): T {
-        const [file, nestedKey] = key.split('.', 2);
-        let value = this.items[file];
+    /**
+     * Get the specified configuration value.
+     */
+    public get(key: string, defaultValue: any = null): any {
+        return Arr.get(this.items, key, defaultValue);
+    }
 
-        if (value && nestedKey) {
-            value = nestedKey.split('.').reduce((object, key) => object?.[key], value);
+    /**
+     * Set a given configuration value.
+     */
+    public set(key: Record<string, any> | string, value: any = null): void {
+        const keys = typeof key === 'string' ? { [key]: value } : key;
+
+        for (const [k, v] of Object.entries(keys)) {
+            Arr.set(this.items, k, v);
         }
-
-        return (value ?? defaultValue) as T;
     }
 }
