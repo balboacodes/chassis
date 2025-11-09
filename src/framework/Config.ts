@@ -20,16 +20,10 @@ export default class Config {
         }
     }
 
-    /**
-     * Get the specified configuration value.
-     */
     public get(key: string, defaultValue: any = null): any {
         return Arr.get(this.items, key, defaultValue);
     }
 
-    /**
-     * Set a given configuration value.
-     */
     public set(key: Record<string, any> | string, value: any = null): void {
         const keys = typeof key === 'string' ? { [key]: value } : key;
 

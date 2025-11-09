@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
 import Container from './Container.js';
-import { config, setAppInstance } from './helpers.js';
+import { config } from './helpers.js';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.js';
 import RouteServiceProvider from './providers/RouteServiceProvider.js';
 
@@ -13,14 +13,13 @@ export default class Application extends Container {
     private providers = new Set([ConfigServiceProvider, RouteServiceProvider]);
 
     public async boot(): Promise<this> {
-        setAppInstance(this);
+        Container.setInstance(this);
+        console.log(Container.getInstance() === this ? '✅ App instance set' : '❗️ App instance not set');
 
         loadEnvFile();
         console.log(process.env.APP_NAME ? '✅ .env loaded' : '❗️ .env not loaded');
 
         await this.bootProviders();
-
-        this.setupMiddleware();
 
         return this;
     }
@@ -62,6 +61,4 @@ export default class Application extends Container {
 
         console.log('✅ Service providers booted');
     }
-
-    private setupMiddleware(): void {}
 }

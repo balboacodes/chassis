@@ -1,9 +1,19 @@
 import { Class, Factory } from './types.js';
 
 export default class Container {
-    private bindings = new Map<Class, Factory>();
+    protected static instance: Container;
 
-    private singletons = new Map<Class, any>();
+    protected bindings = new Map<Class, Factory>();
+
+    protected singletons = new Map<Class, any>();
+
+    public static setInstance(instance: Container) {
+        Container.instance = instance;
+    }
+
+    public static getInstance(): Container {
+        return Container.instance;
+    }
 
     public bound(key: Class): boolean {
         return this.bindings.has(key);
