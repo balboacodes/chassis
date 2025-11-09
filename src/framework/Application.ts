@@ -3,9 +3,9 @@ import fs from 'fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
 import Container from './Container.js';
-import { config } from './helpers.js';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.js';
 import RouteServiceProvider from './providers/RouteServiceProvider.js';
+import { config } from './support/helpers.js';
 
 export default class Application extends Container {
     public router: Express = express();

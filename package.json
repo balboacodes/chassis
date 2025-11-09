@@ -44,7 +44,7 @@
         "typescript": "^5.9.3"
     },
     "dependencies": {
-        "@balboacodes/php-utils": "^0.9.0",
+        "@balboacodes/laravel-helpers": "^0.13.0",
         "express": "^5.1.0",
         "reflect-metadata": "^0.2.2"
     }

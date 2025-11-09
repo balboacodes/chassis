@@ -1,6 +1,6 @@
+import { Arr } from '@balboacodes/laravel-helpers';
 import fs from 'fs';
 import path from 'path';
-import { Arr } from './support/Arr.js';
 
 export default class Config {
     private items: Record<string, Record<string, any>> = {};

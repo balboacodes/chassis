@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Application from '../Application.js';
-import { Class, Method, Route } from '../types.js';
+import { Class, Method, RouteHandler } from '../types.js';
 import ServiceProvider from './ServiceProvider.js';
 
 export default class RouteServiceProvider extends ServiceProvider {
@@ -29,7 +29,7 @@ export default class RouteServiceProvider extends ServiceProvider {
                 throw new Error(`❗️ ${file} — no default function exported`);
             }
 
-            routeModule.default(app);
+            routeModule.default(app.router);
         }
     }
 
@@ -39,7 +39,7 @@ export default class RouteServiceProvider extends ServiceProvider {
         for (const method of methods) {
             const original = app.router[method].bind(app.router);
 
-            ((app.router as any)[method] as Route) = (
+            ((app.router as any)[method] as RouteHandler) = (
                 routePath: string,
                 controllerOrHandler: Class | Function,
                 methodName?: string,

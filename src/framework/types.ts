@@ -12,4 +12,4 @@ export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 /**
  * @throws {Error} If controller could not be resolved from the container or method does not exist on the controller.
  */
-export type Route = (routePath: string, controllerOrHandler: Class | Function, methodName?: string) => void;
+export type RouteHandler = (routePath: string, controllerOrHandler: Class | Function, methodName?: string) => void;
