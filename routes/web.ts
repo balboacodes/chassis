@@ -4,5 +4,5 @@ import { RouteHandler } from '../src/framework/types.js';
 
 export default (route: Express): void => {
     (route.get as RouteHandler)('/', HomeController, 'index');
-    route.get('/ping', (_, res) => res.send('pong'));
-}
+    route.get('/ping/:id/:name', (_, res) => res.send('pong'));
+};

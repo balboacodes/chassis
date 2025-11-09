@@ -6,7 +6,7 @@ import { Class } from '../types.js';
  * @returns The container instance if abstract is undefined, otherwise the resolved class.
  * @throws {Error} If container instance has not been initialized.
  */
-export function app<T>(abstract?: Class<T>): Container | T {
+export function app(abstract?: Class | string): any {
     if (abstract === undefined) {
         return Container.getInstance();
     }
