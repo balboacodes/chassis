@@ -1,17 +1,17 @@
 import { Class, Factory } from './types.js';
 
 export default class Container {
-    protected static instance: Container;
+    private static instance?: Container;
 
-    protected bindings = new Map<Class | string, Factory>();
+    private bindings = new Map<Class | string, Factory>();
 
-    protected singletons = new Map<Class | string, any>();
+    private singletons = new Map<Class | string, any>();
 
     public static setInstance(instance: Container) {
         Container.instance = instance;
     }
 
-    public static getInstance(): Container {
+    public static getInstance(): Container | undefined {
         return Container.instance;
     }
 

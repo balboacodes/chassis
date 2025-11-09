@@ -3,15 +3,14 @@ import Container from '../Container.js';
 import { Class } from '../types.js';
 
 /**
- * @returns The container instance if abstract is undefined, otherwise the resolved class.
- * @throws {Error} If container instance has not been initialized.
+ * @returns The container instance if abstract is undefined, otherwise the resolved binding.
  */
 export function app(abstract?: Class | string): any {
     if (abstract === undefined) {
         return Container.getInstance();
     }
 
-    return Container.getInstance().make(abstract);
+    return Container.getInstance()?.make(abstract);
 }
 
 /**

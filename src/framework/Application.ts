@@ -1,32 +1,58 @@
-import express from 'express';
+import { type Express, type NextFunction, type Request, type Response } from 'express';
 import fs from 'fs';
 import path from 'node:path';
-import { loadEnvFile } from 'node:process';
 import Container from './Container.js';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.js';
 import RouteServiceProvider from './providers/RouteServiceProvider.js';
+import { Class } from './types.js';
 
 export default class Application extends Container {
-    public router = express();
+    private providers: Set<Class> = new Set([ConfigServiceProvider, RouteServiceProvider]);
 
-    private providers = new Set([ConfigServiceProvider, RouteServiceProvider]);
-
-    public async boot(): Promise<void> {
-        this.loadEnv();
-
-        Container.setInstance(this);
-        console.log(Container.getInstance() === this ? '✅ App instance set' : '❗️ App instance not set');
-
-        await this.bootProviders();
-
-        this.bootMiddleware();
-
-        this.listen();
+    public constructor(
+        public router: Express,
+        private req: Request,
+        private res: Response,
+        private next: NextFunction,
+    ) {
+        super();
     }
 
-    private loadEnv(): void {
-        loadEnvFile();
-        console.log(process.env.APP_NAME ? '✅ .env loaded' : '❗️ .env not loaded');
+    /**
+     * @throws {Error} If container instance was not set or response and response were not bound.
+     */
+    public async boot(): Promise<void> {
+        Container.setInstance(this);
+
+        if (Container.getInstance() !== this) {
+            throw new Error('❗️ Container instance not set');
+        }
+
+        this.singleton('router', () => this.router);
+
+        if (!this.bound('router')) {
+            throw new Error('❗️ Router not bound');
+        }
+
+        this.singleton('request', () => this.req);
+
+        if (!this.bound('request')) {
+            throw new Error('❗️ Request not bound');
+        }
+
+        this.singleton('response', () => this.res);
+
+        if (!this.bound('response')) {
+            throw new Error('❗️ Response not bound');
+        }
+
+        this.singleton('next', () => this.next);
+
+        if (!this.bound('next')) {
+            throw new Error('❗️ Next not bound');
+        }
+
+        await this.bootProviders();
     }
 
     private async bootProviders(): Promise<void> {
@@ -38,16 +64,15 @@ export default class Application extends Container {
             if (p.register) await p.register(this);
             if (p.boot) await p.boot(this);
         }
-
-        console.log('✅ Service providers booted');
     }
 
+    /**
+     * @throws {Error} If provider file does not contain a default export.
+     */
     private async loadProviders(): Promise<void> {
         const providersDir = path.resolve(process.cwd(), 'app/providers');
 
-        if (!fs.existsSync(providersDir)) {
-            return;
-        }
+        if (!fs.existsSync(providersDir)) return;
 
         const files = fs.readdirSync(providersDir).filter((f) => f.endsWith('.ts') || f.endsWith('.js'));
 
@@ -56,23 +81,10 @@ export default class Application extends Container {
             const providerModule = await import(modulePath);
 
             if (typeof providerModule.default !== 'function') {
-                throw new Error(`❗️ ${file} — no default class exported`);
+                throw new Error(`❗️ ${file}: no default class exported`);
             }
 
             this.providers.add(providerModule.default);
         }
-    }
-
-    private bootMiddleware(): void {
-        this.router.use((req, _res, next) => {
-            this.bind('request', () => req);
-            next();
-        });
-    }
-
-    private listen(): void {
-        const port = process.env.NODE_ENV === 'development' ? 3000 : 443;
-        const server = this.router.listen(port);
-        console.log(server.listening ? `🚀 Server running at http://localhost:${port}` : '❗️ Server not running');
     }
 }

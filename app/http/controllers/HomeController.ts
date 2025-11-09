@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
+import { app } from '../../../src/framework/support/helpers.js';
 
 export default class HomeController {
-    public index(_: Request, res: Response): void {
-        res.send('hello');
+    public index(): void {
+        app('response').send('hello');
     }
 }

@@ -1,22 +1,20 @@
 import fs from 'fs';
 import path from 'path';
-import Application from '../Application.js';
+import { app } from '../support/helpers.js';
 import { Class, Method, RouteHandler } from '../types.js';
 import ServiceProvider from './ServiceProvider.js';
 
 export default class RouteServiceProvider extends ServiceProvider {
     /**
-     * @throws {Error} If config file could not be loaded.
+     * @throws {Error} If routes file could not be loaded or routes file does not contain a default export.
      */
-    public async boot(app: Application): Promise<void> {
-        this.patchRouter(app);
+    public async boot(): Promise<void> {
+        this.patchRouter();
 
         const routesDir = path.resolve(process.cwd(), 'routes');
 
         if (!fs.existsSync(routesDir)) {
-            console.error('❗️ Routes not booted');
-
-            return;
+            throw new Error('❗️ Routes directory not found');
         }
 
         const files = fs.readdirSync(routesDir).filter((f) => f.endsWith('.ts') || f.endsWith('.js'));
@@ -26,27 +24,29 @@ export default class RouteServiceProvider extends ServiceProvider {
             const routeModule = await import(modulePath);
 
             if (typeof routeModule.default !== 'function') {
-                throw new Error(`❗️ ${file} — no default function exported`);
+                throw new Error(`❗️ ${file}: no default function exported`);
             }
 
-            routeModule.default(app.router);
+            routeModule.default();
         }
     }
 
-    private patchRouter(app: Application): void {
+    /**
+     * @throws {Error} If controller does not have a corresponding method.
+     */
+    private patchRouter(): void {
         const methods: Method[] = ['get', 'post', 'put', 'patch', 'delete'];
 
         for (const method of methods) {
-            const original = app.router[method].bind(app.router);
+            const original = app('router')[method].bind(app('router'));
 
-            ((app.router as any)[method] as RouteHandler) = (
+            ((app('router') as any)[method] as RouteHandler) = (
                 routePath: string,
                 controllerOrHandler: Class | Function,
                 methodName?: string,
             ): void => {
-                if (!methodName && typeof controllerOrHandler !== 'function') {
-                    // TODO: this throws for some Express stuff
-                    // throw new Error(`❗️ Invalid route handler for path '${routePath}'`);
+                if (routePath === 'etag fn') {
+                    original(routePath);
                     return;
                 }
 
@@ -54,7 +54,7 @@ export default class RouteServiceProvider extends ServiceProvider {
 
                 if (methodName) {
                     // Use container to instantiate controller with its dependencies
-                    const controller: Class = app.make(controllerOrHandler as Class);
+                    const controller: Class = app(controllerOrHandler as Class);
                     const method: Function | undefined = controller[methodName];
 
                     if (typeof method !== 'function') {
