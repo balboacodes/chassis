@@ -1,41 +1,31 @@
 import { Class, Factory } from './types.js';
 
 export default class Container {
-    private static instance?: Container;
+    private static bindings = new Map<Class | string, Factory>();
 
-    private bindings = new Map<Class | string, Factory>();
+    private static singletons = new Map<Class | string, any>();
 
-    private singletons = new Map<Class | string, any>();
-
-    public static setInstance(instance: Container) {
-        Container.instance = instance;
+    public static bound(key: Class | string): boolean {
+        return Container.bindings.has(key);
     }
 
-    public static getInstance(): Container | undefined {
-        return Container.instance;
+    public static bind<T>(key: Class | string, factory: Factory<T>): void {
+        Container.bindings.set(key, factory);
     }
 
-    public bound(key: Class | string): boolean {
-        return this.bindings.has(key);
+    public static singleton<T>(key: Class | string, factory: Factory<T>): void {
+        Container.bindings.set(key, factory);
+        Container.singletons.set(key, null);
     }
 
-    public bind<T>(key: Class | string, factory: Factory<T>): void {
-        this.bindings.set(key, factory);
-    }
-
-    public singleton<T>(key: Class | string, factory: Factory<T>): void {
-        this.bindings.set(key, factory);
-        this.singletons.set(key, null);
-    }
-
-    public make(key: Class | string): any {
-        if (this.singletons.has(key)) {
-            const instance = this.singletons.get(key);
+    public static make(key: Class | string): any {
+        if (Container.singletons.has(key)) {
+            const instance = Container.singletons.get(key);
 
             if (instance) return instance;
 
-            const newInstance = this.resolve(key);
-            this.singletons.set(key, newInstance);
+            const newInstance = Container.resolve(key);
+            Container.singletons.set(key, newInstance);
 
             return newInstance;
         }
@@ -46,9 +36,9 @@ export default class Container {
     /**
      * @throws {Error} If key is a string and it hasn't been bound to the container.
      */
-    private resolve(key: Class | string): any {
-        if (this.bindings.has(key)) {
-            return this.bindings.get(key)!(this);
+    private static resolve(key: Class | string): any {
+        if (Container.bindings.has(key)) {
+            return Container.bindings.get(key)!(Container);
         }
 
         if (typeof key === 'string') {
@@ -57,7 +47,7 @@ export default class Container {
 
         // Key is a class, so we'll resolve all its dependencies and return a new instance
         const paramTypes: any[] = Reflect.getMetadata('inject', key) ?? [];
-        const dependencies = paramTypes.map((dep) => this.make(dep));
+        const dependencies = paramTypes.map((dep) => Container.make(dep));
 
         return new key(...dependencies);
     }

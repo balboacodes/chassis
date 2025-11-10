@@ -7,9 +7,4 @@ export type Class<T = any> = {
 
 export type Factory<T = any> = (container: Container) => T;
 
-export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
-
-/**
- * @throws {Error} If controller could not be resolved from the container or method does not exist on the controller.
- */
-export type RouteHandler = (routePath: string, controllerOrHandler: Class | Function, methodName?: string) => void;
+export type Verb = 'get' | 'post' | 'put' | 'patch' | 'delete';

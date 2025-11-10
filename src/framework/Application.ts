@@ -1,4 +1,4 @@
-import { type Express, type NextFunction, type Request, type Response } from 'express';
+import { type Express } from 'express';
 import fs from 'fs';
 import path from 'node:path';
 import Container from './Container.js';
@@ -9,49 +9,11 @@ import { Class } from './types.js';
 export default class Application extends Container {
     private providers: Set<Class> = new Set([ConfigServiceProvider, RouteServiceProvider]);
 
-    public constructor(
-        public router: Express,
-        private req: Request,
-        private res: Response,
-        private next: NextFunction,
-    ) {
+    public constructor(public router: Express) {
         super();
     }
 
-    /**
-     * @throws {Error} If container instance was not set or response and response were not bound.
-     */
     public async boot(): Promise<void> {
-        Container.setInstance(this);
-
-        if (Container.getInstance() !== this) {
-            throw new Error('❗️ Container instance not set');
-        }
-
-        this.singleton('router', () => this.router);
-
-        if (!this.bound('router')) {
-            throw new Error('❗️ Router not bound');
-        }
-
-        this.singleton('request', () => this.req);
-
-        if (!this.bound('request')) {
-            throw new Error('❗️ Request not bound');
-        }
-
-        this.singleton('response', () => this.res);
-
-        if (!this.bound('response')) {
-            throw new Error('❗️ Response not bound');
-        }
-
-        this.singleton('next', () => this.next);
-
-        if (!this.bound('next')) {
-            throw new Error('❗️ Next not bound');
-        }
-
         await this.bootProviders();
     }
 

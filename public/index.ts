@@ -11,11 +11,11 @@ if (!process.env.APP_NAME) {
 
 const app = express();
 
-app.use(async (req, res, next) => {
-    await new Application(app, req, res, next).boot();
+app.use(async (_req, _res, next) => {
+    await new Application(app).boot();
     next();
 });
 
 const port = process.env.NODE_ENV === 'development' ? 3000 : 443;
 const server = app.listen(port);
-console.log(server.listening ? `🚀 Server running at http://localhost:${port}` : '❗️ Server not running');
+console.log(server.listening ? '🚀 Server running' : '❗️ Server not running');
