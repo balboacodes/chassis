@@ -1,6 +1,7 @@
 import { type Express } from 'express';
 import fs from 'fs';
 import path from 'node:path';
+import { loadEnvFile } from 'node:process';
 import Container from './Container.js';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.js';
 import RouteServiceProvider from './providers/RouteServiceProvider.js';
@@ -14,7 +15,16 @@ export default class Application extends Container {
     }
 
     public async boot(): Promise<void> {
+        this.bootEnv();
         await this.bootProviders();
+    }
+
+    private bootEnv(): void {
+        loadEnvFile();
+
+        if (!process.env.APP_NAME) {
+            throw new Error('❗️ .env not loaded');
+        }
     }
 
     private async bootProviders(): Promise<void> {
