@@ -6,7 +6,7 @@ import { inject } from '../../../src/framework/support/decorators/inject.js';
 export default class HomeController {
     public constructor(private config: Config) {}
 
-    public index(_req: Request, res: Response): void {
-        res.send(this.config.get('app.name'));
+    public index(req: Request, res: Response): void {
+        res.send(req.params);
     }
 }

@@ -1,68 +1,102 @@
-import { NextFunction, Request, Response } from 'express';
+import { Arr } from '@balboacodes/laravel-helpers';
+import { Express, NextFunction, Request, Response } from 'express';
 import { app } from './support/helpers.js';
-import { Class, Verb } from './types.js';
+import { Class } from './types.js';
 
 export default class Route {
-    public static get(
-        path: string,
-        handler: Class | ((req: Request, res: Response, next: NextFunction) => any),
-        method?: string,
-    ): void {
-        Route.handle('get', path, handler, method);
+    private routeMiddleware: Set<Class> = new Set();
+
+    public middleware(middleware: Class | Class[]): this {
+        middleware = Arr.wrap(middleware);
+
+        for (const mw of middleware) {
+            this.routeMiddleware.add(mw);
+        }
+
+        return this;
     }
 
-    public static post(
+    public any(
         path: string,
         handler: Class | ((req: Request, res: Response, next: NextFunction) => any),
         method?: string,
     ): void {
-        Route.handle('post', path, handler, method);
+        this.handle('all', path, handler, method);
     }
 
-    public static put(
+    public get(
         path: string,
         handler: Class | ((req: Request, res: Response, next: NextFunction) => any),
         method?: string,
     ): void {
-        Route.handle('put', path, handler, method);
+        this.handle('get', path, handler, method);
     }
 
-    public static patch(
+    public post(
         path: string,
         handler: Class | ((req: Request, res: Response, next: NextFunction) => any),
         method?: string,
     ): void {
-        Route.handle('patch', path, handler, method);
+        void this.handle('post', path, handler, method);
     }
 
-    public static delete(
+    public put(
         path: string,
         handler: Class | ((req: Request, res: Response, next: NextFunction) => any),
         method?: string,
     ): void {
-        Route.handle('delete', path, handler, method);
+        this.handle('put', path, handler, method);
     }
 
-    private static handle(
-        verb: Verb,
+    public patch(
         path: string,
         handler: Class | ((req: Request, res: Response, next: NextFunction) => any),
         method?: string,
     ): void {
+        this.handle('patch', path, handler, method);
+    }
+
+    public delete(
+        path: string,
+        handler: Class | ((req: Request, res: Response, next: NextFunction) => any),
+        method?: string,
+    ): void {
+        this.handle('delete', path, handler, method);
+    }
+
+    public options(
+        path: string,
+        handler: Class | ((req: Request, res: Response, next: NextFunction) => any),
+        method?: string,
+    ): void {
+        this.handle('options', path, handler, method);
+    }
+
+    private handle(
+        verb: keyof Express,
+        path: string,
+        handler: Class | ((req: Request, res: Response, next: NextFunction) => any),
+        method?: string,
+    ): void {
+        const middleware = this.routeMiddleware
+            .values()
+            .toArray()
+            .map((mw: Class) => (req: Request, res: Response, next: NextFunction) => {
+                new mw().handle(req, res, next);
+            });
+
         if (method === undefined) {
-            app().router[verb](path, handler as (req: Request, res: Response, next: NextFunction) => any);
-
+            app().router[verb](path, [...middleware, handler]);
             return;
         }
 
         const controller = app(handler as Class) as Class;
 
-        if (!app().bound(controller)) {
-            app().singleton(controller, () => controller);
-        }
-
-        app().router[verb](path, (req: Request, res: Response, next: NextFunction) => {
-            controller[method](req, res, next);
-        });
+        app().router[verb](path, [
+            ...middleware,
+            (req: Request, res: Response, next: NextFunction) => {
+                controller[method](req, res, next);
+            },
+        ]);
     }
 }

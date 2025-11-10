@@ -6,5 +6,3 @@ export type Class<T = any> = {
 };
 
 export type Factory<T = any> = (container: Container) => T;
-
-export type Verb = 'get' | 'post' | 'put' | 'patch' | 'delete';

@@ -9,9 +9,7 @@ export default class RouteServiceProvider extends ServiceProvider {
     public async boot(): Promise<void> {
         const routesDir = path.resolve(process.cwd(), 'routes');
 
-        if (!fs.existsSync(routesDir)) {
-            return;
-        }
+        if (!fs.existsSync(routesDir)) return;
 
         const files = fs.readdirSync(routesDir).filter((f) => f.endsWith('.ts') || f.endsWith('.js'));
 
