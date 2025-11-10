@@ -1,13 +1,14 @@
 import App from '../App.js';
 import Config from '../Config.js';
+import Container from '../Container.js';
 import { Class } from '../types.js';
 
 export function app<T extends Class | string | undefined = undefined>(abstract?: T): T extends undefined ? App : any {
     if (abstract === undefined) {
-        return App.getInstance() as any;
+        return Container.getInstance() as any;
     }
 
-    return App.make(abstract);
+    return Container.getInstance().make(abstract);
 }
 
 /**

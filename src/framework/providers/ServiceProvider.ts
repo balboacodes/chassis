@@ -1,7 +1,9 @@
 import App from '../App.js';
 
 export default abstract class ServiceProvider {
-    public register?(app: App): void | Promise<void>;
+    public constructor(protected app: App) {}
 
-    public boot?(app: App): void | Promise<void>;
+    public register?(): void | Promise<void>;
+
+    public boot?(): void | Promise<void>;
 }

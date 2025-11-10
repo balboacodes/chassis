@@ -2,16 +2,17 @@ import { type Express, default as express } from 'express';
 import fs from 'fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
-import Config from './Config.js';
 import Container from './Container.js';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.js';
 import RouteServiceProvider from './providers/RouteServiceProvider.js';
+import ServiceProvider from './providers/ServiceProvider.js';
+import { config } from './support/helpers.js';
 import { Class } from './types.js';
 
 export default class App extends Container {
     public router: Express = express();
 
-    private providers: Set<Class> = new Set([ConfigServiceProvider, RouteServiceProvider]);
+    private providers: Set<Class<ServiceProvider>> = new Set([ConfigServiceProvider, RouteServiceProvider]);
 
     public async start(): Promise<void> {
         Container.setInstance(this);
@@ -32,10 +33,10 @@ export default class App extends Container {
         await this.loadProviders();
 
         for (let provider of this.providers) {
-            const p = new provider();
+            const p = new provider(this);
 
-            if (p.register) await p.register(this);
-            if (p.boot) await p.boot(this);
+            if (p.register) await p.register();
+            if (p.boot) await p.boot();
         }
     }
 
@@ -62,8 +63,8 @@ export default class App extends Container {
     }
 
     private listen(): void {
-        const port = Number(App.make<Config>(Config).get('app.port'));
-        const url = App.make<Config>(Config).get('app.url');
+        const port = Number(config('app.port'));
+        const url = config('app.url');
 
         this.router.listen(port, url, () => {
             console.log(`🚀 Server running at http://${url}:${port}`);

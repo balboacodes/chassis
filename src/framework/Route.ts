@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-import App from './App.js';
 import { app } from './support/helpers.js';
 import { Class, Verb } from './types.js';
 
@@ -56,10 +55,10 @@ export default class Route {
             return;
         }
 
-        const controller = App.make<Class>(handler as Class);
+        const controller = app(handler as Class) as Class;
 
-        if (!App.bound(controller)) {
-            App.singleton(controller, () => controller);
+        if (!app().bound(controller)) {
+            app().singleton(controller, () => controller);
         }
 
         app().router[verb](path, (req: Request, res: Response, next: NextFunction) => {
