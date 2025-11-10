@@ -8,7 +8,7 @@ import ConfigServiceProvider from './providers/ConfigServiceProvider.js';
 import RouteServiceProvider from './providers/RouteServiceProvider.js';
 import ServiceProvider from './providers/ServiceProvider.js';
 import { config } from './support/helpers.js';
-import { Class } from './types/types.js';
+import { Class } from './types.js';
 
 export default class App extends Container {
     public router: Express = express();

@@ -1,7 +1,7 @@
 import { Arr } from '@balboacodes/laravel-helpers';
 import type { Express, NextFunction, Request, Response } from 'express';
 import { app } from './support/helpers.js';
-import { Class } from './types/types.js';
+import { Class } from './types.js';
 
 export default class Route {
     private routeMiddleware: Set<Class> = new Set();

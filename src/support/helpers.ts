@@ -1,7 +1,7 @@
 import App from '../App.js';
 import Config from '../Config.js';
 import Container from '../Container.js';
-import { Class } from '../types/types.js';
+import { Class } from '../types.js';
 
 export function app<T extends Class | string | undefined = undefined>(abstract?: T): T extends undefined ? App : any {
     if (abstract === undefined) {

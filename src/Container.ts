@@ -1,4 +1,4 @@
-import { Class, Factory } from './types/types.js';
+import { Class, Factory } from './types.js';
 
 export default class Container {
     private static instance: Container;

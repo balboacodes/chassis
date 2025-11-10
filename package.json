@@ -20,12 +20,8 @@
         "LICENSE",
         "README.md"
     ],
-    "types": "dist/index.d.ts",
     "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        }
+        ".": "dist/index.js"
     },
     "engines": {
         "node": ">=22"

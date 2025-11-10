@@ -4,10 +4,10 @@
         "target": "es2022",
         "module": "nodenext",
         "moduleResolution": "node16",
-        "lib": ["es2024", "ESNext.Array", "ESNext.Collection", "ESNext.Iterator"],
+        "lib": ["ESNext"],
 
         // Directories
-        "rootDir": "./",
+        "rootDir": "src",
         "outDir": "dist",
 
         // Interop
@@ -26,11 +26,11 @@
         "removeComments": true,
         "declaration": true,
         "declarationMap": true,
+        "declarationDir": "dist/types",
 
         // Environment
         "skipLibCheck": true,
-        "types": ["node"]
+        "types": ["@types/node"]
     },
-    "include": ["./**/*.ts"],
-    "exclude": ["node_modules", "dist", "tests/**/*.ts"]
+    "include": ["src/**/*.ts"]
 }
