@@ -7,8 +7,8 @@
         "lib": ["ESNext"],
 
         // Directories
-        "rootDir": "src",
-        "outDir": "dist",
+        "rootDir": "./src",
+        "outDir": "./dist",
 
         // Interop
         "esModuleInterop": true,
@@ -26,11 +26,11 @@
         "removeComments": true,
         "declaration": true,
         "declarationMap": true,
-        "declarationDir": "dist/types",
+        "declarationDir": "./dist/types",
 
         // Environment
         "skipLibCheck": true,
         "types": ["@types/node"]
     },
-    "include": ["src/**/*.ts"]
+    "include": ["./src/**/*.ts"]
 }
