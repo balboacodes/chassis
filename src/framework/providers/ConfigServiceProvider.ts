@@ -1,5 +1,5 @@
 import path from 'path';
-import Application from '../Application.js';
+import App from '../App.js';
 import Config from '../Config.js';
 import ServiceProvider from './ServiceProvider.js';
 
@@ -10,6 +10,6 @@ export default class ConfigServiceProvider extends ServiceProvider {
         const configPath = path.resolve(process.cwd(), 'config');
         await config.loadConfigDir(configPath);
 
-        Application.singleton(Config, () => config);
+        App.singleton(Config, () => config);
     }
 }

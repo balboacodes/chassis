@@ -1,7 +1,7 @@
-import Application from '../Application.js';
+import App from '../App.js';
 
 export default abstract class ServiceProvider {
-    public register?(app: Application): void | Promise<void>;
+    public register?(app: App): void | Promise<void>;
 
-    public boot?(app: Application): void | Promise<void>;
+    public boot?(app: App): void | Promise<void>;
 }

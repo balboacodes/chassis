@@ -1,15 +1,13 @@
-import Application from '../Application.js';
+import App from '../App.js';
 import Config from '../Config.js';
 import { Class } from '../types.js';
 
-export function app<T extends Class | string | undefined = undefined>(
-    abstract?: T,
-): T extends undefined ? Application : any {
+export function app<T extends Class | string | undefined = undefined>(abstract?: T): T extends undefined ? App : any {
     if (abstract === undefined) {
-        return Application as any;
+        return App.getInstance() as any;
     }
 
-    return Application.make(abstract);
+    return App.make(abstract);
 }
 
 /**

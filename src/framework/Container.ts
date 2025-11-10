@@ -1,9 +1,19 @@
 import { Class, Factory } from './types.js';
 
 export default class Container {
+    private static instance: Container;
+
     private static bindings = new Map<Class | string, Factory>();
 
     private static singletons = new Map<Class | string, any>();
+
+    public static getInstance(): Container {
+        return Container.instance;
+    }
+
+    public static setInstance(instance: Container): Container {
+        return (Container.instance = instance);
+    }
 
     public static bound(key: Class | string): boolean {
         return Container.bindings.has(key);
@@ -18,7 +28,7 @@ export default class Container {
         Container.singletons.set(key, null);
     }
 
-    public static make(key: Class | string): any {
+    public static make<T>(key: Class | string): T {
         if (Container.singletons.has(key)) {
             const instance = Container.singletons.get(key);
 

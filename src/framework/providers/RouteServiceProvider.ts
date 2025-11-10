@@ -1,13 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import Application from '../Application.js';
 import ServiceProvider from './ServiceProvider.js';
 
 export default class RouteServiceProvider extends ServiceProvider {
     /**
      * @throws {Error} If routes file does not contain a default export.
      */
-    public async boot(app: Application): Promise<void> {
+    public async boot(): Promise<void> {
         const routesDir = path.resolve(process.cwd(), 'routes');
 
         if (!fs.existsSync(routesDir)) {
@@ -24,7 +23,7 @@ export default class RouteServiceProvider extends ServiceProvider {
                 throw new Error(`❗️ ${file}: no default function exported`);
             }
 
-            routeModule.default(app);
+            routeModule.default();
         }
     }
 }

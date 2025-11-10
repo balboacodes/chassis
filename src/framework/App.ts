@@ -1,22 +1,23 @@
-import { type Express } from 'express';
+import { type Express, default as express } from 'express';
 import fs from 'fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
+import Config from './Config.js';
 import Container from './Container.js';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.js';
 import RouteServiceProvider from './providers/RouteServiceProvider.js';
 import { Class } from './types.js';
 
-export default class Application extends Container {
+export default class App extends Container {
+    public router: Express = express();
+
     private providers: Set<Class> = new Set([ConfigServiceProvider, RouteServiceProvider]);
 
-    public constructor(public router: Express) {
-        super();
-    }
-
-    public async boot(): Promise<void> {
+    public async start(): Promise<void> {
+        Container.setInstance(this);
         this.bootEnv();
         await this.bootProviders();
+        this.listen();
     }
 
     private bootEnv(): void {
@@ -58,5 +59,14 @@ export default class Application extends Container {
 
             this.providers.add(providerModule.default);
         }
+    }
+
+    private listen(): void {
+        const port = Number(App.make<Config>(Config).get('app.port'));
+        const url = App.make<Config>(Config).get('app.url');
+
+        this.router.listen(port, url, () => {
+            console.log(`🚀 Server running at http://${url}:${port}`);
+        });
     }
 }
