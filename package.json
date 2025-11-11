@@ -16,7 +16,7 @@
     "type": "module",
     "main": "dist/index.js",
     "files": [
-        "dist",
+        "dist/framework",
         "LICENSE",
         "README.md"
     ],

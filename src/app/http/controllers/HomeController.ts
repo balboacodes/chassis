@@ -1,12 +1,12 @@
-import { Config, test } from '../../../index.ts';
+import { Config, inject } from '../../../framework/index.ts';
 
-@test()
+@inject
 export default class HomeController {
-    public constructor(private config: Config) {
-        console.log(this.config.get('app.name'));
-    }
+    public constructor(private config: Config) {}
 
     public index(_req: any, res: any, _next: any) {
+        console.log(this.config.get('app.name'));
+
         res.send('test');
     }
 }
