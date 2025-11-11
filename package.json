@@ -29,6 +29,7 @@
     },
     "scripts": {
         "build": "tsc",
+        "dev": "tsc --watch",
         "format": "prettier --write ."
     },
     "devDependencies": {

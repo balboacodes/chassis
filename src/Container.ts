@@ -56,7 +56,7 @@ export default class Container {
         }
 
         // Key is a class, so we'll resolve all its dependencies and return a new instance
-        const paramTypes: any[] = Reflect.getMetadata('inject', key) ?? [];
+        const paramTypes: any[] = Reflect.getMetadata('design:paramtypes', key) ?? [];
         const dependencies = paramTypes.map((dep) => this.make(dep));
 
         return new key(...dependencies);
