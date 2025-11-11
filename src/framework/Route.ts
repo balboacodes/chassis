@@ -72,6 +72,12 @@ export default class Route {
         this.handle('options', path, handler, method);
     }
 
+    public redirect(from: string, to: string, status: number = 302): void {
+        app().router.all(from, (_req: Request, res: Response) => {
+            res.redirect(status, to);
+        });
+    }
+
     private handle(
         verb: keyof Express,
         path: string,

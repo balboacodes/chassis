@@ -3,4 +3,5 @@ import { Route } from '../framework/index.ts';
 
 export default function () {
     new Route().get('/', HomeController, 'index');
+    new Route().redirect('/here', '/there');
 }

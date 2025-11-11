@@ -1,2 +1,0 @@
-- empty decorator
-- redirect route
