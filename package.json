@@ -14,11 +14,11 @@
     "license": "MIT",
     "author": "Balboa Codes",
     "type": "module",
-    "main": "./dist/index.js",
+    "main": "dist/index.js",
     "files": [
-        "./dist",
-        "./LICENSE",
-        "./README.md"
+        "dist",
+        "LICENSE",
+        "README.md"
     ],
     "exports": {
         "import": "./dist/index.js",
@@ -28,7 +28,7 @@
         "node": ">=22"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "tsc --build",
         "dev": "tsc --watch",
         "format": "prettier --write ."
     },

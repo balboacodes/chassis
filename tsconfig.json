@@ -10,14 +10,14 @@
         "module": "nodenext",
         "moduleResolution": "node16",
         "rewriteRelativeImportExtensions": true,
-        "rootDir": "./src",
+        "rootDir": "src",
         "types": ["@types/node"],
 
         // Emit
         "declaration": true,
-        "declarationDir": "./dist/types",
+        "declarationDir": "dist/types",
         "declarationMap": true,
-        "outDir": "./dist",
+        "outDir": "dist",
         "removeComments": false,
         "sourceMap": true,
 
@@ -30,5 +30,5 @@
         // Completeness
         "skipLibCheck": true
     },
-    "include": ["./src/**/*.ts"]
+    "include": ["src/**/*.ts"]
 }
