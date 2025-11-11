@@ -16,16 +16,13 @@
     "type": "module",
     "main": "./dist/index.js",
     "files": [
-        "dist",
-        "LICENSE",
-        "README.md"
+        "./dist",
+        "./LICENSE",
+        "./README.md"
     ],
-    "types": "dist/index.d.ts",
     "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        }
+        "import": "./dist/index.js",
+        "types": "./dist/types/index.d.ts"
     },
     "engines": {
         "node": ">=22"
