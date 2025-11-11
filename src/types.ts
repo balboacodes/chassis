@@ -1,4 +1,4 @@
-import Container from './Container.js';
+import Container from './Container.ts';
 
 export type Class<T = any> = {
     new (...args: any[]): T;

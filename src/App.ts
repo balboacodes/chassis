@@ -3,12 +3,12 @@ import { type Express, type NextFunction, type Request, type Response, default a
 import fs from 'fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
-import Container from './Container.js';
-import ConfigServiceProvider from './providers/ConfigServiceProvider.js';
-import RouteServiceProvider from './providers/RouteServiceProvider.js';
-import ServiceProvider from './providers/ServiceProvider.js';
-import { config } from './support/helpers.js';
-import { Class } from './types.js';
+import Container from './Container.ts';
+import ConfigServiceProvider from './providers/ConfigServiceProvider.ts';
+import RouteServiceProvider from './providers/RouteServiceProvider.ts';
+import ServiceProvider from './providers/ServiceProvider.ts';
+import { config } from './support/helpers.ts';
+import { Class } from './types.ts';
 
 export default class App extends Container {
     public router: Express = express();

@@ -1,4 +1,4 @@
-import { Class } from '../../types.js';
+import { Class } from '../../types.ts';
 
 export default function inject(dependencies: Class[] | string[]): ClassDecorator {
     return (target: Function) => {

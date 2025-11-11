@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import ServiceProvider from './ServiceProvider.js';
+import ServiceProvider from './ServiceProvider.ts';
 
 export default class RouteServiceProvider extends ServiceProvider {
     /**

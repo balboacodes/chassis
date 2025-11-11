@@ -29,7 +29,7 @@
     },
     "scripts": {
         "build": "tsc --build",
-        "dev": "tsc --watch",
+        "dev": "tsx watch public/index.ts",
         "format": "prettier --write ."
     },
     "devDependencies": {

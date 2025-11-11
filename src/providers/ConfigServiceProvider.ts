@@ -1,6 +1,6 @@
 import path from 'path';
-import Config from '../Config.js';
-import ServiceProvider from './ServiceProvider.js';
+import Config from '../Config.ts';
+import ServiceProvider from './ServiceProvider.ts';
 
 export default class ConfigServiceProvider extends ServiceProvider {
     public async register(): Promise<void> {

@@ -1,4 +1,4 @@
-import App from '../App.js';
+import App from '../App.ts';
 
 export default abstract class ServiceProvider {
     public constructor(protected app: App) {}
