@@ -73,9 +73,9 @@ export default class Route {
     }
 
     public redirect(from: string, to: string, status: number = 302): void {
-        app().router.all(from, (_req: Request, res: Response) => {
+        this.handle('all', from,(_req: Request, res: Response) => {
             res.redirect(status, to);
-        });
+        })
     }
 
     private handle(
