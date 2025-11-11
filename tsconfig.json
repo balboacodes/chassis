@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        // Type checking
+        // Type Checking
         "noImplicitAny": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
@@ -8,7 +8,7 @@
 
         // Modules
         "module": "nodenext",
-        "moduleResolution": "node16",
+        "moduleResolution": "nodenext",
         "rewriteRelativeImportExtensions": true,
         "rootDir": "src",
         "types": ["@types/node"],
@@ -21,7 +21,10 @@
         "removeComments": false,
         "sourceMap": true,
 
-        // Language and environment
+        // Interop Constraints
+        "esModuleInterop": true,
+
+        // Language and Environment
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "lib": ["es2024", "ESNext.Array", "ESNext.Collection", "ESNext.Iterator"],
@@ -29,6 +32,5 @@
 
         // Completeness
         "skipLibCheck": true
-    },
-    "include": ["src/**/*.ts"]
+    }
 }

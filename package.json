@@ -30,6 +30,7 @@
     "scripts": {
         "build": "tsc --build",
         "dev": "tsx watch public/index.ts",
+        "start": "cd dist && node public/index.js",
         "format": "prettier --write ."
     },
     "devDependencies": {

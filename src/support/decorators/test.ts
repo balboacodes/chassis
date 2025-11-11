@@ -1,3 +1,3 @@
-export default function test(target: Function): void {
-    console.log(Reflect.getMetadata('design:paramtypes', target));
+export default function test(): ClassDecorator {
+    return (_target: any) => {};
 }
