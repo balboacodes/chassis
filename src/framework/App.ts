@@ -26,10 +26,11 @@ export default class App extends Container {
 
     public async start(): Promise<void> {
         Container.setInstance(this);
-        this.bootSingletons();
         this.bootEnv();
+        this.bootSingletons();
         this.bootMiddleware();
         await this.bootProviders();
+        this.bootErrorHandlers();
         this.listen();
     }
 
@@ -47,17 +48,14 @@ export default class App extends Container {
 
     private async bootMiddleware(): Promise<void> {
         for (const middleware of this.middleware) {
-            app(Router).registerGlobalMiddleware((req: Request, res: Response, next: NextFunction) => {
-                App.inject(
-                    middleware,
-                    (paramTypes: any[]) => {
-                        const dependencies = paramTypes.map((dep) => (isClass(dep) ? this.make(dep) : undefined));
-                        new middleware(...dependencies).handle(req, res, next);
-                    },
-                    () => {
-                        new middleware().handle(req, res, next);
-                    },
-                );
+            const mw = this.make(middleware);
+
+            if (!this.bound(mw)) {
+                this.singleton(middleware, () => mw, false);
+            }
+
+            this.make(Router).registerGlobalMiddleware((req: Request, res: Response, next: NextFunction) => {
+                mw.handle(req, res, next);
             });
         }
     }
@@ -87,7 +85,7 @@ export default class App extends Container {
             const instance = new provider(this);
 
             if (instance.boot) {
-                const result = App.inject(
+                const result = Container.inject(
                     instance as any,
                     async (paramTypes: any[]) => {
                         const dependencies = paramTypes.map((dep) => (isClass(dep) ? this.make(dep) : undefined));
@@ -127,6 +125,16 @@ export default class App extends Container {
 
             this.providers.add(providerModule.default);
         }
+    }
+
+    private bootErrorHandlers(): void {
+        // this.make(Router).registerGlobalMiddleware((_req: Request, res: Response) => {
+        //     res.status(404).send("Sorry can't find that!");
+        // });
+        // this.make(Router).registerGlobalMiddleware((err: any, _req: Request, res: Response) => {
+        //     console.error(err.stack);
+        //     res.status(500).send('Something broke!');
+        // });
     }
 
     private listen(): void {

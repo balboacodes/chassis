@@ -9,6 +9,6 @@ export default class ConfigServiceProvider extends ServiceProvider {
         const configPath = path.resolve(process.cwd(), 'config');
         await config.loadConfigDir(configPath);
 
-        this.app.singleton(Config, () => config);
+        this.app.singleton(Config, () => config, false);
     }
 }

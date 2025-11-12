@@ -24,12 +24,12 @@ export default class Container {
         this.bindings.set(key, factory);
     }
 
-    public singleton<T>(key: Class | string, factory: Factory<T>): void {
+    public singleton<T>(key: Class | string, factory: Factory<T>, lazyLoad: boolean = true): void {
         this.bindings.set(key, factory);
-        this.singletons.set(key, null);
+        this.singletons.set(key, lazyLoad ? null : factory());
     }
 
-    public make<T extends Class | string>(key: T): T extends Class ? InstanceType<T> : any {
+    public make<T extends Class | string>(key: T, method?: string): T extends Class ? InstanceType<T> : any {
         if (this.singletons.has(key)) {
             const instance = this.singletons.get(key);
 
@@ -41,7 +41,7 @@ export default class Container {
             return newInstance;
         }
 
-        return this.resolve(key);
+        return this.resolve(key, method);
     }
 
     public static inject(
@@ -57,17 +57,17 @@ export default class Container {
                 : Reflect.getMetadata('design:paramtypes', target)
         ) ?? [];
 
-        if (paramTypes.length === 0) {
-            return noParams();
+        if (paramTypes.length > 0) {
+            return whenParams(paramTypes);
         }
 
-        return whenParams(paramTypes);
+        return noParams();
     }
 
     /**
      * @throws {Error} If key is a string and it hasn't been bound to the container.
      */
-    private resolve(key: Class | string): any {
+    private resolve(key: Class | string, method?: string): any {
         if (this.bindings.has(key)) {
             return this.bindings.get(key)!(this);
         }
@@ -84,6 +84,7 @@ export default class Container {
                 return new key(...dependencies);
             },
             () => new key(),
+            method,
         );
     }
 }

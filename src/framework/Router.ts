@@ -2,7 +2,7 @@ import { Arr } from '@balboacodes/laravel-helpers';
 import { type Express, type NextFunction, type Request, type Response, default as express } from 'express';
 import Container from './Container.ts';
 import { app, isClass } from './support/helpers.ts';
-import { Class, RouteHandler } from './types.ts';
+import { Class, ErrorHandler, RouteHandler } from './types.ts';
 
 export default class Router {
     public router: Express = express();
@@ -25,7 +25,6 @@ export default class Router {
 
     public name(name: string): this {
         this.routeName = name;
-
         return this;
     }
 
@@ -63,7 +62,7 @@ export default class Router {
         });
     }
 
-    public registerGlobalMiddleware(handler: RouteHandler) {
+    public registerGlobalMiddleware(handler: RouteHandler | ErrorHandler) {
         this.router.use(handler);
     }
 
@@ -94,11 +93,12 @@ export default class Router {
         if (method === undefined) {
             this.router[verb](path, [...middleware, handler]);
             this.routeMiddleware.clear();
+
             return;
         }
 
         const controller = app(handler as Class) as Class;
-        app().singleton(controller, () => controller);
+        app().singleton(controller, () => controller, false);
 
         this.router[verb](path, [
             ...middleware,
@@ -106,11 +106,11 @@ export default class Router {
                 Container.inject(
                     controller,
                     (paramTypes: any[]) => {
-                        const dependencies = paramTypes.filter((dep) => isClass(dep)).map((dep) => app().make(dep));
-                        controller[method!](req, res, ...dependencies);
+                        const dependencies = paramTypes.map((dep) => (isClass(dep) ? app(dep) : undefined));
+                        controller[method](req, res, ...dependencies);
                     },
                     () => {
-                        controller[method!](req, res);
+                        controller[method](req, res);
                     },
                     method,
                 );

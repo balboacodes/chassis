@@ -6,8 +6,10 @@ export type Class<T = any> = {
     [key: string]: any;
 };
 
-export type Factory<T = any> = (container: Container) => T;
+export type Factory<T = any> = (container?: Container) => T;
 
 export type RouteDefinition = (path: string, handler: Class | RouteHandler, method?: string) => void;
 
 export type RouteHandler = (req: Request, res: Response, next: NextFunction) => any;
+
+export type ErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => any;
