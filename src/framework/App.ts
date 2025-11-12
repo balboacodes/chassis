@@ -48,7 +48,16 @@ export default class App extends Container {
     private async bootMiddleware(): Promise<void> {
         for (const middleware of this.middleware) {
             app(Router).registerGlobalMiddleware((req: Request, res: Response, next: NextFunction) => {
-                new middleware().handle(req, res, next);
+                App.inject(
+                    middleware,
+                    (paramTypes: any[]) => {
+                        const dependencies = paramTypes.map((dep) => (isClass(dep) ? this.make(dep) : undefined));
+                        new middleware(...dependencies).handle(req, res, next);
+                    },
+                    () => {
+                        new middleware().handle(req, res, next);
+                    },
+                );
             });
         }
     }
