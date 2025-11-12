@@ -29,7 +29,8 @@
     },
     "scripts": {
         "build": "tsc --build",
-        "dev": "cd src && tsx watch public/index.ts",
+        "dev-ts": "tsc --watch",
+        "dev-node": "cd dist && node --watch public/index.js",
         "start": "cd dist && node public/index.js",
         "format": "prettier --write ."
     },

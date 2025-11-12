@@ -1,5 +1,5 @@
 import { Arr } from '@balboacodes/laravel-helpers';
-import { type Express, type NextFunction, type Request, type Response, default as express } from 'express';
+import { type NextFunction, type Request, type Response } from 'express';
 import fs from 'fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
@@ -7,12 +7,11 @@ import Container from './Container.ts';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.ts';
 import RouteServiceProvider from './providers/RouteServiceProvider.ts';
 import ServiceProvider from './providers/ServiceProvider.ts';
-import { config } from './support/helpers.ts';
+import Router from './routing/Router.ts';
+import { app, config } from './support/helpers.ts';
 import { Class } from './types.ts';
 
 export default class App extends Container {
-    public router: Express = express();
-
     private middleware: Set<Class> = new Set([]);
 
     private providers: Set<Class<ServiceProvider>> = new Set([ConfigServiceProvider, RouteServiceProvider]);
@@ -27,6 +26,7 @@ export default class App extends Container {
 
     public async start(): Promise<void> {
         Container.setInstance(this);
+        this.singleton(Router, () => new Router());
         this.bootEnv();
         this.bootMiddleware();
         await this.bootProviders();
@@ -43,7 +43,7 @@ export default class App extends Container {
 
     private async bootMiddleware(): Promise<void> {
         for (const middleware of this.middleware) {
-            this.router.use((req: Request, res: Response, next: NextFunction) => {
+            (app(Router) as Router).router.use((req: Request, res: Response, next: NextFunction) => {
                 new middleware().handle(req, res, next);
             });
         }
@@ -86,7 +86,7 @@ export default class App extends Container {
         const port = Number(config('app.port'));
         const url = config('app.url');
 
-        this.router.listen(port, url, () => {
+        (app(Router) as Router).router.listen(port, url, () => {
             console.log(`🚀 Server running at http://${url}:${port}`);
         });
     }
