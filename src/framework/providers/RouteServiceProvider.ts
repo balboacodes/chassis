@@ -6,6 +6,7 @@ export default class RouteServiceProvider extends ServiceProvider {
     /**
      * @throws {Error} If routes file does not contain a default export.
      */
+
     public async boot(): Promise<void> {
         const routesDir = path.resolve(process.cwd(), 'routes');
 

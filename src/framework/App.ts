@@ -56,11 +56,33 @@ export default class App extends Container {
     private async bootProviders(): Promise<void> {
         await this.loadProviders();
 
-        for (let provider of this.providers) {
-            const p = new provider(this);
+        for (const provider of this.providers) {
+            const instance = new provider(this);
 
-            if (p.register) await p.register();
-            if (p.boot) await p.boot();
+            if (instance.bindings) {
+                for (const binding of instance.bindings) {
+                    this.bind(binding, () => new binding());
+                }
+            }
+
+            if (instance.singletons) {
+                for (const singleton of instance.singletons) {
+                    this.singleton(singleton, () => new singleton());
+                }
+            }
+
+            if (instance.register) await instance.register();
+        }
+
+        for (const provider of this.providers) {
+            const instance = new provider(this);
+
+            if (instance.boot) {
+                const paramTypes: any[] = Reflect.getMetadata('design:paramtypes', instance, 'boot') ?? [];
+                const dependencies = paramTypes.map((dep) => this.make(dep));
+
+                await instance.boot(...dependencies);
+            }
         }
     }
 
