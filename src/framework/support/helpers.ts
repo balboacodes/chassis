@@ -3,12 +3,12 @@ import Config from '../Config.ts';
 import Container from '../Container.ts';
 import { Class } from '../types.ts';
 
-export function app<T extends Class | string | undefined = undefined>(abstract?: T): T extends undefined ? App : any {
-    if (abstract === undefined) {
+export function app<T extends Class | string | undefined = undefined>(binding?: T): T extends undefined ? App : any {
+    if (binding === undefined) {
         return Container.getInstance() as any;
     }
 
-    return Container.getInstance().make(abstract);
+    return Container.getInstance().make(binding);
 }
 
 /**

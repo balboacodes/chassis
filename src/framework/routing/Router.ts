@@ -12,10 +12,6 @@ export default class Router {
         this.handle('get', path, handler, method);
     }
 
-    public any(path: string, handler: Class | RouteHandler, method?: string): void {
-        this.handle('all', path, handler, method);
-    }
-
     public post(path: string, handler: Class | RouteHandler, method?: string): void {
         void this.handle('post', path, handler, method);
     }
@@ -36,8 +32,12 @@ export default class Router {
         this.handle('options', path, handler, method);
     }
 
+    public any(path: string, handler: Class | RouteHandler, method?: string): void {
+        this.handle('all', path, handler, method);
+    }
+
     public redirect(from: string, to: string, status: number = 302): void {
-        this.handle('all', from, (_req: Request, res: Response) => {
+        this.handle('all', from, (_req: Request, res: Response): void => {
             res.redirect(status, to);
         });
     }
