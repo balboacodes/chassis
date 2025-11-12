@@ -1,4 +1,4 @@
-import Router from '../../routing/Router.ts';
+import Router from '../../Router.ts';
 import { Class, RouteDefinition } from '../../types.ts';
 import Facade from './Facade.ts';
 

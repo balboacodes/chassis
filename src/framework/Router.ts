@@ -1,7 +1,8 @@
 import { Arr } from '@balboacodes/laravel-helpers';
 import { type Express, type NextFunction, type Request, type Response, default as express } from 'express';
-import { app } from '../support/helpers.ts';
-import { Class, RouteHandler } from '../types.ts';
+import Container from './Container.ts';
+import { app, isClass } from './support/helpers.ts';
+import { Class, RouteHandler } from './types.ts';
 
 export default class Router {
     public router: Express = express();
@@ -101,8 +102,18 @@ export default class Router {
 
         this.router[verb](path, [
             ...middleware,
-            (req: Request, res: Response, next: NextFunction) => {
-                controller[method!](req, res, next);
+            (req: Request, res: Response) => {
+                Container.inject(
+                    controller,
+                    (paramTypes: any[]) => {
+                        const dependencies = paramTypes.filter((dep) => isClass(dep)).map((dep) => app().make(dep));
+                        controller[method!](req, res, ...dependencies);
+                    },
+                    () => {
+                        controller[method!](req, res);
+                    },
+                    method,
+                );
             },
         ]);
 

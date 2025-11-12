@@ -1,3 +1,4 @@
+import { isClass } from './support/helpers.ts';
 import { Class, Factory } from './types.ts';
 
 export default class Container {
@@ -28,7 +29,7 @@ export default class Container {
         this.singletons.set(key, null);
     }
 
-    public make<T>(key: Class | string): T {
+    public make<T extends Class | string>(key: T): T extends Class ? InstanceType<T> : any {
         if (this.singletons.has(key)) {
             const instance = this.singletons.get(key);
 
@@ -41,6 +42,26 @@ export default class Container {
         }
 
         return this.resolve(key);
+    }
+
+    public static inject(
+        target: Class,
+        whenParams: (paramTypes: any[]) => any,
+        noParams: () => any,
+        method?: string,
+    ): any {
+        // prettier-ignore
+        const paramTypes: any[] = (
+            method
+                ? Reflect.getMetadata('design:paramtypes', target, method)
+                : Reflect.getMetadata('design:paramtypes', target)
+        ) ?? [];
+
+        if (paramTypes.length === 0) {
+            return noParams();
+        }
+
+        return whenParams(paramTypes);
     }
 
     /**
@@ -56,9 +77,13 @@ export default class Container {
         }
 
         // Key is a class, so we'll resolve all its dependencies and return a new instance
-        const paramTypes: any[] = Reflect.getMetadata('design:paramtypes', key) ?? [];
-        const dependencies = paramTypes.map((dep) => this.make(dep));
-
-        return new key(...dependencies);
+        return Container.inject(
+            key,
+            (paramTypes: any[]) => {
+                const dependencies = paramTypes.map((dep) => (isClass(dep) ? this.make(dep) : undefined));
+                return new key(...dependencies);
+            },
+            () => new key(),
+        );
     }
 }

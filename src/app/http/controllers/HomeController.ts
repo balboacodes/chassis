@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { Config } from '../../../framework/index.ts';
+import { Config, inject } from '../../../framework/index.ts';
 
-// @inject
+@inject
 export default class HomeController {
     // @ts-ignore
     public constructor(private config: Config) {}
@@ -9,8 +9,9 @@ export default class HomeController {
     /**
      * Display a listing of the resource.
      */
-    public index(req: Request, res: Response) {
-        // res.send(this.config.get('app.name'));
-        res.send(req.params);
+    @inject
+    public index(_req: Request, res: Response, _config: Config) {
+        // console.log(config);
+        res.send('done');
     }
 }

@@ -1,7 +1,7 @@
 import App from '../App.ts';
 import Config from '../Config.ts';
 import Container from '../Container.ts';
-import Router from '../routing/Router.ts';
+import Router from '../Router.ts';
 import { Class } from '../types.ts';
 
 export function app<T extends Class | string | undefined = undefined>(
@@ -42,4 +42,11 @@ export function route(name: string, parameters: Record<string, number | string> 
     }
 
     return path;
+}
+
+/**
+ * Check if value is a class.
+ */
+export function isClass<T>(value: unknown): value is Class<T> {
+    return typeof value === 'function' && /^class(\s|{)/.test(value.toString());
 }

@@ -7,8 +7,8 @@ import Container from './Container.ts';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.ts';
 import RouteServiceProvider from './providers/RouteServiceProvider.ts';
 import ServiceProvider from './providers/ServiceProvider.ts';
-import Router from './routing/Router.ts';
-import { app, config } from './support/helpers.ts';
+import Router from './Router.ts';
+import { app, config, isClass } from './support/helpers.ts';
 import { Class } from './types.ts';
 
 export default class App extends Container {
@@ -78,10 +78,22 @@ export default class App extends Container {
             const instance = new provider(this);
 
             if (instance.boot) {
-                const paramTypes: any[] = Reflect.getMetadata('design:paramtypes', instance, 'boot') ?? [];
-                const dependencies = paramTypes.map((dep) => this.make(dep));
+                const result = App.inject(
+                    instance as any,
+                    async (paramTypes: any[]) => {
+                        const dependencies = paramTypes.map((dep) => (isClass(dep) ? this.make(dep) : undefined));
+                        await instance.boot!(...dependencies);
+                    },
+                    async () => {
+                        await instance.boot!();
+                        return 'continue';
+                    },
+                    'boot',
+                );
 
-                await instance.boot(...dependencies);
+                if (result === 'continue') {
+                    continue;
+                }
             }
         }
     }
