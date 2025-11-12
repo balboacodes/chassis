@@ -1,5 +1,5 @@
 import Router from '../../routing/Router.ts';
-import { RouteDefinition } from '../../types.ts';
+import { Class, RouteDefinition } from '../../types.ts';
 import Facade from './Facade.ts';
 
 class Route {
@@ -11,6 +11,8 @@ class Route {
     public static options: RouteDefinition;
     public static any: RouteDefinition;
     public static redirect(_from: string, _to: string, _status: number = 302): void {}
+    // @ts-expect-error
+    public static middleware(middleware: Class | Class[]): Router {}
 }
 
 export default Facade.createProxy(Route, Router);

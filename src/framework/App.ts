@@ -43,7 +43,7 @@ export default class App extends Container {
 
     private async bootMiddleware(): Promise<void> {
         for (const middleware of this.middleware) {
-            (app(Router) as Router).router.use((req: Request, res: Response, next: NextFunction) => {
+            (app(Router) as Router).registerGlobalMiddleware((req: Request, res: Response, next: NextFunction) => {
                 new middleware().handle(req, res, next);
             });
         }
@@ -86,8 +86,6 @@ export default class App extends Container {
         const port = Number(config('app.port'));
         const url = config('app.url');
 
-        (app(Router) as Router).router.listen(port, url, () => {
-            console.log(`🚀 Server running at http://${url}:${port}`);
-        });
+        (app(Router) as Router).listen(port, url);
     }
 }

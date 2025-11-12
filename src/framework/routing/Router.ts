@@ -3,44 +3,13 @@ import { type Express, type NextFunction, type Request, type Response, default a
 import { app } from '../support/helpers.ts';
 import { Class, RouteHandler } from '../types.ts';
 
+/**
+ * Bound
+ */
 export default class Router {
     public router: Express = express();
 
     private routeMiddleware: Set<Class> = new Set();
-
-    public get(path: string, handler: Class | RouteHandler, method?: string): void {
-        this.handle('get', path, handler, method);
-    }
-
-    public post(path: string, handler: Class | RouteHandler, method?: string): void {
-        void this.handle('post', path, handler, method);
-    }
-
-    public put(path: string, handler: Class | RouteHandler, method?: string): void {
-        this.handle('put', path, handler, method);
-    }
-
-    public patch(path: string, handler: Class | RouteHandler, method?: string): void {
-        this.handle('patch', path, handler, method);
-    }
-
-    public delete(path: string, handler: Class | RouteHandler, method?: string): void {
-        this.handle('delete', path, handler, method);
-    }
-
-    public options(path: string, handler: Class | RouteHandler, method?: string): void {
-        this.handle('options', path, handler, method);
-    }
-
-    public any(path: string, handler: Class | RouteHandler, method?: string): void {
-        this.handle('all', path, handler, method);
-    }
-
-    public redirect(from: string, to: string, status: number = 302): void {
-        this.handle('all', from, (_req: Request, res: Response): void => {
-            res.redirect(status, to);
-        });
-    }
 
     public middleware(middleware: Class | Class[]): this {
         middleware = Arr.wrap(middleware);
@@ -52,7 +21,56 @@ export default class Router {
         return this;
     }
 
-    private handle(verb: keyof Express, path: string, handler: Class | RouteHandler, method?: string): void {
+    public get(path: string, handler: Class | RouteHandler, method?: string): void {
+        this.register('get', path, handler, method);
+    }
+
+    public post(path: string, handler: Class | RouteHandler, method?: string): void {
+        this.register('post', path, handler, method);
+    }
+
+    public put(path: string, handler: Class | RouteHandler, method?: string): void {
+        this.register('put', path, handler, method);
+    }
+
+    public patch(path: string, handler: Class | RouteHandler, method?: string): void {
+        this.register('patch', path, handler, method);
+    }
+
+    public delete(path: string, handler: Class | RouteHandler, method?: string): void {
+        this.register('delete', path, handler, method);
+    }
+
+    public options(path: string, handler: Class | RouteHandler, method?: string): void {
+        this.register('options', path, handler, method);
+    }
+
+    public any(path: string, handler: Class | RouteHandler, method?: string): void {
+        this.register('all', path, handler, method);
+    }
+
+    public redirect(from: string, to: string, status: number = 302): void {
+        this.register('all', from, (_req: Request, res: Response): void => {
+            res.redirect(status, to);
+        });
+    }
+
+    public registerGlobalMiddleware(handler: RouteHandler) {
+        this.router.use(handler);
+    }
+
+    public listen(port: number, hostname: string, callback?: (error?: Error) => void): void {
+        this.router.listen(
+            port,
+            hostname,
+            callback ??
+                (() => {
+                    console.log(`🚀 Server running at http://${hostname}:${port}`);
+                }),
+        );
+    }
+
+    private register(verb: keyof Express, path: string, handler: Class | RouteHandler, method?: string) {
         const middleware = this.routeMiddleware
             .values()
             .toArray()
@@ -71,8 +89,10 @@ export default class Router {
         this.router[verb](path, [
             ...middleware,
             (req: Request, res: Response, next: NextFunction) => {
-                controller[method](req, res, next);
+                controller[method!](req, res, next);
             },
         ]);
+
+        this.routeMiddleware.clear();
     }
 }
