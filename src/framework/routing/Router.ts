@@ -3,11 +3,12 @@ import { type Express, type NextFunction, type Request, type Response, default a
 import { app } from '../support/helpers.ts';
 import { Class, RouteHandler } from '../types.ts';
 
-/**
- * Bound
- */
 export default class Router {
     public router: Express = express();
+
+    public routeNames: Map<string, string> = new Map();
+
+    private routeName?: string;
 
     private routeMiddleware: Set<Class> = new Set();
 
@@ -17,6 +18,12 @@ export default class Router {
         for (const mw of middleware) {
             this.routeMiddleware.add(mw);
         }
+
+        return this;
+    }
+
+    public name(name: string): this {
+        this.routeName = name;
 
         return this;
     }
@@ -71,6 +78,11 @@ export default class Router {
     }
 
     private register(verb: keyof Express, path: string, handler: Class | RouteHandler, method?: string) {
+        if (this.routeName !== undefined) {
+            this.routeNames.set(this.routeName, path);
+            this.routeName = undefined;
+        }
+
         const middleware = this.routeMiddleware
             .values()
             .toArray()
@@ -80,6 +92,7 @@ export default class Router {
 
         if (method === undefined) {
             this.router[verb](path, [...middleware, handler]);
+            this.routeMiddleware.clear();
             return;
         }
 

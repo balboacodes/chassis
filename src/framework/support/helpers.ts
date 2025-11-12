@@ -1,9 +1,12 @@
 import App from '../App.ts';
 import Config from '../Config.ts';
 import Container from '../Container.ts';
+import Router from '../routing/Router.ts';
 import { Class } from '../types.ts';
 
-export function app<T extends Class | string | undefined = undefined>(binding?: T): T extends undefined ? App : any {
+export function app<T extends Class | string | undefined = undefined>(
+    binding?: T,
+): T extends Class ? InstanceType<T> : T extends string ? any : App {
     if (binding === undefined) {
         return Container.getInstance() as any;
     }
@@ -17,8 +20,8 @@ export function app<T extends Class | string | undefined = undefined>(binding?: 
 export function config<T extends string | Record<string, any> | undefined = undefined>(
     key?: T,
     defaultValue?: any,
-): T extends undefined ? Config : T extends string ? any : void {
-    const repository = app(Config) as Config;
+): T extends string ? any : T extends Record<string, any> ? void : Config {
+    const repository = app(Config);
 
     if (key === undefined) {
         return repository as any;
@@ -29,4 +32,14 @@ export function config<T extends string | Record<string, any> | undefined = unde
     }
 
     return repository.set(key) as any;
+}
+
+export function route(name: string, parameters: Record<string, number | string> = {}): string | undefined {
+    let path = app(Router).routeNames.get(name);
+
+    for (const [key, value] of Object.entries(parameters)) {
+        path = path?.replace(`:${key}`, String(value));
+    }
+
+    return path;
 }
