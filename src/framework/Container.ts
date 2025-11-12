@@ -3,9 +3,9 @@ import { Class, Factory } from './types.ts';
 export default class Container {
     private static instance: Container;
 
-    private bindings = new Map<Class | string, Factory>();
-
     private singletons = new Map<Class | string, any>();
+
+    private bindings = new Map<Class | string, Factory>();
 
     public static getInstance(): Container {
         return Container.instance;

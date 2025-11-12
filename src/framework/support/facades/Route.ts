@@ -15,4 +15,4 @@ class Route {
     public static middleware(middleware: Class | Class[]): Router {}
 }
 
-export default Facade.createProxy(Route, Router);
+export default Facade.proxy(Route, Router);

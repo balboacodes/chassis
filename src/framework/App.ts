@@ -26,7 +26,7 @@ export default class App extends Container {
 
     public async start(): Promise<void> {
         Container.setInstance(this);
-        this.singleton(Router, () => new Router());
+        this.bootSingletons();
         this.bootEnv();
         this.bootMiddleware();
         await this.bootProviders();
@@ -39,6 +39,10 @@ export default class App extends Container {
         if (!process.env.APP_NAME) {
             throw new Error('❗️ .env not loaded');
         }
+    }
+
+    private bootSingletons(): void {
+        this.bind(Router, () => new Router());
     }
 
     private async bootMiddleware(): Promise<void> {
