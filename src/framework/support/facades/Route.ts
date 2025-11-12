@@ -1,10 +1,9 @@
 import Router from '../../routing/Router.ts';
-import { app } from '../helpers.ts';
+import { Class, RouteHandler } from '../../types.ts';
+import Facade from './Facade.ts';
 
-class Route {}
+class Route {
+    public static get(_path: string, _handler: Class | RouteHandler, _method?: string): void {}
+}
 
-export default new Proxy(Route, {
-    get(_target, property) {
-        return (...args: any[]) => app(Router)[property](...args);
-    },
-});
+export default Facade.createProxy(Route, Router);

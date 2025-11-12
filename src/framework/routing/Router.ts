@@ -8,18 +8,8 @@ export default class Router {
 
     private routeMiddleware: Set<Class> = new Set();
 
-    public get(path: string, handler: Class | RouteHandler, method?: string) {
+    public get(path: string, handler: Class | RouteHandler, method?: string): void {
         this.handle('get', path, handler, method);
-    }
-
-    public middleware(middleware: Class | Class[]): this {
-        middleware = Arr.wrap(middleware);
-
-        for (const mw of middleware) {
-            this.routeMiddleware.add(mw);
-        }
-
-        return this;
     }
 
     public any(path: string, handler: Class | RouteHandler, method?: string): void {
@@ -50,6 +40,16 @@ export default class Router {
         this.handle('all', from, (_req: Request, res: Response) => {
             res.redirect(status, to);
         });
+    }
+
+    public middleware(middleware: Class | Class[]): this {
+        middleware = Arr.wrap(middleware);
+
+        for (const mw of middleware) {
+            this.routeMiddleware.add(mw);
+        }
+
+        return this;
     }
 
     private handle(verb: keyof Express, path: string, handler: Class | RouteHandler, method?: string): void {

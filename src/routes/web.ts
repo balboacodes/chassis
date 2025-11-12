@@ -3,6 +3,5 @@ import { Route } from '../framework/index.ts';
 
 export default function () {
     // new Route().redirect('/here', '/there');
-    // @ts-expect-error
     Route.get('/:id', HomeController, 'index');
 }
