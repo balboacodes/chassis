@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import Config from '../Config.ts';
 import ServiceProvider from './ServiceProvider.ts';
 

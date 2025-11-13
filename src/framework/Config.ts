@@ -1,6 +1,6 @@
 import { Arr } from '@balboacodes/laravel-helpers';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export default class Config {
     private items: Record<string, Record<string, any>> = {};

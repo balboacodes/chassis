@@ -1,6 +1,6 @@
 import { Arr } from '@balboacodes/laravel-helpers';
 import { type NextFunction, type Request, type Response } from 'express';
-import fs from 'fs';
+import fs from 'node:fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
 import Container from './Container.ts';
