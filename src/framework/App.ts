@@ -8,7 +8,7 @@ import ConfigServiceProvider from './providers/ConfigServiceProvider.ts';
 import RouteServiceProvider from './providers/RouteServiceProvider.ts';
 import ServiceProvider from './providers/ServiceProvider.ts';
 import Router from './Router.ts';
-import { app, config, isClass } from './support/helpers.ts';
+import { config, isClass } from './support/helpers.ts';
 import { Class } from './types.ts';
 
 export default class App extends Container {
@@ -46,7 +46,7 @@ export default class App extends Container {
         this.singleton(Router, () => new Router());
     }
 
-    private async bootMiddleware(): Promise<void> {
+    private bootMiddleware(): void {
         for (const middleware of this.middleware) {
             const mw = this.make(middleware);
 
@@ -54,8 +54,8 @@ export default class App extends Container {
                 this.singleton(middleware, () => mw, false);
             }
 
-            this.make(Router).registerGlobalMiddleware((req: Request, res: Response, next: NextFunction) => {
-                mw.handle(req, res, next);
+            this.make(Router).registerGlobalMiddleware(async (req: Request, res: Response, next: NextFunction) => {
+                await mw.handle(req, res, next);
             });
         }
     }
@@ -85,7 +85,7 @@ export default class App extends Container {
             const instance = new provider(this);
 
             if (instance.boot) {
-                const result = Container.inject(
+                const result = await Container.inject(
                     instance as any,
                     async (paramTypes: any[]) => {
                         const dependencies = paramTypes.map((dep) => (isClass(dep) ? this.make(dep) : undefined));
@@ -128,19 +128,20 @@ export default class App extends Container {
     }
 
     private bootErrorHandlers(): void {
-        // this.make(Router).registerGlobalMiddleware((_req: Request, res: Response) => {
-        //     res.status(404).send("Sorry can't find that!");
-        // });
-        // this.make(Router).registerGlobalMiddleware((err: any, _req: Request, res: Response) => {
-        //     console.error(err.stack);
-        //     res.status(500).send('Something broke!');
-        // });
+        this.make(Router).registerGlobalMiddleware((_req: Request, res: Response) => {
+            res.status(404).send("Sorry can't find that!");
+        });
+
+        this.make(Router).registerGlobalMiddleware((err: any, _req: Request, res: Response) => {
+            console.error(err.stack);
+            res.status(500).send('Something broke!');
+        });
     }
 
     private listen(): void {
         const port = Number(config('app.port'));
         const url = config('app.url');
 
-        app(Router).listen(port, url);
+        this.make(Router).listen(port, url);
     }
 }
