@@ -114,7 +114,7 @@ export default class Router {
         return this.routeMiddleware
             .values()
             .toArray()
-            .map((mw: Class) => (req: Request, res: Response, next: NextFunction) => {
+            .map((mw) => (req: Request, res: Response, next: NextFunction): void => {
                 new mw().handle(req, res, next);
             });
     }

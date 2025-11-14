@@ -5,7 +5,7 @@ export default class HomeController {
     /**
      * Display a listing of the resource.
      */
-    public index(_req: Request, res: Response) {
-        res.send(route('test', { id: 'sdsd' }));
+    public index(_req: Request, res: Response): Response {
+        return res.send(route('test', { id: 'sdsd' }));
     }
 }
