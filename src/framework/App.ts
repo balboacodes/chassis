@@ -27,6 +27,7 @@ export default class App extends Container {
     public async start(): Promise<void> {
         Container.setInstance(this);
         this.bootEnv();
+        this.bootAppSettings();
         this.bootSingletons();
         this.bootMiddleware();
         await this.bootProviders();
@@ -40,6 +41,11 @@ export default class App extends Container {
         if (!process.env.APP_NAME) {
             throw new Error('❗️ .env not loaded');
         }
+    }
+
+    private bootAppSettings(): void {
+        this.make(Router).router.set('x-powered-by', false);
+        this.make(Router).router.set('views', './resources/views');
     }
 
     private bootSingletons(): void {

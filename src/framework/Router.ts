@@ -1,5 +1,6 @@
 import { Arr } from '@balboacodes/laravel-helpers';
 import { type Express, type NextFunction, type Request, type Response, default as express } from 'express';
+import { default as nodePath } from 'node:path';
 import Container from './Container.ts';
 import { app, isClass } from './support/helpers.ts';
 import { Class, ErrorHandler, RouteHandler } from './types.ts';
@@ -62,6 +63,17 @@ export default class Router {
         });
     }
 
+    public view(path: string, view: string, _data?: Record<string, any>): void {
+        this.register('get', path, (_req: Request, res: Response): void => {
+            res.sendFile(nodePath.join(process.cwd(), `../src/resources/views/${view}.html`));
+
+            // Prod
+            // res.sendFile(nodePath.join(process.cwd(), `/resources/views/${view}.html`));
+            // or
+            // res.render(view, data));
+        });
+    }
+
     public registerGlobalMiddleware(handler: RouteHandler | ErrorHandler) {
         this.router.use(handler);
     }
@@ -71,24 +83,48 @@ export default class Router {
             port,
             hostname,
             callback ??
-                (() => {
+                ((error?: Error) => {
+                    if (error) {
+                        throw error;
+                    }
+
                     console.log(`🚀 Server running at http://${hostname}:${port}`);
                 }),
         );
     }
 
-    private register(verb: keyof Express, path: string, handler: Class | RouteHandler, method?: string) {
+    private transformPath(path: string): string {
+        if (path.includes('?}')) {
+            // {foo?} -> {:foo}
+            return path.replaceAll('{', '{:').replaceAll('?}', '}');
+        }
+
+        // {foo} -> :foo
+        return path.replaceAll('{', ':').replaceAll('}', '');
+    }
+
+    private setRouteNames(path: string): void {
         if (this.routeName !== undefined) {
             this.routeNames.set(this.routeName, path);
             this.routeName = undefined;
         }
+    }
 
-        const middleware = this.routeMiddleware
+    private getMiddlewareHandlers(): RouteHandler[] {
+        return this.routeMiddleware
             .values()
             .toArray()
             .map((mw: Class) => (req: Request, res: Response, next: NextFunction) => {
                 new mw().handle(req, res, next);
             });
+    }
+
+    private register(verb: keyof Express, path: string, handler: Class | RouteHandler, method?: string) {
+        path = this.transformPath(path);
+
+        this.setRouteNames(path);
+
+        const middleware = this.getMiddlewareHandlers();
 
         if (method === undefined) {
             this.router[verb](path, [...middleware, handler]);

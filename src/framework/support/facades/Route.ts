@@ -19,6 +19,8 @@ class Route {
     public static middleware(middleware: Class | Class[]): Router {}
     // @ts-expect-error
     public static name(name: string): Router {}
+    // @ts-expect-error
+    public static view(path: string, view: string, data?: Record<string, any>): void {}
 }
 
 export default Facade.proxy(Route, Router);
