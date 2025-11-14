@@ -14,6 +14,14 @@ export default class Router {
 
     private routeMiddleware: Set<Class> = new Set();
 
+    private groupPrefix?: string;
+
+    private groupRouteName?: string;
+
+    private groupController?: Class;
+
+    private isGroup = false;
+
     public middleware(middleware: Class | Class[]): this {
         middleware = Arr.wrap(middleware);
 
@@ -24,12 +32,34 @@ export default class Router {
         return this;
     }
 
+    public prefix(prefix: string): this {
+        this.groupPrefix = `/${prefix}`;
+        return this;
+    }
+
     public name(name: string): this {
         this.routeName = name;
         return this;
     }
 
-    public get(path: string, handler: Class | RouteHandler, method?: string): void {
+    public controller(name: Class): this {
+        this.groupController = name;
+        return this;
+    }
+
+    public group(routes: () => void): void {
+        this.isGroup = true;
+        this.groupRouteName = this.routeName;
+        this.routeName = undefined;
+        routes();
+        this.isGroup = false;
+        this.routeMiddleware.clear();
+        this.groupPrefix = undefined;
+        this.groupRouteName = undefined;
+        this.groupController = undefined;
+    }
+
+    public get(path: string, handler: Class | RouteHandler | string, method?: string): void {
         this.register('get', path, handler, method);
     }
 
@@ -109,8 +139,11 @@ export default class Router {
     }
 
     private setRouteNames(path: string): void {
-        if (this.routeName !== undefined) {
-            this.routeNames.set(this.routeName, path);
+        if (this.routeName) {
+            this.routeNames.set((this.groupRouteName ?? '') + this.routeName, path);
+        }
+
+        if (!this.isGroup) {
             this.routeName = undefined;
         }
     }
@@ -124,22 +157,34 @@ export default class Router {
             });
     }
 
-    private register(verb: keyof Express, path: string, handler: Class | RouteHandler, method?: string) {
-        path = this.convertPath(path);
+    private register(verb: keyof Express, path: string, handler: Class | RouteHandler | string, method?: string) {
+        path = (this.groupPrefix ?? '') + this.convertPath(path);
 
         this.setRouteNames(path);
+        console.log(this.routeNames);
 
         const middleware = this.getMiddlewareHandlers();
 
+        if (this.groupController) {
+            method = handler as string;
+            handler = this.groupController;
+        }
+
         if (method === undefined) {
             this.router[verb](path, [...middleware, handler]);
-            this.routeMiddleware.clear();
+
+            if (!this.isGroup) {
+                this.routeMiddleware.clear();
+            }
 
             return;
         }
 
         const controller = app(handler as Class) as Class;
-        app().singleton(controller, () => controller, false);
+
+        if (!app().bound(controller)) {
+            app().singleton(controller, () => controller, false);
+        }
 
         this.router[verb](path, [
             ...middleware,
@@ -158,6 +203,8 @@ export default class Router {
             },
         ]);
 
-        this.routeMiddleware.clear();
+        if (!this.isGroup) {
+            this.routeMiddleware.clear();
+        }
     }
 }

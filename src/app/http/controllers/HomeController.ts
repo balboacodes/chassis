@@ -8,4 +8,11 @@ export default class HomeController {
     public index(req: Request, res: Response): Response {
         return res.send(route('home.index', req.params));
     }
+
+    /**
+     * Show the resource.
+     */
+    public show(_req: Request, res: Response): Response {
+        return res.send('show');
+    }
 }
