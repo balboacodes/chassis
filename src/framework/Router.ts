@@ -93,14 +93,19 @@ export default class Router {
         );
     }
 
-    private transformPath(path: string): string {
-        if (path.includes('?}')) {
-            // {foo?} -> {:foo}
-            return path.replaceAll('{', '{:').replaceAll('?}', '}');
-        }
-
-        // {foo} -> :foo
-        return path.replaceAll('{', ':').replaceAll('}', '');
+    /**
+     * Convert Laravel-style route definitions to Express-style.
+     *
+     * Example: {foo}/{bar?}/{baz?} -> :foo{/:bar}{/:baz}
+     */
+    private convertPath(path: string): string {
+        return (
+            path
+                // normal param {foo} -> :foo
+                .replaceAll(/{\w+}/g, (match) => `:${match.replace('{', '').replace('}', '')}`)
+                // optional param /{foo?} -> {/:foo}
+                .replaceAll(/\/{\w+\?}/g, (match) => match.replace('/{', '{/:').replace('?', ''))
+        );
     }
 
     private setRouteNames(path: string): void {
@@ -120,7 +125,7 @@ export default class Router {
     }
 
     private register(verb: keyof Express, path: string, handler: Class | RouteHandler, method?: string) {
-        path = this.transformPath(path);
+        path = this.convertPath(path);
 
         this.setRouteNames(path);
 

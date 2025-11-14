@@ -38,10 +38,13 @@ export function route(name: string, parameters: Record<string, number | string> 
     let path = app(Router).routeNames.get(name);
 
     for (const [key, value] of Object.entries(parameters)) {
+        // Insert parameters :foo -> foo
         path = path?.replace(`:${key}`, String(value));
     }
 
-    return path;
+    return path
+        ?.replaceAll(/{(\/\w+)}/g, '$1') // Optional parameters {/foo} -> foo
+        .replaceAll(/{\/:\w+}/g, ''); // Remove optional parameters not used {/:foo} -> ''
 }
 
 /**
