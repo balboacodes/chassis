@@ -51,7 +51,9 @@ export default class Router {
         this.isGroup = true;
         this.groupRouteName = this.routeName;
         this.routeName = undefined;
+
         routes();
+
         this.isGroup = false;
         this.routeMiddleware.clear();
         this.groupPrefix = undefined;
@@ -129,22 +131,14 @@ export default class Router {
      * Example: {foo}/{bar?}/{baz?} -> :foo{/:bar}{/:baz}
      */
     private convertPath(path: string): string {
-        return (
-            path
-                // normal param {foo} -> :foo
-                .replaceAll(/{\w+}/g, (match) => `:${match.replace('{', '').replace('}', '')}`)
-                // optional param /{foo?} -> {/:foo}
-                .replaceAll(/\/{\w+\?}/g, (match) => match.replace('/{', '{/:').replace('?', ''))
-        );
+        return path
+            .replaceAll(/{\w+}/g, (match) => `:${match.replace('{', '').replace('}', '')}`) // {foo} -> :foo
+            .replaceAll(/\/{\w+\?}/g, (match) => match.replace('/{', '{/:').replace('?', '')); // /{foo?} -> {/:foo}
     }
 
     private setRouteNames(path: string): void {
         if (this.routeName) {
             this.routeNames.set((this.groupRouteName ?? '') + this.routeName, path);
-        }
-
-        if (!this.isGroup) {
-            this.routeName = undefined;
         }
     }
 
@@ -157,11 +151,18 @@ export default class Router {
             });
     }
 
+    private reset(): void {
+        if (!this.isGroup) {
+            this.routeMiddleware.clear();
+        }
+
+        this.routeName = undefined;
+    }
+
     private register(verb: keyof Express, path: string, handler: Class | RouteHandler | string, method?: string) {
         path = (this.groupPrefix ?? '') + this.convertPath(path);
 
         this.setRouteNames(path);
-        console.log(this.routeNames);
 
         const middleware = this.getMiddlewareHandlers();
 
@@ -172,11 +173,7 @@ export default class Router {
 
         if (method === undefined) {
             this.router[verb](path, [...middleware, handler]);
-
-            if (!this.isGroup) {
-                this.routeMiddleware.clear();
-            }
-
+            this.reset();
             return;
         }
 
@@ -203,8 +200,6 @@ export default class Router {
             },
         ]);
 
-        if (!this.isGroup) {
-            this.routeMiddleware.clear();
-        }
+        this.reset();
     }
 }
