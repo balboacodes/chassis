@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import HomeController from '../app/http/controllers/HomeController.ts';
+import UserController from '../app/http/controllers/UserController.ts';
 import LogTime from '../app/http/middleware/LogTime.ts';
 import { Route } from '../framework/index.ts';
 
@@ -16,6 +17,8 @@ export default function () {
         .controller(HomeController)
         .group(() => {
             Route.name('index').get('', 'index');
-            Route.name('show').get('/{foo?}', 'show');
+            Route.name('foo').get('/{foo?}', 'foo');
         });
+
+    Route.resource('users', UserController);
 }

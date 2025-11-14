@@ -27,6 +27,8 @@ class Route {
     public static prefix(prefix: string): Router {}
     // @ts-expect-error
     public static group(routes: () => void): void {}
+    // @ts-expect-error
+    public static resource(resource: string, controller: Class): void {}
 }
 
 export default Facade.proxy(Route, Router);

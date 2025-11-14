@@ -14,13 +14,17 @@ export default class Router {
 
     private routeMiddleware: Set<Class> = new Set();
 
+    private isGroup = false;
+
     private groupPrefix?: string;
 
     private groupRouteName?: string;
 
     private groupController?: Class;
 
-    private isGroup = false;
+    public registerGlobalMiddleware(handler: RouteHandler | ErrorHandler) {
+        this.router.use(handler);
+    }
 
     public middleware(middleware: Class | Class[]): this {
         middleware = Arr.wrap(middleware);
@@ -54,11 +58,7 @@ export default class Router {
 
         routes();
 
-        this.isGroup = false;
-        this.routeMiddleware.clear();
-        this.groupPrefix = undefined;
-        this.groupRouteName = undefined;
-        this.groupController = undefined;
+        this.resetGroup();
     }
 
     public get(path: string, handler: Class | RouteHandler | string, method?: string): void {
@@ -106,8 +106,20 @@ export default class Router {
         });
     }
 
-    public registerGlobalMiddleware(handler: RouteHandler | ErrorHandler) {
-        this.router.use(handler);
+    public resource(resource: string, controller: Class): void {
+        this.prefix(resource)
+            .name(`${resource}.`)
+            .controller(controller)
+            .group(() => {
+                this.name('index').get('', controller, 'index');
+                this.name('create').get('/create', controller, 'create');
+                this.name('store').post('', controller, 'store');
+                this.name('show').get('/{resource}', controller, 'show');
+                this.name('edit').get('/{resource}/edit', controller, 'edit');
+                this.name('update.put').put('/{resource}', controller, 'update');
+                this.name('update.patch').patch('/{resource}', controller, 'update');
+                this.name('destroy').delete('/{resource}', controller, 'destroy');
+            });
     }
 
     public listen(port: number, hostname: string, callback?: (error?: Error) => void): void {
@@ -125,44 +137,10 @@ export default class Router {
         );
     }
 
-    /**
-     * Convert Laravel-style route definitions to Express-style.
-     *
-     * Example: {foo}/{bar?}/{baz?} -> :foo{/:bar}{/:baz}
-     */
-    private convertPath(path: string): string {
-        return path
-            .replaceAll(/{\w+}/g, (match) => `:${match.replace('{', '').replace('}', '')}`) // {foo} -> :foo
-            .replaceAll(/\/{\w+\?}/g, (match) => match.replace('/{', '{/:').replace('?', '')); // /{foo?} -> {/:foo}
-    }
-
-    private setRouteNames(path: string): void {
-        if (this.routeName) {
-            this.routeNames.set((this.groupRouteName ?? '') + this.routeName, path);
-        }
-    }
-
-    private getMiddlewareHandlers(): RouteHandler[] {
-        return this.routeMiddleware
-            .values()
-            .toArray()
-            .map((mw) => (req: Request, res: Response, next: NextFunction): void => {
-                new mw().handle(req, res, next);
-            });
-    }
-
-    private reset(): void {
-        if (!this.isGroup) {
-            this.routeMiddleware.clear();
-        }
-
-        this.routeName = undefined;
-    }
-
     private register(verb: keyof Express, path: string, handler: Class | RouteHandler | string, method?: string) {
         path = (this.groupPrefix ?? '') + this.convertPath(path);
 
-        this.setRouteNames(path);
+        this.setRouteName(path);
 
         const middleware = this.getMiddlewareHandlers();
 
@@ -173,7 +151,7 @@ export default class Router {
 
         if (method === undefined) {
             this.router[verb](path, [...middleware, handler]);
-            this.reset();
+            this.resetRoute();
             return;
         }
 
@@ -200,6 +178,48 @@ export default class Router {
             },
         ]);
 
-        this.reset();
+        this.resetRoute();
+    }
+
+    /**
+     * Convert Laravel-style route definitions to Express-style.
+     *
+     * Example: {foo}/{bar?}/{baz?} -> :foo{/:bar}{/:baz}
+     */
+    private convertPath(path: string): string {
+        return path
+            .replaceAll(/{\w+}/g, (match) => `:${match.replace('{', '').replace('}', '')}`) // {foo} -> :foo
+            .replaceAll(/\/{\w+\?}/g, (match) => match.replace('/{', '{/:').replace('?', '')); // /{foo?} -> {/:foo}
+    }
+
+    private getMiddlewareHandlers(): RouteHandler[] {
+        return this.routeMiddleware
+            .values()
+            .toArray()
+            .map((mw) => (req: Request, res: Response, next: NextFunction): void => {
+                new mw().handle(req, res, next);
+            });
+    }
+
+    private setRouteName(path: string): void {
+        if (this.routeName) {
+            this.routeNames.set((this.groupRouteName ?? '') + this.routeName, path);
+        }
+    }
+
+    private resetRoute(): void {
+        if (!this.isGroup) {
+            this.routeMiddleware.clear();
+        }
+
+        this.routeName = undefined;
+    }
+
+    private resetGroup(): void {
+        this.isGroup = false;
+        this.routeMiddleware.clear();
+        this.groupPrefix = undefined;
+        this.groupRouteName = undefined;
+        this.groupController = undefined;
     }
 }
