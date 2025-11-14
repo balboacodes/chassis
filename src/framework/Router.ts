@@ -65,32 +65,32 @@ export default class Router {
         this.register('get', path, handler, method);
     }
 
-    public post(path: string, handler: Class | RouteHandler, method?: string): void {
+    public post(path: string, handler: Class | RouteHandler | string, method?: string): void {
         this.register('post', path, handler, method);
     }
 
-    public put(path: string, handler: Class | RouteHandler, method?: string): void {
+    public put(path: string, handler: Class | RouteHandler | string, method?: string): void {
         this.register('put', path, handler, method);
     }
 
-    public patch(path: string, handler: Class | RouteHandler, method?: string): void {
+    public patch(path: string, handler: Class | RouteHandler | string, method?: string): void {
         this.register('patch', path, handler, method);
     }
 
-    public delete(path: string, handler: Class | RouteHandler, method?: string): void {
+    public delete(path: string, handler: Class | RouteHandler | string, method?: string): void {
         this.register('delete', path, handler, method);
     }
 
-    public options(path: string, handler: Class | RouteHandler, method?: string): void {
+    public options(path: string, handler: Class | RouteHandler | string, method?: string): void {
         this.register('options', path, handler, method);
     }
 
-    public any(path: string, handler: Class | RouteHandler, method?: string): void {
+    public any(path: string, handler: Class | RouteHandler | string, method?: string): void {
         this.register('all', path, handler, method);
     }
 
     public redirect(from: string, to: string, status: number = 302): void {
-        this.register('all', from, (_req: Request, res: Response): void => {
+        this.register('get', from, (_req: Request, res: Response): void => {
             res.redirect(status, to);
         });
     }
@@ -111,15 +111,17 @@ export default class Router {
             .name(`${resource}.`)
             .controller(controller)
             .group(() => {
-                this.name('index').get('', controller, 'index');
-                this.name('create').get('/create', controller, 'create');
-                this.name('store').post('', controller, 'store');
-                this.name('show').get('/{resource}', controller, 'show');
-                this.name('edit').get('/{resource}/edit', controller, 'edit');
-                this.name('update.put').put('/{resource}', controller, 'update');
-                this.name('update.patch').patch('/{resource}', controller, 'update');
-                this.name('destroy').delete('/{resource}', controller, 'destroy');
+                this.name('index').get('', 'index');
+                this.name('create').get('/create', 'create');
+                this.name('store').post('', 'store');
+                this.name('show').get('/{resource}', 'show');
+                this.name('edit').get('/{resource}/edit', 'edit');
+                this.name('update.put').put('/{resource}', 'update');
+                this.name('update.patch').patch('/{resource}', 'update');
+                this.name('destroy').delete('/{resource}', 'destroy');
             });
+
+        console.log(this.routeNames);
     }
 
     public listen(port: number, hostname: string, callback?: (error?: Error) => void): void {
