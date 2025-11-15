@@ -22,5 +22,5 @@ export default function () {
             Route.name('foo').get('/test/{foo?}', 'show');
         });
 
-    Route.resource('users', UserController);
+    Route.only(['index', 'show']).resource('users', UserController);
 }

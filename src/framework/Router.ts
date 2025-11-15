@@ -3,7 +3,7 @@ import { default as nodePath } from 'node:path';
 import Container from './Container.ts';
 import Arr from './support/Arr.ts';
 import { app, isClass } from './support/helpers.ts';
-import { Class, ErrorHandler, RouteHandler } from './types.ts';
+import { Class, ErrorHandler, ResourceActions, RouteHandler } from './types.ts';
 
 export default class Router {
     public router: Express = express();
@@ -21,6 +21,18 @@ export default class Router {
     private groupRouteName?: string;
 
     private groupController?: Class;
+
+    private resourceGroupActions: ResourceActions[] = ['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'];
+
+    private resourceGroupRoutes = {
+        index: () => this.name('index').get('', 'index'),
+        create: () => this.name('create').get('/create', 'create'),
+        store: () => this.name('store').post('', 'store'),
+        show: () => this.name('show').get('/{resource}', 'show'),
+        edit: () => this.name('edit').get('/{resource}/edit', 'edit'),
+        update: () => this.name('update').patch('/{resource}', 'update'),
+        destroy: () => this.name('destroy').delete('/{resource}', 'destroy'),
+    };
 
     public registerGlobalMiddleware(handler: RouteHandler | ErrorHandler) {
         this.router.use(handler);
@@ -48,6 +60,11 @@ export default class Router {
 
     public controller(name: Class): this {
         this.groupController = name;
+        return this;
+    }
+
+    public only(actions: ResourceActions[]): this {
+        this.resourceGroupActions = actions;
         return this;
     }
 
@@ -111,14 +128,9 @@ export default class Router {
             .name(`${resource}.`)
             .controller(controller)
             .group(() => {
-                this.name('index').get('', 'index');
-                this.name('create').get('/create', 'create');
-                this.name('store').post('', 'store');
-                this.name('show').get('/{resource}', 'show');
-                this.name('edit').get('/{resource}/edit', 'edit');
-                this.name('update.put').put('/{resource}', 'update');
-                this.name('update.patch').patch('/{resource}', 'update');
-                this.name('destroy').delete('/{resource}', 'destroy');
+                for (const action of this.resourceGroupActions) {
+                    this.resourceGroupRoutes[action]();
+                }
             });
 
         console.log(this.routeNames);
@@ -223,5 +235,6 @@ export default class Router {
         this.groupPrefix = undefined;
         this.groupRouteName = undefined;
         this.groupController = undefined;
+        this.resourceGroupActions = ['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'];
     }
 }

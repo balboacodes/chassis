@@ -8,6 +8,8 @@ export type Class<T = any> = {
 
 export type Factory<T = any> = (container?: Container) => T;
 
+export type ResourceActions = 'index' | 'create' | 'store' | 'show' | 'edit' | 'update' | 'destroy';
+
 export type RouteDefinition = (path: string, handler: Class | RouteHandler | string, method?: string) => void;
 
 export type RouteHandler = (req: Request, res: Response, ...params: any[]) => any;

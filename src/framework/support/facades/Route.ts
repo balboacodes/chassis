@@ -1,5 +1,5 @@
 import Router from '../../Router.ts';
-import { Class, RouteDefinition } from '../../types.ts';
+import { Class, ResourceActions, RouteDefinition } from '../../types.ts';
 import Facade from './Facade.ts';
 
 /**
@@ -29,6 +29,8 @@ class Route {
     public static group(routes: () => void): void {}
     // @ts-expect-error
     public static resource(resource: string, controller: Class): void {}
+    // @ts-expect-error
+    public static only(actions: ResourceActions[]): Router {}
 }
 
 export default Facade.proxy(Route, Router);
