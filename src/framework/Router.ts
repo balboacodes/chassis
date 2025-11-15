@@ -1,7 +1,7 @@
-import { Arr } from '@balboacodes/laravel-helpers';
 import { type Express, type NextFunction, type Request, type Response, default as express } from 'express';
 import { default as nodePath } from 'node:path';
 import Container from './Container.ts';
+import Arr from './support/Arr.ts';
 import { app, isClass } from './support/helpers.ts';
 import { Class, ErrorHandler, RouteHandler } from './types.ts';
 

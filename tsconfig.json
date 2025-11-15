@@ -32,5 +32,6 @@
 
         // Completeness
         "skipLibCheck": true
-    }
+    },
+    "exclude": ["tests"]
 }

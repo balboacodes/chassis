@@ -1,4 +1,3 @@
-import { Arr } from '@balboacodes/laravel-helpers';
 import { type NextFunction, type Request, type Response } from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,6 +7,7 @@ import ConfigServiceProvider from './providers/ConfigServiceProvider.ts';
 import RouteServiceProvider from './providers/RouteServiceProvider.ts';
 import ServiceProvider from './providers/ServiceProvider.ts';
 import Router from './Router.ts';
+import Arr from './support/Arr.ts';
 import { config, isClass } from './support/helpers.ts';
 import { Class } from './types.ts';
 
