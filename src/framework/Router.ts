@@ -1,9 +1,12 @@
-import { type Express, type NextFunction, type Request, type Response, default as express } from 'express';
+import { FILTER_VALIDATE_BOOLEAN, filter_var, intval } from '@balboacodes/php-utils';
+import { Express, default as express, NextFunction, Request, Response } from 'express';
 import { default as nodePath } from 'node:path';
 import Container from './Container.ts';
 import Arr from './support/Arr.ts';
 import { app, isClass } from './support/helpers.ts';
-import { Class, ErrorHandler, ResourceActions, RouteHandler } from './types.ts';
+import Str from './support/Str.ts';
+import Stringable from './support/Stringable.ts';
+import { Class, ResourceActions, RouteErrorHandler, RouteHandler } from './types.ts';
 
 export default class Router {
     public router: Express = express();
@@ -34,8 +37,49 @@ export default class Router {
         destroy: () => this.name('destroy').delete('/{resource}', 'destroy'),
     };
 
-    public registerGlobalMiddleware(handler: RouteHandler | ErrorHandler) {
-        this.router.use(handler);
+    public constructor() {
+        Object.defineProperties(this.router.request, {
+            all: {
+                value: function (): {} {
+                    return { ...this.query, ...this.body, file: this.file, files: this.files };
+                },
+            },
+            input: {
+                value: function (key: string, defaultValue?: any): any {
+                    const inputs = { ...this.query, ...this.body, file: this.file, files: this.files };
+
+                    return inputs[key] ?? defaultValue;
+                },
+            },
+            string: {
+                value: function (key: string, defaultValue?: any): Stringable {
+                    return Str.of(this.input(key ?? defaultValue));
+                },
+            },
+            integer: {
+                value: function (key: string, defaultValue = 0): number {
+                    return intval(this.input(key, defaultValue));
+                },
+            },
+            boolean: {
+                value: function (key: string, defaultValue = false): boolean {
+                    return filter_var(this.input(key, defaultValue), FILTER_VALIDATE_BOOLEAN);
+                },
+            },
+            date: {
+                value: function (key: string): Date | null {
+                    const input = this.input(key);
+                    if (!input) return null;
+
+                    const parsed = Date.parse(input);
+                    return Number.isNaN(parsed) ? null : new Date(parsed);
+                },
+            },
+        });
+    }
+
+    public registerGlobalMiddleware(handler: RouteHandler | RouteErrorHandler) {
+        this.router.use(handler as any);
     }
 
     public middleware(middleware: Class | Class[]): this {
