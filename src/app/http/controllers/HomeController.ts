@@ -1,5 +1,5 @@
-import { Response } from 'express';
-import { Request, route } from '../../../framework/index.ts';
+import type { Request, Response } from 'express';
+import { route } from '../../../framework/index.ts';
 
 export default class HomeController {
     /**

@@ -1,13 +1,12 @@
 import { FILTER_VALIDATE_BOOLEAN, filter_var, intval } from '@balboacodes/php-utils';
-import { Express, default as express, Request as ExpressRequest, NextFunction, Response } from 'express';
+import { Express, default as express, NextFunction, Response } from 'express';
 import { default as nodePath } from 'node:path';
 import Container from './Container.ts';
-import Request from './Request.ts';
 import Arr from './support/Arr.ts';
 import { app, isClass } from './support/helpers.ts';
 import Str from './support/Str.ts';
 import Stringable from './support/Stringable.ts';
-import { Class, ResourceActions, RouteHandler } from './types.ts';
+import type { Class, Request, ResourceActions, RouteHandler } from './types.ts';
 
 export default class Router {
     public router: Express = express();
@@ -80,8 +79,9 @@ export default class Router {
     }
 
     public registerGlobalMiddleware(handler: RouteHandler) {
-        this.router.use(async (req: ExpressRequest, res: Response, next: NextFunction) => {
-            await handler(new Request(req), res, next);
+        // @ts-ignore
+        this.router.use((req: Request, res: Response, next: NextFunction) => {
+            handler(req, res, next);
         });
     }
 
@@ -211,8 +211,8 @@ export default class Router {
         if (method === undefined) {
             this.router[verb](path, [
                 ...middleware,
-                (req: ExpressRequest, res: Response) => {
-                    (handler as RouteHandler)(new Request(req), res);
+                (req: Request, res: Response) => {
+                    (handler as RouteHandler)(req, res);
                 },
             ]);
             this.resetRoute();
@@ -227,15 +227,15 @@ export default class Router {
 
         this.router[verb](path, [
             ...middleware,
-            (req: ExpressRequest, res: Response) => {
+            (req: Request, res: Response) => {
                 Container.inject(
                     controller,
                     (paramTypes: any[]) => {
                         const dependencies = paramTypes.map((dep) => (isClass(dep) ? app(dep) : undefined));
-                        controller[method](new Request(req), res, ...dependencies);
+                        controller[method](req, res, ...dependencies);
                     },
                     () => {
-                        controller[method](new Request(req), res);
+                        controller[method](req, res);
                     },
                     method,
                 );

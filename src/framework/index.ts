@@ -1,6 +1,5 @@
 export { default as App } from './App.ts';
 export { default as ServiceProvider } from './providers/ServiceProvider.ts';
-export { default as Request } from './Request.ts';
 export { default as Arr } from './support/Arr.ts';
 export { default as Benchmark } from './support/Benchmark.ts';
 export { default as Collection } from './support/Collection.ts';

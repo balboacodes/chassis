@@ -1,5 +1,4 @@
-import type { NextFunction, Response } from 'express';
-import { Request } from '../../../framework/index.ts';
+import type { NextFunction, Request, Response } from 'express';
 
 export default class LogTime {
     public handle(_req: Request, _res: Response, next: NextFunction): void {

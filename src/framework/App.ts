@@ -1,4 +1,4 @@
-import { Request as ExpressRequest, NextFunction, Response } from 'express';
+import { NextFunction, Response } from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
@@ -6,11 +6,10 @@ import Container from './Container.ts';
 import ConfigServiceProvider from './providers/ConfigServiceProvider.ts';
 import RouteServiceProvider from './providers/RouteServiceProvider.ts';
 import ServiceProvider from './providers/ServiceProvider.ts';
-import Request from './Request.ts';
 import Router from './Router.ts';
 import Arr from './support/Arr.ts';
 import { config, isClass } from './support/helpers.ts';
-import { Class } from './types.ts';
+import type { Class, Request } from './types.ts';
 
 export default class App extends Container {
     private middleware: Set<Class> = new Set([]);
@@ -45,7 +44,6 @@ export default class App extends Container {
     }
 
     private bootAppSettings(): void {
-        this.make(Router).router.set('x-powered-by', false);
         this.make(Router).router.set('views', './resources/views');
     }
 
@@ -139,7 +137,8 @@ export default class App extends Container {
             res.status(404).send("Sorry can't find that!");
         });
 
-        this.make(Router).router.use((err: any, _req: ExpressRequest, res: Response) => {
+        // @ts-ignore
+        this.make(Router).router.use((err: any, _req: Request, res: Response) => {
             console.error(err.stack);
             res.status(500).send('Something broke!');
         });
