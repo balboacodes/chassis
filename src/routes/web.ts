@@ -4,7 +4,8 @@ import LogTime from '../app/http/middleware/LogTime.ts';
 import { Route } from '../framework/index.ts';
 
 export default () => {
-    Route.get('/', (_req, res) => res.send('callback'));
+    Route.get('/', (_req, res) => res.route('home.index'));
+    // Route.get('/', (_req, res) => res.view('test'));
 
     Route.view('/view', 'test');
 

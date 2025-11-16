@@ -1,4 +1,4 @@
-import { NextFunction, Response } from 'express';
+import { Request as ExpressRequest, Response as ExpressResponse, NextFunction } from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
@@ -9,7 +9,7 @@ import ServiceProvider from './providers/ServiceProvider.ts';
 import Router from './Router.ts';
 import Arr from './support/Arr.ts';
 import { config, isClass } from './support/helpers.ts';
-import type { Class, Request } from './types.ts';
+import type { Class, Request, Response } from './types.ts';
 
 export default class App extends Container {
     private middleware: Set<Class> = new Set([]);
@@ -138,7 +138,7 @@ export default class App extends Container {
         });
 
         // @ts-ignore
-        this.make(Router).router.use((err: any, _req: Request, res: Response) => {
+        this.make(Router).router.use((err: any, _req: ExpressRequest, res: ExpressResponse) => {
             console.error(err.stack);
             res.status(500).send('Something broke!');
         });

@@ -1,12 +1,12 @@
 import { FILTER_VALIDATE_BOOLEAN, filter_var, intval } from '@balboacodes/php-utils';
-import { Express, default as express, NextFunction, Response } from 'express';
+import { Express, default as express, NextFunction } from 'express';
 import { default as nodePath } from 'node:path';
 import Container from './Container.ts';
 import Arr from './support/Arr.ts';
-import { app, isClass } from './support/helpers.ts';
+import { app, isClass, route } from './support/helpers.ts';
 import Str from './support/Str.ts';
 import Stringable from './support/Stringable.ts';
-import type { Class, Request, ResourceActions, RouteHandler } from './types.ts';
+import type { Class, Request, ResourceActions, Response, RouteHandler } from './types.ts';
 
 export default class Router {
     public router: Express = express();
@@ -73,6 +73,24 @@ export default class Router {
 
                     const parsed = Date.parse(input);
                     return Number.isNaN(parsed) ? null : new Date(parsed);
+                },
+            },
+        });
+
+        Object.defineProperties(this.router.response, {
+            route: {
+                value: function (name: string, parameters: Record<string, number | string> = {}): void {
+                    return this.redirect(route(name, parameters));
+                },
+            },
+            view: {
+                value: function (view: string, _data?: Record<string, any>): void {
+                    this.sendFile(nodePath.join(process.cwd(), `../src/resources/views/${view}.html`));
+
+                    // Prod
+                    // this.sendFile(nodePath.join(process.cwd(), `/resources/views/${view}.html`));
+                    // or
+                    // this.render(view, data));
                 },
             },
         });

@@ -1,4 +1,4 @@
-import { Request as ExpressRequest, Response } from 'express';
+import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import Container from './Container.ts';
 import Stringable from './support/Stringable.ts';
 
@@ -16,6 +16,11 @@ export interface Request extends ExpressRequest {
     integer: (key: string, defaultValue?: number) => number;
     boolean: (key: string, defaultValue?: boolean) => boolean;
     date: (key: string) => Date | null;
+}
+
+export interface Response extends ExpressResponse {
+    route: (name: string, parameters?: Record<string, number | string>) => void;
+    view: (view: string, _data?: Record<string, any>) => void;
 }
 
 export type ResourceActions = 'index' | 'create' | 'store' | 'show' | 'edit' | 'update' | 'destroy';
