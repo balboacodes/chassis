@@ -1,18 +1,18 @@
-import type { Request, Response } from 'express';
-import { route } from '../../../framework/index.ts';
+import { Response } from 'express';
+import { Request, route } from '../../../framework/index.ts';
 
 export default class HomeController {
     /**
      * Display a listing of the resource.
      */
-    public index(req: Request, res: Response): Response {
-        return res.send(route('home.index', req.params));
+    public index(_req: Request, res: Response): Response {
+        return res.send(route('home.index'));
     }
 
     /**
      * Show the resource.
      */
     public show(req: Request, res: Response): Response {
-        return res.send(req.params);
+        return res.send(req.request.params);
     }
 }

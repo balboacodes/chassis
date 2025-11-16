@@ -1,5 +1,5 @@
-import type { Request, Response } from 'express';
-import { route } from '../../../framework/index.ts';
+import type { Response } from 'express';
+import { Request, route } from '../../../framework/index.ts';
 
 export default class UserController {
     /**
@@ -17,7 +17,7 @@ export default class UserController {
      * Show the resource.
      */
     public show(req: Request, res: Response): Response {
-        return res.send(req.params);
+        return res.send(req.request.params);
     }
 
     public edit(_req: Request, _res: Response) {}

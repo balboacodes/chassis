@@ -1,12 +1,13 @@
 import { FILTER_VALIDATE_BOOLEAN, filter_var, intval } from '@balboacodes/php-utils';
-import { Express, default as express, NextFunction, Request, Response } from 'express';
+import { Express, default as express, Request as ExpressRequest, NextFunction, Response } from 'express';
 import { default as nodePath } from 'node:path';
 import Container from './Container.ts';
+import Request from './Request.ts';
 import Arr from './support/Arr.ts';
 import { app, isClass } from './support/helpers.ts';
 import Str from './support/Str.ts';
 import Stringable from './support/Stringable.ts';
-import { Class, ResourceActions, RouteErrorHandler, RouteHandler } from './types.ts';
+import { Class, ResourceActions, RouteHandler } from './types.ts';
 
 export default class Router {
     public router: Express = express();
@@ -78,8 +79,10 @@ export default class Router {
         });
     }
 
-    public registerGlobalMiddleware(handler: RouteHandler | RouteErrorHandler) {
-        this.router.use(handler as any);
+    public registerGlobalMiddleware(handler: RouteHandler) {
+        this.router.use(async (req: ExpressRequest, res: Response, next: NextFunction) => {
+            await handler(new Request(req), res, next);
+        });
     }
 
     public middleware(middleware: Class | Class[]): this {
@@ -176,8 +179,6 @@ export default class Router {
                     this.resourceGroupRoutes[action]();
                 }
             });
-
-        console.log(this.routeNames);
     }
 
     public listen(port: number, hostname: string, callback?: (error?: Error) => void): void {
@@ -208,7 +209,12 @@ export default class Router {
         }
 
         if (method === undefined) {
-            this.router[verb](path, [...middleware, handler]);
+            this.router[verb](path, [
+                ...middleware,
+                (req: ExpressRequest, res: Response) => {
+                    (handler as RouteHandler)(new Request(req), res);
+                },
+            ]);
             this.resetRoute();
             return;
         }
@@ -221,15 +227,15 @@ export default class Router {
 
         this.router[verb](path, [
             ...middleware,
-            (req: Request, res: Response) => {
+            (req: ExpressRequest, res: Response) => {
                 Container.inject(
                     controller,
                     (paramTypes: any[]) => {
                         const dependencies = paramTypes.map((dep) => (isClass(dep) ? app(dep) : undefined));
-                        controller[method](req, res, ...dependencies);
+                        controller[method](new Request(req), res, ...dependencies);
                     },
                     () => {
-                        controller[method](req, res);
+                        controller[method](new Request(req), res);
                     },
                     method,
                 );

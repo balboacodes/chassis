@@ -33,5 +33,5 @@
         // Completeness
         "skipLibCheck": true
     },
-    "exclude": ["tests"]
+    "include": ["src/**/*.ts"]
 }
