@@ -13,6 +13,6 @@ export default class HomeController {
      * Show the resource.
      */
     public show(req: Request, res: Response): Response {
-        return res.send(req.request.params);
+        return res.send(req.params);
     }
 }

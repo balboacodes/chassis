@@ -17,7 +17,7 @@ export default class UserController {
      * Show the resource.
      */
     public show(req: Request, res: Response): Response {
-        return res.send(req.request.params);
+        return res.send(req.params);
     }
 
     public edit(_req: Request, _res: Response) {}
