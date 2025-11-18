@@ -1,29 +1,36 @@
 {
+  "name": "@balboacodes/chassis",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": "./dist/main.js",
+  "publish": {
+    "include": ["dist", "LICENSE", "README.md"]
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1"
+  },
+  "tasks": {
+    "bundle": "deno bundle --minify --sourcemap src/main.ts > dist/main.js",
+    "check": "deno check",
+    "dev": "deno bundle --watch src/main.ts > dist/main.js",
+    "fmt": "deno fmt",
+    "lint": "deno lint",
+    "test": "deno test"
+  },
   "compilerOptions": {
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true
   },
-  "exports": "./src/index.ts",
   "fmt": {
     "include": ["src/"],
     "indentWidth": 4,
     "singleQuote": true
-  },
-  "imports": {
-    "@std/assert": "jsr:@std/assert@1"
   },
   "lint": {
     "include": ["src/"],
     "rules": {
       "tags": ["recommended"]
     }
-  },
-  "tasks": {
-    "check": "deno check",
-    "dev": "deno run --watch public/index.ts",
-    "fmt": "deno fmt",
-    "lint": "deno lint",
-    "test": "deno test"
   },
   "test": {
     "include": ["tests/"]
