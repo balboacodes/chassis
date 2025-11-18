@@ -3,8 +3,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true
   },
-  "exclude": ["dist/"],
-  "exports": "./dist/index.ts",
+  "exports": "./src/index.ts",
   "fmt": {
     "include": ["src/"],
     "indentWidth": 4,
@@ -21,10 +20,12 @@
   },
   "tasks": {
     "check": "deno check",
-    "dev": "deno serve --watch dist/index.js",
+    "dev": "deno run --watch public/index.ts",
     "fmt": "deno fmt",
     "lint": "deno lint",
-    "serve": "deno serve dist/index.js",
     "test": "deno test"
+  },
+  "test": {
+    "include": ["tests/"]
   }
 }
