@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
+  },
+  "exclude": ["dist/"],
+  "exports": "./dist/index.ts",
+  "fmt": {
+    "include": ["src/"],
+    "indentWidth": 4,
+    "singleQuote": true
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1"
+  },
+  "lint": {
+    "include": ["src/"],
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "tasks": {
+    "check": "deno check",
+    "dev": "deno serve --watch dist/index.js",
+    "fmt": "deno fmt",
+    "lint": "deno lint",
+    "serve": "deno serve dist/index.js",
+    "test": "deno test"
+  }
+}
