@@ -4,4 +4,4 @@ dist
 node_modules
 npm-debug.log
 tsconfig.tsbuildinfo
-src/.env
+**/.env
