@@ -26,6 +26,7 @@
   },
   "lint": {
     "include": ["src/"],
+    "exclude": ["src/framework/support/", "tests/"],
     "rules": {
       "tags": ["recommended"]
     }
