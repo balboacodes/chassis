@@ -1,3 +1,4 @@
+import { array_unshift } from '@balboacodes/php-utils';
 import Arr from '../support/Arr.ts';
 import Collection from '../support/Collection.ts';
 
@@ -141,90 +142,60 @@ export default class Repository {
         }
     }
 
-    // /**
-    //  * Prepend a value onto an array configuration value.
-    //  *
-    //  * @param  string  $key
-    //  * @param  mixed  $value
-    //  * @return void
-    //  */
-    // public prepend($key, $value)
-    // {
-    //     $array = this.get($key, []);
+    /**
+     * Prepend a value onto an array configuration value.
+     */
+    public prepend(key: string, value: unknown): void {
+        const array = this.get(key, []) as unknown[];
 
-    //     array_unshift($array, $value);
+        array_unshift(array, value);
 
-    //     this.set($key, $array);
-    // }
+        this.set(key, array);
+    }
 
-    // /**
-    //  * Push a value onto an array configuration value.
-    //  *
-    //  * @param  string  $key
-    //  * @param  mixed  $value
-    //  * @return void
-    //  */
-    // public push($key, $value)
-    // {
-    //     $array = this.get($key, []);
+    /**
+     * Push a value onto an array configuration value.
+     */
+    public push(key: string, value: unknown): void {
+        const array = this.get(key, []) as unknown[];
 
-    //     $array[] = $value;
+        array.push(value);
 
-    //     this.set($key, $array);
-    // }
+        this.set(key, array);
+    }
 
-    // /**
-    //  * Get all of the configuration items for the application.
-    //  *
-    //  * @return array
-    //  */
-    // public all()
-    // {
-    //     return this.items;
-    // }
+    /**
+     * Get all of the configuration items for the application.
+     */
+    public all(): Record<string, unknown> {
+        return this.items;
+    }
 
-    // /**
-    //  * Determine if the given configuration option exists.
-    //  *
-    //  * @param  string  $key
-    //  * @return bool
-    //  */
-    // public offsetExists($key): bool
-    // {
-    //     return this.has($key);
-    // }
+    /**
+     * Determine if the given configuration option exists.
+     */
+    public offsetExists(key: string): boolean {
+        return this.has(key);
+    }
 
-    // /**
-    //  * Get a configuration option.
-    //  *
-    //  * @param  string  $key
-    //  * @return mixed
-    //  */
-    // public offsetGet($key): mixed
-    // {
-    //     return this.get($key);
-    // }
+    /**
+     * Get a configuration option.
+     */
+    public offsetGet(key: string): unknown {
+        return this.get(key);
+    }
 
-    // /**
-    //  * Set a configuration option.
-    //  *
-    //  * @param  string  $key
-    //  * @param  mixed  $value
-    //  * @return void
-    //  */
-    // public offsetSet($key, $value): void
-    // {
-    //     this.set($key, $value);
-    // }
+    /**
+     * Set a configuration option.
+     */
+    public offsetSet(key: string, value: unknown): void {
+        this.set(key, value);
+    }
 
-    // /**
-    //  * Unset a configuration option.
-    //  *
-    //  * @param  string  $key
-    //  * @return void
-    //  */
-    // public offsetUnset($key): void
-    // {
-    //     this.set($key, null);
-    // }
+    /**
+     * Unset a configuration option.
+     */
+    public offsetUnset(key: string): void {
+        this.set(key, null);
+    }
 }
