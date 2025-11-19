@@ -13,6 +13,7 @@ export {
     e,
     filled,
     head,
+    isClass,
     last,
     now,
     pass,
