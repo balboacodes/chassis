@@ -1,4 +1,4 @@
-export { default as Application } from './Application.ts';
+export { default as Application } from './foundation/Application.ts';
 export { default as Arr } from './support/Arr.ts';
 export { default as Benchmark } from './support/Benchmark.ts';
 export { default as Collection } from './support/Collection.ts';
