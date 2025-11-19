@@ -2,24 +2,20 @@
   "name": "@balboacodes/chassis",
   "version": "0.1.0",
   "license": "MIT",
-  "exports": "./dist/main.js",
+  "exports": "./src/framework/main.ts",
   "publish": {
-    "include": ["dist", "LICENSE", "README.md"]
+    "include": ["src/framework", "LICENSE", "README.md"]
   },
   "imports": {
-    "@std/assert": "jsr:@std/assert@1"
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.5"
   },
   "tasks": {
-    "bundle": "deno bundle --minify --sourcemap src/main.ts > dist/main.js",
     "check": "deno check",
-    "dev": "deno bundle --watch src/main.ts > dist/main.js",
+    "dev": "cd src && deno run --allow-read --allow-env --allow-net --watch public/main.ts",
     "fmt": "deno fmt",
     "lint": "deno lint",
     "test": "deno test"
-  },
-  "compilerOptions": {
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
   },
   "fmt": {
     "include": ["src/"],
@@ -34,5 +30,6 @@
   },
   "test": {
     "include": ["tests/"]
-  }
+  },
+  "vendor": true
 }
