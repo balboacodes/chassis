@@ -1,4 +1,4 @@
-// // import '@std/dotenv/load';
+import '@std/dotenv/load';
 
 // // export default class Application {
 // //     public serve(): void {
@@ -9,237 +9,176 @@
 import Container from '../container/Container.ts';
 
 export default class Application extends Container {
-    //     /**
-    //      * The Laravel framework version.
-    //      *
-    //      * @var string
-    //      */
-    //     const VERSION = '12.38.1';
+    /**
+     * The Chassis framework version.
+     */
+    static readonly VERSION = '0.1.0';
 
-    //     /**
-    //      * The base path for the Laravel installation.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $basePath;
+    /**
+     * The base path for the Chassis installation.
+     */
+    protected basePath: string;
 
-    //     /**
-    //      * The array of registered callbacks.
-    //      *
-    //      * @var callable[]
-    //      */
-    //     protected $registeredCallbacks = [];
+    /**
+     * The array of registered callbacks.
+     */
+    protected registeredCallbacks: (() => unknown)[] = [];
 
-    //     /**
-    //      * Indicates if the application has been bootstrapped before.
-    //      *
-    //      * @var bool
-    //      */
-    //     protected $hasBeenBootstrapped = false;
+    /**
+     * Indicates if the application has been bootstrapped before.
+     */
+    protected hasBeenBootstrapped: boolean = false;
 
-    //     /**
-    //      * Indicates if the application has "booted".
-    //      *
-    //      * @var bool
-    //      */
-    //     protected $booted = false;
+    /**
+     * Indicates if the application has "booted".
+     */
+    protected booted: boolean = false;
 
-    //     /**
-    //      * The array of booting callbacks.
-    //      *
-    //      * @var callable[]
-    //      */
-    //     protected $bootingCallbacks = [];
+    /**
+     * The array of booting callbacks.
+     */
+    protected bootingCallbacks: (() => unknown)[] = [];
 
-    //     /**
-    //      * The array of booted callbacks.
-    //      *
-    //      * @var callable[]
-    //      */
-    //     protected $bootedCallbacks = [];
+    /**
+     * The array of booted callbacks.
+     */
+    protected bootedCallbacks: (() => unknown)[] = [];
 
-    //     /**
-    //      * The array of terminating callbacks.
-    //      *
-    //      * @var callable[]
-    //      */
-    //     protected $terminatingCallbacks = [];
+    /**
+     * The array of terminating callbacks.
+     */
+    protected terminatingCallbacks: (() => unknown)[] = [];
 
-    //     /**
-    //      * All of the registered service providers.
-    //      *
-    //      * @var array<string, \Illuminate\Support\ServiceProvider>
-    //      */
-    //     protected $serviceProviders = [];
+    /**
+     * All of the registered service providers.
+     *
+     * @var array<string, \Illuminate\Support\ServiceProvider>
+     */
+    protected serviceProviders: ServiceProvider[] = [];
 
-    //     /**
-    //      * The names of the loaded service providers.
-    //      *
-    //      * @var array
-    //      */
-    //     protected $loadedProviders = [];
+    /**
+     * The names of the loaded service providers.
+     */
+    protected loadedProviders: ServiceProvider[] = [];
 
-    //     /**
-    //      * The deferred services and their providers.
-    //      *
-    //      * @var array
-    //      */
-    //     protected $deferredServices = [];
+    /**
+     * The deferred services and their providers.
+     */
+    protected deferredServices: ServiceProvider[] = [];
 
-    //     /**
-    //      * The custom bootstrap path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $bootstrapPath;
+    /**
+     * The custom bootstrap path defined by the developer.
+     */
+    protected bootstrapPath: string;
 
-    //     /**
-    //      * The custom application path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $appPath;
+    /**
+     * The custom application path defined by the developer.
+     */
+    protected appPath: string;
 
-    //     /**
-    //      * The custom configuration path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $configPath;
+    /**
+     * The custom configuration path defined by the developer.
+     */
+    protected configPath: string;
 
-    //     /**
-    //      * The custom database path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $databasePath;
+    /**
+     * The custom database path defined by the developer.
+     */
+    protected databasePath: string;
 
-    //     /**
-    //      * The custom language file path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $langPath;
+    /**
+     * The custom language file path defined by the developer.
+     */
+    protected langPath: string;
 
-    //     /**
-    //      * The custom public / web path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $publicPath;
+    /**
+     * The custom public / web path defined by the developer.
+     */
+    protected publicPath: string;
 
-    //     /**
-    //      * The custom storage path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $storagePath;
+    /**
+     * The custom storage path defined by the developer.
+     */
+    protected storagePath: string;
 
-    //     /**
-    //      * The custom environment path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $environmentPath;
+    /**
+     * The custom environment path defined by the developer.
+     */
+    protected environmentPath: string;
 
-    //     /**
-    //      * The environment file to load during bootstrapping.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $environmentFile = '.env';
+    /**
+     * The environment file to load during bootstrapping.
+     */
+    protected environmentFile: string = '.env';
 
-    //     /**
-    //      * Indicates if the application is running in the console.
-    //      *
-    //      * @var bool|null
-    //      */
-    //     protected $isRunningInConsole;
+    /**
+     * Indicates if the application is running in the console.
+     */
+    protected isRunningInConsole?: boolean;
 
-    //     /**
-    //      * The application namespace.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $namespace;
+    /**
+     * The application namespace.
+     */
+    protected namespace: string;
 
-    //     /**
-    //      * Indicates if the framework's base configuration should be merged.
-    //      *
-    //      * @var bool
-    //      */
-    //     protected $mergeFrameworkConfiguration = true;
+    /**
+     * Indicates if the framework's base configuration should be merged.
+     */
+    protected mergeFrameworkConfiguration: boolean = true;
 
-    //     /**
-    //      * The prefixes of absolute cache paths for use during normalization.
-    //      *
-    //      * @var string[]
-    //      */
-    //     protected $absoluteCachePathPrefixes = ['/', '\\'];
+    /**
+     * The prefixes of absolute cache paths for use during normalization.
+     */
+    protected $absoluteCachePathPrefixes: string[] = ['/', '\\'];
 
-    //     /**
-    //      * Create a new Illuminate application instance.
-    //      *
-    //      * @param  string|null  $basePath
-    //      */
-    //     public function __construct($basePath = null)
-    //     {
-    //         if ($basePath) {
-    //             $this->setBasePath($basePath);
-    //         }
+    /**
+     * Create a new Illuminate application instance.
+     */
+    public constructor(basePath?: string) {
+        super();
 
-    //         $this->registerBaseBindings();
-    //         $this->registerBaseServiceProviders();
-    //         $this->registerCoreContainerAliases();
-    //         $this->registerLaravelCloudServices();
-    //     }
+        if (basePath) {
+            this.setBasePath(basePath);
+        }
 
-    //     /**
-    //      * Begin configuring a new Laravel application instance.
-    //      *
-    //      * @param  string|null  $basePath
-    //      * @return \Illuminate\Foundation\Configuration\ApplicationBuilder
-    //      */
-    //     public static function configure(?string $basePath = null)
-    //     {
-    //         $basePath = match (true) {
-    //             is_string($basePath) => $basePath,
-    //             default => static::inferBasePath(),
-    //         };
+        this.registerBaseBindings();
+        this.registerBaseServiceProviders();
+        this.registerCoreContainerAliases();
+    }
 
-    //         return (new Configuration\ApplicationBuilder(new static($basePath)))
-    //             ->withKernels()
-    //             ->withEvents()
-    //             ->withCommands()
-    //             ->withProviders();
-    //     }
+    /**
+     * Begin configuring a new Laravel application instance.
+     * @return \Illuminate\Foundation\Configuration\ApplicationBuilder
+     */
+    public static configure(basePath?: string): ApplicationBuilder {
+        if (basePath === undefined) {
+            basePath = Application.inferBasePath();
+        }
 
-    //     /**
-    //      * Infer the application's base directory from the environment.
-    //      *
-    //      * @return string
-    //      */
-    //     public static function inferBasePath()
-    //     {
-    //         return match (true) {
-    //             isset($_ENV['APP_BASE_PATH']) => $_ENV['APP_BASE_PATH'],
-    //             isset($_SERVER['APP_BASE_PATH']) => $_SERVER['APP_BASE_PATH'],
-    //             default => dirname(array_values(array_filter(
-    //                 array_keys(ClassLoader::getRegisteredLoaders()),
-    //                 fn ($path) => ! str_starts_with($path, 'phar://'),
-    //             ))[0]),
-    //         };
-    //     }
+        return (new ApplicationBuilder(new Application(basePath)))
+            .withKernels()
+            .withEvents()
+            .withCommands()
+            .withProviders();
+    }
 
-    //     /**
-    //      * Get the version number of the application.
-    //      *
-    //      * @return string
-    //      */
-    //     public function version()
-    //     {
-    //         return static::VERSION;
-    //     }
+    /**
+     * Infer the application's base directory from the environment.
+     */
+    public static inferBasePath(): string {
+        if (Deno.env.APP_BASE_PATH) {
+            return Deno.env.APP_BASE_PATH;
+        }
+
+        return Deno.cwd();
+    }
+
+    /**
+     * Get the version number of the application.
+     */
+    public version(): string {
+        return Application.VERSION;
+    }
 
     //     /**
     //      * Register the basic bindings into the container.
