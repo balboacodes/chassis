@@ -1,60 +1,6 @@
 // prettier-ignore
 import {
-    array_all,
-    array_any,
-    array_chunk,
-    array_combine,
-    array_diff,
-    array_diff_assoc,
-    array_diff_key,
-    array_diff_uassoc,
-    array_filter,
-    array_find_key,
-    array_flip,
-    array_intersect,
-    array_intersect_assoc,
-    array_intersect_key,
-    array_intersect_uassoc,
-    array_keys,
-    array_map,
-    array_merge,
-    array_merge_recursive,
-    array_pad,
-    array_pop,
-    array_push,
-    array_replace,
-    array_replace_recursive,
-    array_reverse,
-    array_search,
-    array_shift,
-    array_slice,
-    array_splice,
-    array_uintersect,
-    array_unique,
-    arsort,
-    asort,
-    count,
-    empty,
-    in_array,
-    intval,
-    isset,
-    krsort,
-    ksort,
-    range,
-    SORT_FLAG_CASE,
-    SORT_LOCALE_STRING,
-    SORT_NATURAL,
-    SORT_NUMERIC,
-    SORT_REGULAR,
-    SORT_STRING,
-    strcasecmp,
-    strcmp,
-    strcoll,
-    strnatcasecmp,
-    strnatcmp,
-    uasort,
-    uksort,
-    unset,
+    array_all, array_any, array_chunk, array_combine, array_diff, array_diff_assoc, array_diff_key, array_diff_uassoc, array_filter, array_find_key, array_flip, array_intersect, array_intersect_assoc, array_intersect_key, array_intersect_uassoc, array_keys, array_map, array_merge, array_merge_recursive, array_pad, array_pop, array_push, array_replace, array_replace_recursive, array_reverse, array_search, array_shift, array_slice, array_splice, array_uintersect, array_unique, arsort, asort, count, empty, in_array, intval, isset, krsort, ksort, range, SORT_FLAG_CASE, SORT_LOCALE_STRING, SORT_NATURAL, SORT_NUMERIC, SORT_REGULAR, SORT_STRING, strcasecmp, strcmp, strcoll, strnatcasecmp, strnatcmp, uasort, uksort, unset,
 } from '@balboacodes/php-utils';
 import Arr from './Arr.ts';
 import use from './decorators/use.ts';
@@ -978,7 +924,9 @@ export class Collection<TKey extends number | string, TValue> {
         const collection = isset(key) ? this.pluck(key) : this;
         const counts = new Map();
 
-        collection.each((value) => counts.has(value) ? counts.set(value, counts.get(value) + 1) : counts.set(value, 1));
+        collection.each((value) =>
+            counts.has(value) ? counts.set(value, counts.get(value) + 1) : counts.set(value, 1),
+        );
 
         const highestValue = counts.values().toArray().sort().pop();
 
@@ -1071,9 +1019,10 @@ export class Collection<TKey extends number | string, TValue> {
         operator?: any,
         value?: any,
     ): Collection<0 | 1, Collection<TKey, TValue>> {
-        const callback = arguments.length === 1
-            ? this.valueRetriever(key as any)
-            : (this.operatorForWhere(key as any, operator, value) as any);
+        const callback =
+            arguments.length === 1
+                ? this.valueRetriever(key as any)
+                : (this.operatorForWhere(key as any, operator, value) as any);
 
         const [passed, failed] = Arr.partition(this.items, callback);
 
@@ -1243,7 +1192,7 @@ export class Collection<TKey extends number | string, TValue> {
         const useAsCallable = this.useAsCallable(callback);
 
         return this.filter((value: TValue, key: TKey): boolean =>
-            useAsCallable ? !(callback as Function)(value, key) : value != callback
+            useAsCallable ? !(callback as Function)(value, key) : value != callback,
         );
     }
 
@@ -1394,11 +1343,11 @@ export class Collection<TKey extends number | string, TValue> {
     public sortBy(
         callback:
             | (
-                | ((value: TValue, value2: TValue) => any)
-                | ((value: TValue, key: TKey) => any)
-                | string
-                | [string, string][]
-            )[]
+                  | ((value: TValue, value2: TValue) => any)
+                  | ((value: TValue, key: TKey) => any)
+                  | string
+                  | [string, string][]
+              )[]
             | ((value: TValue, key: TKey) => any)
             | string,
         options:
@@ -1445,11 +1394,11 @@ export class Collection<TKey extends number | string, TValue> {
     public sortByDesc(
         callback:
             | (
-                | ((value: TValue, value2: TValue) => any)
-                | ((value: TValue, key: TKey) => any)
-                | string
-                | [string, string][]
-            )[]
+                  | ((value: TValue, value2: TValue) => any)
+                  | ((value: TValue, key: TKey) => any)
+                  | string
+                  | [string, string][]
+              )[]
             | ((value: TValue, key: TKey) => any)
             | string,
         options:
@@ -1922,15 +1871,15 @@ export class Collection<TKey extends number | string, TValue> {
      */
     protected getArrayableItems(items?: any): any[] | Record<string, any> {
         return items === undefined ||
-                items === null ||
-                typeof items === 'bigint' ||
-                typeof items === 'boolean' ||
-                typeof items === 'number' ||
-                typeof items === 'string'
+            items === null ||
+            typeof items === 'bigint' ||
+            typeof items === 'boolean' ||
+            typeof items === 'number' ||
+            typeof items === 'string'
             ? Arr.wrap(items)
             : items instanceof Collection
-            ? items.all()
-            : Arr.from(items);
+              ? items.all()
+              : Arr.from(items);
     }
 
     /**
@@ -1972,11 +1921,11 @@ export class Collection<TKey extends number | string, TValue> {
             if (
                 count(strings) < 2 &&
                 count(
-                        array_filter(
-                            [retrieved, value],
-                            (value) => typeof value === 'object' && value !== null && !Array.isArray(value),
-                        ),
-                    ) == 1
+                    array_filter(
+                        [retrieved, value],
+                        (value) => typeof value === 'object' && value !== null && !Array.isArray(value),
+                    ),
+                ) == 1
             ) {
                 return in_array(operator, ['!=', '<>', '!==']);
             }
