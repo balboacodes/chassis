@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { NumberFormatter } from '../src/NumberFormatter';
+import { NumberFormatter } from '../../src/framework/main.ts';
 
 test('abbreviate', () => {
     expect(NumberFormatter.abbreviate(1)).toEqual('1');

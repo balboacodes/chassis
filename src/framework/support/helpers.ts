@@ -2,24 +2,24 @@
 import {
     array_key_first, array_key_last, array_shift, count, empty, ENT_QUOTES, explode, htmlspecialchars, in_array, preg_replace_callback,
 } from '@balboacodes/php-utils';
-import Application from '../Application.ts';
-import Config from '../Config.ts';
-import Container from '../Container.ts';
-import Router from '../Router.ts';
+// import Application from '../Application.ts';
+// import Config from '../Config.ts';
+// import Container from '../Container.ts';
+// import Router from '../Router.ts';
 import { Class } from '../types.ts';
 import Arr from './Arr.ts';
 import Collection from './Collection.ts';
 import Stringable from './Stringable.ts';
 
-export function app<T extends Class | string | undefined = undefined>(
-    binding?: T,
-): T extends Class ? InstanceType<T> : T extends string ? any : Application {
-    if (binding === undefined) {
-        return Container.getInstance() as any;
-    }
+// export function app<T extends Class | string | undefined = undefined>(
+//     binding?: T,
+// ): T extends Class ? InstanceType<T> : T extends string ? any : Application {
+//     if (binding === undefined) {
+//         return Container.getInstance() as any;
+//     }
 
-    return Container.getInstance().make(binding);
-}
+//     return Container.getInstance().make(binding);
+// }
 
 /**
  * Determine if the given value is "blank".
@@ -60,22 +60,22 @@ export function collect<TKey extends number | string, TValue>(
 /**
  * If an object is passed as the key, we will assume you want to set an object of values.
  */
-export function config<T extends string | Record<string, any> | undefined = undefined>(
-    key?: T,
-    defaultValue?: any,
-): T extends string ? any : T extends Record<string, any> ? void : Config {
-    const repository = app(Config);
+// export function config<T extends string | Record<string, any> | undefined = undefined>(
+//     key?: T,
+//     defaultValue?: any,
+// ): T extends string ? any : T extends Record<string, any> ? void : Config {
+//     const repository = app(Config);
 
-    if (key === undefined) {
-        return repository as any;
-    }
+//     if (key === undefined) {
+//         return repository as any;
+//     }
 
-    if (typeof key === 'string') {
-        return repository.get(key, defaultValue);
-    }
+//     if (typeof key === 'string') {
+//         return repository.get(key, defaultValue);
+//     }
 
-    return repository.set(key) as any;
-}
+//     return repository.set(key) as any;
+// }
 
 /**
  * Fill in data where it's missing.
@@ -384,18 +384,18 @@ export function retry<TValue>(
     }
 }
 
-export function route(name: string, parameters: Record<string, number | string> = {}): string | undefined {
-    let path = app(Router).routeNames.get(name);
+// export function route(name: string, parameters: Record<string, number | string> = {}): string | undefined {
+//     let path = app(Router).routeNames.get(name);
 
-    for (const [key, value] of Object.entries(parameters)) {
-        // Insert parameters :foo -> foo
-        path = path?.replace(`:${key}`, String(value));
-    }
+//     for (const [key, value] of Object.entries(parameters)) {
+//         // Insert parameters :foo -> foo
+//         path = path?.replace(`:${key}`, String(value));
+//     }
 
-    return path
-        ?.replaceAll(/{(\/\w+)}/g, '$1') // Optional parameters {/foo} -> foo
-        .replaceAll(/{\/:\w+}/g, ''); // Remove optional parameters not used {/:foo} -> ''
-}
+//     return path
+//         ?.replaceAll(/{(\/\w+)}/g, '$1') // Optional parameters {/foo} -> foo
+//         .replaceAll(/{\/:\w+}/g, ''); // Remove optional parameters not used {/:foo} -> ''
+// }
 
 /**
  * Get a new stringable object from the given string.

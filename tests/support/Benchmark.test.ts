@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
-import { Arr } from '../src/Arr';
-import { Benchmark } from '../src/Benchmark';
+import { Arr } from '../../src/framework/main.ts';
+import { Benchmark } from '../../src/framework/main.ts';
 
 test('measure', () => {
     expect(Benchmark.measure(() => 1 + 1)).toBeTypeOf('number');

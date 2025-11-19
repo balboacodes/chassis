@@ -1,6 +1,6 @@
 import { base64_encode } from '@balboacodes/php-utils';
 import { expect, test } from 'vitest';
-import { Str } from '../src/Str';
+import { Str } from '../../src/framework/main.ts';
 
 test('after', () => {
     [

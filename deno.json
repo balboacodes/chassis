@@ -9,7 +9,8 @@
   "imports": {
     "@balboacodes/php-utils": "npm:@balboacodes/php-utils@^0.9.0",
     "@std/assert": "jsr:@std/assert@1",
-    "@std/dotenv": "jsr:@std/dotenv@^0.225.5"
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.5",
+    "vitest": "npm:vitest@^4.0.10"
   },
   "tasks": {
     "check": "deno check",

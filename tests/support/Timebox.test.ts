@@ -1,5 +1,5 @@
 import { expect, test, vi } from 'vitest';
-import { Timebox } from '../src/Timebox';
+import { Timebox } from '../../src/framework/main.ts';
 
 test('executes callback', () => {
     const callback = () => expect(true);

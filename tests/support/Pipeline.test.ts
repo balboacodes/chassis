@@ -1,11 +1,12 @@
 import { expect, test } from 'vitest';
-import { Pipeline } from '../src/Pipeline';
+import { Pipeline } from '../../src/framework/main.ts';
 import { unset } from '@balboacodes/php-utils';
 
 let $_SERVER = {};
 
 class PipelineTestPipeOne {
     public handle(piped: any, next: (passable: any) => any) {
+        // @ts-ignore
         $_SERVER['__test.pipe.one'] = piped;
 
         return next(piped);
@@ -18,6 +19,7 @@ class PipelineTestPipeOne {
 
 test('pipeline basic usage', () => {
     const pipeTwo = (piped: any, next: (passable: any) => any) => {
+        // @ts-ignore
         $_SERVER['__test.pipe.two'] = piped;
 
         return next(piped);
@@ -29,7 +31,9 @@ test('pipeline basic usage', () => {
         .then((piped) => piped);
 
     expect(result).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.one']).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.two']).toEqual('foo');
 
     unset($_SERVER, '__test.pipe.two');
@@ -43,6 +47,7 @@ test('pipeline usage with objects', () => {
         .then((piped: any) => piped);
 
     expect(result).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.one']).toEqual('foo');
 
     unset($_SERVER, '__test.pipe.one');
@@ -50,6 +55,7 @@ test('pipeline usage with objects', () => {
 
 test('pipeline usage with callable', () => {
     const fn = (piped: any, next: (passable: any) => any) => {
+        // @ts-ignore
         $_SERVER['__test.pipe.one'] = 'foo';
 
         return next(piped);
@@ -61,6 +67,7 @@ test('pipeline usage with callable', () => {
         .then((piped: any) => piped);
 
     expect(result).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.one']).toEqual('foo');
 
     unset($_SERVER, '__test.pipe.one');
@@ -68,6 +75,7 @@ test('pipeline usage with callable', () => {
     result = new Pipeline().send('bar').through(fn).thenReturn();
 
     expect(result).toEqual('bar');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.one']).toEqual('foo');
 
     unset($_SERVER, '__test.pipe.one');
@@ -111,13 +119,17 @@ test('pipeline through method overwrites previously set and appended pipes', () 
 });
 
 test('then method is not called if the pipe returns', () => {
+    // @ts-ignore
     $_SERVER['__test.pipe.then'] = '(*_*)';
+    // @ts-ignore
     $_SERVER['__test.pipe.second'] = '(*_*)';
 
     const result = new Pipeline()
         .send('foo')
+        // @ts-ignore
         .through([() => 'm(-_-)m', () => ($_SERVER['__test.pipe.second'] = 'm(-_-)m')])
         .then((piped: any) => {
+            // @ts-ignore
             $_SERVER['__test.pipe.then'] = '(0_0)';
 
             return piped;
@@ -125,8 +137,10 @@ test('then method is not called if the pipe returns', () => {
 
     expect(result).toEqual('m(-_-)m');
     // The then callback is not called.
+    // @ts-ignore
     expect($_SERVER['__test.pipe.then']).toEqual('(*_*)');
     // The second pipe is not called.
+    // @ts-ignore
     expect($_SERVER['__test.pipe.second']).toEqual('(*_*)');
 
     unset($_SERVER, '__test.pipe.then');
@@ -138,18 +152,21 @@ test('then method input value', () => {
         .through([
             (value: any, next: (passable: any) => any) => {
                 value = next('::not_foo::');
+                // @ts-ignore
                 $_SERVER['__test.pipe.return'] = value;
 
                 return 'pipe::' + value;
             },
         ])
         .then((piped: any) => {
+            // @ts-ignore
             $_SERVER['__test.then.arg'] = piped;
 
             return 'then' + piped;
         });
 
     expect(result).toEqual('pipe::then::not_foo::');
+    // @ts-ignore
     expect($_SERVER['__test.then.arg']).toEqual('::not_foo::');
 
     unset($_SERVER, '__test.then.arg');
@@ -171,6 +188,7 @@ test('pipeline then return method runs pipeline then returns passable', () => {
     const result = new Pipeline().send('foo').through([new PipelineTestPipeOne()]).thenReturn();
 
     expect(result).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.one']).toEqual('foo');
 
     unset($_SERVER, '__test.pipe.one');
@@ -183,10 +201,12 @@ test('pipeline conditionable', () => {
         .then((piped: any) => piped);
 
     expect(result).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.one']).toEqual('foo');
 
     unset($_SERVER, '__test.pipe.one');
 
+    // @ts-ignore
     $_SERVER['__test.pipe.one'] = null;
 
     result = new Pipeline()
@@ -195,6 +215,7 @@ test('pipeline conditionable', () => {
         .then((piped: any) => piped);
 
     expect(result).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.one']).toEqual(null);
 
     unset($_SERVER, '__test.pipe.one');
@@ -202,6 +223,7 @@ test('pipeline conditionable', () => {
 
 test('pipeline finally', () => {
     const pipeTwo = (piped: any, next: (passable: any) => any) => {
+        // @ts-ignore
         $_SERVER['__test.pipe.two'] = piped;
 
         next(piped);
@@ -210,12 +232,16 @@ test('pipeline finally', () => {
     const result = new Pipeline()
         .send('foo')
         .through([new PipelineTestPipeOne(), pipeTwo])
+        // @ts-ignore
         .finally((piped: any) => ($_SERVER['__test.pipe.finally'] = piped))
         .then((piped) => piped);
 
     expect(result).toEqual(undefined);
+    // @ts-ignore
     expect($_SERVER['__test.pipe.one']).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.two']).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.finally']).toEqual('foo');
 
     unset($_SERVER, '__test.pipe.one');
@@ -225,18 +251,23 @@ test('pipeline finally', () => {
 
 test('pipeline finally method when chain is stopped', () => {
     const pipeTwo = (piped: any) => {
+        // @ts-ignore
         $_SERVER['__test.pipe.two'] = piped;
     };
 
     const result = new Pipeline()
         .send('foo')
         .through([new PipelineTestPipeOne(), pipeTwo])
+        // @ts-ignore
         .finally((piped: any) => ($_SERVER['__test.pipe.finally'] = piped))
         .then((piped: any) => piped);
 
     expect(result).toEqual(undefined);
+    // @ts-ignore
     expect($_SERVER['__test.pipe.one']).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.two']).toEqual('foo');
+    // @ts-ignore
     expect($_SERVER['__test.pipe.finally']).toEqual('foo');
 
     unset($_SERVER, '__test.pipe.one');

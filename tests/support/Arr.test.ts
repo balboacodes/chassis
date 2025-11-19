@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { Arr } from '../src/Arr';
+import { Arr } from '../../src/framework/main.ts';
 
 test('accessible', () => {
     expect(Arr.accessible([])).toEqual(true);
@@ -750,9 +750,11 @@ test('push', () => {
     let array = {};
 
     Arr.push(array, 'office.furniture', 'Desk');
+    // @ts-ignore
     expect(array['office']['furniture']).toEqual(['Desk']);
 
     Arr.push(array, 'office.furniture', 'Chair', 'Lamp');
+    // @ts-ignore
     expect(array['office']['furniture']).toEqual(['Desk', 'Chair', 'Lamp']);
 
     array = [];

@@ -1,5 +1,5 @@
 import { afterEach, test, expect } from 'vitest';
-import { Lottery } from '../src/Lottery';
+import { Lottery } from '../../src/framework/main.ts';
 
 afterEach(() => {
     Lottery.determineResultNormally();

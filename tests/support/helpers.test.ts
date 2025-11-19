@@ -2,8 +2,8 @@ import { expect, test } from 'vitest';
 // deno-fmt-ignore
 import {
     blank, data_fill, data_forget, data_get, data_has, data_set, e, filled, head, last, now, pass, preg_replace_array, rescue, retry, str, tap, throw_if, throw_unless, transform, value, when,
-} from '../src/helpers';
-import { Stringable } from '../src/Stringable';
+} from '../../src/framework/main.ts';
+import { Stringable } from '../../src/framework/main.ts';
 
 test('blank', () => {
     expect(blank(null)).toEqual(true);

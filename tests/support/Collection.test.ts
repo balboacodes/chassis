@@ -1,8 +1,8 @@
 import { array_keys, isset, range, SORT_NATURAL, SORT_STRING, strnatcasecmp } from '@balboacodes/php-utils';
 import { expect, test } from 'vitest';
-import { Arr } from '../src/Arr';
-import { Collection } from '../src/Collection';
-import { collect } from '../src/helpers';
+import { Arr } from '../../src/framework/main.ts';
+import { Collection } from '../../src/framework/main.ts';
+import { collect } from '../../src/framework/main.ts';
 
 enum StaffEnum {
     Taylor = 'Taylor',
@@ -572,11 +572,13 @@ test('each', () => {
     const original = { 0: 1, 1: 2, foo: 'bar', bam: 'baz' };
     const c = new Collection(original);
     let result = {};
+    // @ts-ignore
     c.each((item, key) => (result[key] = item));
     expect(result).toEqual(original);
 
     result = {};
     c.each((item, key) => {
+      // @ts-ignore
         result[key] = item;
 
         if (isNaN(Number(key))) {
@@ -1521,6 +1523,7 @@ test('offsetSet', () => {
 test('offsetUnset', () => {
     const c = new Collection(['foo', 'bar']);
     c.offsetUnset(1);
+    // @ts-ignore
     expect(isset(c[1])).toEqual(false);
 });
 
