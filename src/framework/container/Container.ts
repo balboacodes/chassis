@@ -453,7 +453,7 @@ export default class Container {
         if (!isClass(abstract) && typeof abstract !== 'string' && callback === undefined) {
             this.globalBeforeResolvingCallbacks.push(abstract);
         } else {
-            abstract = this.getAlias(abstract);
+            abstract = this.getAlias(abstract as string | Class);
             this.beforeResolvingCallbacks.get(abstract as string | Class)?.push(callback as () => unknown);
         }
     }
@@ -468,7 +468,7 @@ export default class Container {
         if (!isClass(abstract) && typeof abstract !== 'string' && callback === undefined) {
             this.globalResolvingCallbacks.push(abstract);
         } else {
-            abstract = this.getAlias(abstract);
+            abstract = this.getAlias(abstract as string | Class);
             this.resolvingCallbacks.get(abstract as string | Class)?.push(
                 callback as (object: unknown, container: Container) => unknown,
             );
@@ -482,7 +482,7 @@ export default class Container {
         if (!isClass(abstract) && typeof abstract !== 'string' && callback === undefined) {
             this.globalAfterResolvingCallbacks.push(abstract);
         } else {
-            abstract = this.getAlias(abstract);
+            abstract = this.getAlias(abstract as string | Class);
             this.afterResolvingCallbacks.get(abstract as string | Class)?.push(callback as () => unknown);
         }
     }

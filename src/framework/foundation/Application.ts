@@ -3,12 +3,23 @@ import '@std/dotenv/load';
 import { exists } from '@std/fs';
 import { SEPARATOR } from '@std/path';
 import Container from '../container/Container.ts';
+import EventServiceProvider from '../events/EventServiceProvider.ts';
 import { join_paths } from '../filesystem/functions.ts';
+import LogServiceProvider from '../log/LogServiceProvider.ts';
+import ContextServiceProvider from '../log/context/ContextServiceProvider.ts';
+import RoutingServiceProvider from '../routing/RoutingServiceProvider.ts';
 import Arr from '../support/Arr.ts';
 import Collection from '../support/Collection.ts';
+import Env from '../support/Env.ts';
+import ServiceProvider from '../support/ServiceProvider.ts';
 import Str from '../support/Str.ts';
 import { value } from '../support/helpers.ts';
 import { Class } from '../types.ts';
+import EnvironmentDetector from './EnvironmentDetector.ts';
+import ProviderRepository from './ProviderRepository.ts';
+import LoadEnvironmentVariables from './bootstrap/LoadEnvironmentVariables.ts';
+import ApplicationBuilder from './configuration/ApplicationBuilder.ts';
+import Filesystem from './filesystem/Filesystem.ts';
 
 export default class Application extends Container {
     /**
@@ -273,18 +284,11 @@ export default class Application extends Container {
         this.instance('path.config', this.getConfigPath());
         this.instance('path.database', this.getDatabasePath());
         this.instance('path.public', this.getPublicPath());
-        this.instance('path.resources', this.getResourcePath());
+        this.instance('path.resources', this.resourcePath());
         this.instance('path.storage', this.getStoragePath());
 
-        this.useBootstrapPath(value(() => {
-            const directory = this.getBasePath('.laravel');
-            return is_dir(directory) ? directory : this.getBasePath('bootstrap');
-        }));
-
-        this.useLangPath(value(() => {
-            const directory = this.getResourcePath('lang');
-            return is_dir(directory) ? directory : this.getBasePath('lang');
-        }));
+        this.useBootstrapPath(value(() => this.getBasePath('bootstrap')));
+        this.useLangPath(value(() => this.resourcePath('lang')));
     }
 
     /**
@@ -309,14 +313,14 @@ export default class Application extends Container {
      * Get the base path of the installation.
      */
     public getBasePath(path: string = ''): string {
-        return this.joinPaths(this.basePath, path);
+        return this.joinPaths(this.basePath ?? '', path);
     }
 
     /**
      * Get the path to the bootstrap directory.
      */
     public getBootstrapPath(path: string = ''): string {
-        return this.joinPaths(this.bootstrapPath, path);
+        return this.joinPaths(this.bootstrapPath ?? '', path);
     }
 
     /**
@@ -377,7 +381,7 @@ export default class Application extends Container {
      * Get the path to the language files.
      */
     public getLangPath(path: string = ''): string {
-        return this.joinPaths(this.langPath, path);
+        return this.joinPaths(this.langPath ?? '', path);
     }
 
     /**
@@ -529,7 +533,7 @@ export default class Application extends Container {
      * Detect the application's current environment.
      */
     public detectEnvironment(callback: () => unknown): string {
-        const args = this.runningInConsole() && Deno.args ? Deno.args : null;
+        const args = this.runningInConsole() && Deno.args ? Deno.args : undefined;
 
         this.bind('env', () => new EnvironmentDetector().detect(callback, args));
 
@@ -541,7 +545,8 @@ export default class Application extends Container {
      */
     public runningInConsole(): boolean {
         if (this.isRunningInConsole === undefined) {
-            this.isRunningInConsole = Env.get('APP_RUNNING_IN_CONSOLE') ?? Deno.env.get('TERM') !== undefined;
+            this.isRunningInConsole =
+                (Env.get('APP_RUNNING_IN_CONSOLE') ?? Deno.env.get('TERM') !== undefined) as boolean;
         }
 
         return this.isRunningInConsole as boolean;
@@ -569,6 +574,7 @@ export default class Application extends Container {
      * Determine if the application is running with debug mode enabled.
      */
     public hasDebugModeEnabled(): boolean {
+        // @ts-expect-error: need better typing
         return !!this.make('config').get('app.debug');
     }
 
@@ -583,10 +589,12 @@ export default class Application extends Container {
      * Register all of the configured providers.
      */
     public registerConfiguredProviders(): void {
+        // @ts-expect-error: need better typing
         const providers = new Collection(this.make('config').get('app.providers'));
 
-        (new ProviderRepository(this, new Filesystem(), this.getCachedServicesPath()))
-            .load(providers.collapse().toArray());
+        (new ProviderRepository(this, new Filesystem(), this.getCachedServicesPath())).load(
+            providers.collapse().toArray() as unknown[],
+        );
 
         this.fireAppCallbacks(this.registeredCallbacks);
     }
@@ -610,16 +618,12 @@ export default class Application extends Container {
         // If there are bindings / singletons set as properties on the provider we
         // will spin through them and register them with the application, which
         // serves as a convenience layer while registering a lot of bindings.
-        if (provider.bindings) {
-            for (const [key, value] of Object.entries(provider.bindings)) {
-                this.bind(key, value as ((container: Container, parameters?: unknown[]) => unknown) | Class);
-            }
+        for (const [key, value] of provider.bindings?.entries() ?? []) {
+            this.bind(key, value);
         }
 
-        if (provider.singletons) {
-            for (const [key, value] of Object.entries(provider.singletons)) {
-                this.singleton(key, value as ((container: Container, parameters?: unknown[]) => unknown) | Class);
-            }
+        for (const [key, value] of provider.singletons?.entries() ?? []) {
+            this.singleton(key, value);
         }
 
         this.markAsRegistered(provider);
@@ -636,11 +640,9 @@ export default class Application extends Container {
 
     /**
      * Get the registered service provider instance if it exists.
-     *
-     * @param  \Illuminate\Support\ServiceProvider|string  $provider
-     * @return \Illuminate\Support\ServiceProvider|null
      */
     public getProvider(provider: ServiceProvider | string): ServiceProvider | null {
+        // @ts-ignore: name exists on class
         const name = typeof provider === 'string' ? provider : provider.name;
 
         return this.serviceProviders[name] ?? null;
@@ -648,20 +650,18 @@ export default class Application extends Container {
 
     /**
      * Get the registered service provider instances if any exist.
-     *
-     * @param  \Illuminate\Support\ServiceProvider|string  $provider
      */
-    public getProviders(provider: ServiceProvider | string): Record<string, ServiceProvider> {
-        const name = typeof provider === 'string' ? provider : provider.name;
-
-        return Arr.where(this.serviceProviders, (value) => value instanceof name);
+    public getProviders(provider: ServiceProvider): Record<string, ServiceProvider> {
+        return Arr.where(this.serviceProviders, (value) => value instanceof provider) as Record<
+            string,
+            ServiceProvider
+        >;
     }
 
     /**
      * Resolve a service provider instance from the class name.
-     * @return \Illuminate\Support\ServiceProvider
      */
-    public resolveProvider(provider: ServiceProvider): ServiceProvider {
+    public resolveProvider(provider: Class<ServiceProvider>): ServiceProvider {
         return new provider(this);
     }
 
@@ -1177,44 +1177,44 @@ export default class Application extends Container {
     public registerCoreContainerAliases(): void {
         for (
             const [key, aliases] of Object.entries({
-                'app': [Application, Container],
-                'auth': [AuthManager, Factory],
-                'auth.driver': [Guard],
-                'auth.password': [PasswordBrokerManager, PasswordBrokerFactory],
-                'auth.password.broker': [PasswordBroker],
-                'blade.compiler': [BladeCompiler],
-                'cache': [CacheManager, Factory],
-                'cache.store': [Repository],
-                'config': [Repository],
-                'cookie': [CookieJar, Factory, QueueingFactory],
-                'db': [DatabaseManager, ConnectionResolverInterface],
-                'db.connection': [Connection, ConnectionInterface],
-                'db.schema': [Builder],
-                'encrypter': [Encrypter, StringEncrypter],
-                'events': [Dispatcher],
-                'files': [Filesystem],
-                'filesystem': [FilesystemManager, Factory],
-                'filesystem.disk': [Filesystem],
-                'filesystem.cloud': [Cloud],
-                'hash': [HashManager],
-                'hash.driver': [Hasher],
-                'log': [LogManager],
-                'mail.manager': [MailManager, Factory],
-                'mailer': [Mailer, MailQueue],
-                'queue': [QueueManager, Factory, Monitor],
-                'queue.connection': [Queue],
-                'queue.failer': [FailedJobProviderInterface],
-                'redirect': [Redirector],
-                'redis': [RedisManager, Factory],
-                'redis.connection': [Connections],
-                'request': [Request],
-                'router': [Router, Registrar, BindingRegistrar],
-                'session': [SessionManager],
-                'session.store': [Store, Session],
-                'translator': [Translator],
-                'url': [UrlGenerator],
-                'validator': [Factory],
-                'view': [Factory],
+                // 'app': [Application, Container],
+                // 'auth': [AuthManager, Factory],
+                // 'auth.driver': [Guard],
+                // 'auth.password': [PasswordBrokerManager, PasswordBrokerFactory],
+                // 'auth.password.broker': [PasswordBroker],
+                // 'blade.compiler': [BladeCompiler],
+                // 'cache': [CacheManager, Factory],
+                // 'cache.store': [Repository],
+                // 'config': [Repository],
+                // 'cookie': [CookieJar, Factory, QueueingFactory],
+                // 'db': [DatabaseManager, ConnectionResolverInterface],
+                // 'db.connection': [Connection, ConnectionInterface],
+                // 'db.schema': [Builder],
+                // 'encrypter': [Encrypter, StringEncrypter],
+                // 'events': [Dispatcher],
+                // 'files': [Filesystem],
+                // 'filesystem': [FilesystemManager, Factory],
+                // 'filesystem.disk': [Filesystem],
+                // 'filesystem.cloud': [Cloud],
+                // 'hash': [HashManager],
+                // 'hash.driver': [Hasher],
+                // 'log': [LogManager],
+                // 'mail.manager': [MailManager, Factory],
+                // 'mailer': [Mailer, MailQueue],
+                // 'queue': [QueueManager, Factory, Monitor],
+                // 'queue.connection': [Queue],
+                // 'queue.failer': [FailedJobProviderInterface],
+                // 'redirect': [Redirector],
+                // 'redis': [RedisManager, Factory],
+                // 'redis.connection': [Connections],
+                // 'request': [Request],
+                // 'router': [Router, Registrar, BindingRegistrar],
+                // 'session': [SessionManager],
+                // 'session.store': [Store, Session],
+                // 'translator': [Translator],
+                // 'url': [UrlGenerator],
+                // 'validator': [Factory],
+                // 'view': [Factory],
             })
         ) {
             for (const alias of aliases as Class[]) {
