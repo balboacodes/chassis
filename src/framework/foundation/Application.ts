@@ -1,3 +1,4 @@
+import { isClass } from '@balboacodes/chassis';
 import { rtrim } from '@balboacodes/php-utils';
 import '@std/dotenv/load';
 import { exists } from '@std/fs';
@@ -64,20 +65,18 @@ export default class Application extends Container {
 
     /**
      * All of the registered service providers.
-     *
-     * @var array<string, \Illuminate\Support\ServiceProvider>
      */
-    protected serviceProviders: Record<string, ServiceProvider> = {};
+    protected serviceProviders: Map<string | Class<ServiceProvider>, InstanceType<typeof ServiceProvider>> = new Map();
 
     /**
      * The names of the loaded service providers.
      */
-    protected loadedProviders: Record<string, boolean> = {};
+    protected loadedProviders: Map<string | Class<ServiceProvider>, boolean> = new Map();
 
     /**
      * The deferred services and their providers.
      */
-    protected deferredServices: Map<string | Class, ServiceProvider> = new Map();
+    protected deferredServices: Map<string | Class<ServiceProvider>, Class<ServiceProvider>> = new Map();
 
     /**
      * The custom bootstrap path defined by the developer.
@@ -601,18 +600,24 @@ export default class Application extends Container {
 
     /**
      * Register a service provider with the application.
-     *
-     * @param  \Illuminate\Support\ServiceProvider|string  $provider
-     * @return \Illuminate\Support\ServiceProvider
      */
-    public register(provider: ServiceProvider, force: boolean = false): ServiceProvider {
+    public register(
+        provider: InstanceType<typeof ServiceProvider> | Class<ServiceProvider>,
+        force: boolean = false,
+    ): ServiceProvider {
         const registered = this.getProvider(provider);
 
         if (registered && !force) {
             return registered;
         }
 
-        provider = this.resolveProvider(provider);
+        // If the given "provider" is a class, we will resolve it, passing in the
+        // application instance automatically for the developer. This is simply
+        // a more convenient way of specifying your service provider classes.
+        if (isClass(provider)) {
+            provider = this.resolveProvider(provider);
+        }
+
         provider.register();
 
         // If there are bindings / singletons set as properties on the provider we
@@ -641,21 +646,19 @@ export default class Application extends Container {
     /**
      * Get the registered service provider instance if it exists.
      */
-    public getProvider(provider: ServiceProvider | string): ServiceProvider | null {
-        // @ts-ignore: name exists on class
-        const name = typeof provider === 'string' ? provider : provider.name;
+    public getProvider(
+        provider: InstanceType<typeof ServiceProvider> | Class<ServiceProvider>,
+    ): ServiceProvider | undefined {
+        const name = isClass(provider) ? provider : provider.constructor.name;
 
-        return this.serviceProviders[name] ?? null;
+        return this.serviceProviders.get(name);
     }
 
     /**
      * Get the registered service provider instances if any exist.
      */
-    public getProviders(provider: ServiceProvider): Record<string, ServiceProvider> {
-        return Arr.where(this.serviceProviders, (value) => value instanceof provider) as Record<
-            string,
-            ServiceProvider
-        >;
+    public getProviders(provider: Class<ServiceProvider>): ServiceProvider[] {
+        return Arr.where(this.serviceProviders.values(), (value) => value instanceof provider) as ServiceProvider[];
     }
 
     /**
@@ -667,15 +670,12 @@ export default class Application extends Container {
 
     /**
      * Mark the given provider as registered.
-     *
-     * @param  \Illuminate\Support\ServiceProvider  $provider
      */
     protected markAsRegistered(provider: ServiceProvider): void {
-        const className = provider.name;
+        const className = provider.constructor.name;
 
-        this.serviceProviders[className] = provider;
-
-        this.loadedProviders[className] = true;
+        this.serviceProviders.set(className, provider);
+        this.loadedProviders.set(className, true);
     }
 
     /**
@@ -695,25 +695,27 @@ export default class Application extends Container {
     /**
      * Load the provider for a deferred service.
      */
-    public loadDeferredProvider(service: string | Class): void {
+    public loadDeferredProvider(service: string | Class<ServiceProvider>): void {
         if (!this.isDeferredService(service)) {
             return;
         }
 
         const provider = this.deferredServices.get(service);
 
-        // If the service provider has not already been loaded and registered we can
-        // register it with the application and remove the service from this list
-        // of deferred services, since it will already be loaded on subsequent.
-        if (!this.loadedProviders[provider]) {
-            this.registerDeferredProvider(provider, service);
+        if (provider) {
+            // If the service provider has not already been loaded and registered we can
+            // register it with the application and remove the service from this list
+            // of deferred services, since it will already be loaded on subsequent.
+            if (!this.loadedProviders.get(provider.constructor.name)) {
+                this.registerDeferredProvider(provider, service);
+            }
         }
     }
 
     /**
      * Register a deferred provider and service.
      */
-    public registerDeferredProvider(provider: ServiceProvider, service?: string | Class): void {
+    public registerDeferredProvider(provider: Class<ServiceProvider>, service?: string | Class<ServiceProvider>): void {
         // Once the provider that provides the deferred service has been registered we
         // will remove it from our local list of the deferred services with related
         // providers so that this container does not try to resolve it out again.
@@ -735,10 +737,10 @@ export default class Application extends Container {
     /**
      * Resolve the given type from the container.
      */
-    public override make<TClass extends string | Class>(
+    public override make<TClass extends string | Class<ServiceProvider>>(
         abstract: TClass,
         parameters: unknown[] = [],
-    ): TClass extends Class ? InstanceType<TClass> : unknown {
+    ): TClass extends Class<ServiceProvider> ? InstanceType<TClass> : unknown {
         abstract = this.getAlias(abstract) as TClass;
 
         this.loadDeferredProviderIfNeeded(abstract);
@@ -750,11 +752,11 @@ export default class Application extends Container {
     /**
      * Resolve the given type from the container.
      */
-    protected override resolve<TClass extends string | Class>(
+    protected override resolve<TClass extends string | Class<ServiceProvider>>(
         abstract: TClass,
         parameters: unknown[] = [],
         raiseEvents: boolean = true,
-    ): TClass extends Class ? InstanceType<TClass> : unknown {
+    ): TClass extends Class<ServiceProvider> ? InstanceType<TClass> : unknown {
         abstract = this.getAlias(abstract) as TClass;
 
         this.loadDeferredProviderIfNeeded(abstract);
@@ -766,7 +768,7 @@ export default class Application extends Container {
     /**
      * Load the deferred provider if the given type is a deferred service and the instance has not been loaded.
      */
-    protected loadDeferredProviderIfNeeded(abstract: string | Class): void {
+    protected loadDeferredProviderIfNeeded(abstract: string | Class<ServiceProvider>): void {
         if (this.isDeferredService(abstract) && !this.instances.has(abstract)) {
             this.loadDeferredProvider(abstract);
         }
