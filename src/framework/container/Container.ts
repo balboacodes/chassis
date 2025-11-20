@@ -1,5 +1,5 @@
-import { array_merge, array_pop, count } from '@balboacodes/php-utils';
 import { isClass } from '@balboacodes/chassis';
+import { array_merge, array_pop, count, unset } from '@balboacodes/php-utils';
 import { Class } from '../types.ts';
 
 export default class Container {
@@ -30,6 +30,16 @@ export default class Container {
      * The container's shared instances.
      */
     protected instances: Map<string | Class, InstanceType<Class>> = new Map();
+
+    /**
+     * The registered type aliases.
+     */
+    protected aliases: Map<string | Class, string | Class> = new Map();
+
+    /**
+     * The registered aliases keyed by the abstract name.
+     */
+    protected abstractAliases: Map<string | Class, (string | Class)[]> = new Map();
 
     /**
      * The parameter override stack.
@@ -81,13 +91,17 @@ export default class Container {
      * Determine if the given abstract type has been bound.
      */
     public bound(abstract: string | Class): boolean {
-        return this.bindings.has(abstract) || this.instances.has(abstract);
+        return this.bindings.has(abstract) || this.instances.has(abstract) || this.isAlias(abstract);
     }
 
     /**
      * Determine if the given abstract type has been resolved.
      */
     public resolved(abstract: string | Class): boolean {
+        if (this.isAlias(abstract)) {
+            abstract = this.getAlias(abstract);
+        }
+
         return this.resolvedTypes.has(abstract) || this.instances.has(abstract);
     }
 
@@ -100,6 +114,13 @@ export default class Container {
         }
 
         return this.bindings.get(abstract)?.['shared'] === true;
+    }
+
+    /**
+     * Determine if a given string or class is an alias.
+     */
+    public isAlias(name: string | Class): boolean {
+        return this.aliases.has(name);
     }
 
     /**
@@ -214,7 +235,11 @@ export default class Container {
      * Register an existing instance as shared in the container.
      */
     public instance(abstract: string | Class, instance: InstanceType<Class> | unknown): InstanceType<Class> | unknown {
+        this.removeAbstractAlias(abstract);
+
         const isBound = this.bound(abstract);
+
+        this.aliases.delete(abstract);
 
         // We'll check to determine if this type has been bound before, and if it has
         // we will fire the rebound callbacks registered with the container and it
@@ -229,9 +254,53 @@ export default class Container {
     }
 
     /**
+     * Remove an alias from the contextual binding alias cache.
+     */
+    protected removeAbstractAlias(searched: string | Class): void {
+        if (!this.aliases.has(searched)) {
+            return;
+        }
+
+        for (const [abstract, aliases] of this.abstractAliases.entries()) {
+            for (const [index, alias] of Object.entries(aliases)) {
+                if (alias === searched) {
+                    unset(this.abstractAliases.get(abstract) ?? [], index);
+                }
+            }
+        }
+    }
+
+    /**
+     * Alias a type to a different name.
+     *
+     * @throws {Error}
+     */
+    public alias(abstract: string | Class, alias: string | Class): void {
+        if (alias === abstract) {
+            throw new Error('[{abstract}] is aliased to itself.');
+        }
+
+        this.removeAbstractAlias(alias);
+
+        this.aliases.set(alias, abstract);
+
+        if (!this.abstractAliases.has(abstract)) {
+            this.abstractAliases.set(abstract, []);
+        }
+
+        this.abstractAliases.get(abstract)?.push(alias);
+    }
+
+    /**
      * Bind a new callback to an abstract's rebind event.
      */
     public rebinding(abstract: string | Class, callback: (container: Container, instance: Class) => unknown): unknown {
+        abstract = this.getAlias(abstract);
+
+        if (!this.reboundCallbacks.has(abstract)) {
+            this.reboundCallbacks.set(abstract, []);
+        }
+
         this.reboundCallbacks.get(abstract)?.push(callback);
 
         if (this.bound(abstract)) {
@@ -284,6 +353,8 @@ export default class Container {
      * Resolve the given type from the container.
      */
     protected resolve(abstract: string | Class, parameters: unknown[] = [], raiseEvents: boolean = true): unknown {
+        abstract = this.getAlias(abstract);
+
         // First we'll fire any event handlers which handle the "before" resolving of
         // specific types. This gives some hooks the chance to add various extends
         // calls to change the resolution of objects that they're interested in.
@@ -382,6 +453,7 @@ export default class Container {
         if (!isClass(abstract) && typeof abstract !== 'string' && callback === undefined) {
             this.globalBeforeResolvingCallbacks.push(abstract);
         } else {
+            abstract = this.getAlias(abstract);
             this.beforeResolvingCallbacks.get(abstract as string | Class)?.push(callback as () => unknown);
         }
     }
@@ -396,6 +468,7 @@ export default class Container {
         if (!isClass(abstract) && typeof abstract !== 'string' && callback === undefined) {
             this.globalResolvingCallbacks.push(abstract);
         } else {
+            abstract = this.getAlias(abstract);
             this.resolvingCallbacks.get(abstract as string | Class)?.push(
                 callback as (object: unknown, container: Container) => unknown,
             );
@@ -409,6 +482,7 @@ export default class Container {
         if (!isClass(abstract) && typeof abstract !== 'string' && callback === undefined) {
             this.globalAfterResolvingCallbacks.push(abstract);
         } else {
+            abstract = this.getAlias(abstract);
             this.afterResolvingCallbacks.get(abstract as string | Class)?.push(callback as () => unknown);
         }
     }
@@ -507,10 +581,18 @@ export default class Container {
     }
 
     /**
+     * Get the alias for an abstract if available.
+     */
+    public getAlias(abstract: string | Class): string | Class {
+        return this.aliases.get(abstract) ?? abstract;
+    }
+
+    /**
      * Drop all of the stale instances and aliases.
      */
     protected dropStaleInstances(abstract: string | Class): void {
         this.instances.delete(abstract);
+        this.aliases.delete(abstract);
     }
 
     /**
@@ -545,9 +627,11 @@ export default class Container {
      * Flush the container of all bindings and resolved instances.
      */
     public flush(): void {
+        this.aliases.clear();
         this.resolvedTypes.clear();
         this.bindings.clear();
         this.instances.clear();
+        this.abstractAliases.clear();
     }
 
     /**
