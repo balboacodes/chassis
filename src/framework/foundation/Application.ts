@@ -1,17 +1,10 @@
+import { in_array, rtrim } from '@balboacodes/php-utils';
 import '@std/dotenv/load';
-
-// // export default class Application {
-// //     public serve(): void {
-// //         Deno.serve((_req) => new Response(Deno.env.get('APP_NAME')));
-// //     }
-// // }
-
-import Container from '../container/Container.ts';
-import { Class } from '../types.ts';
-import { rtrim } from '@balboacodes/php-utils';
-import { value } from '../main.ts';
 import { SEPARATOR } from '@std/path';
+import Container from '../container/Container.ts';
 import { join_paths } from '../filesystem/functions.ts';
+import Str from '../support/Str.ts';
+import { value } from '../support/helpers.ts';
 
 export default class Application extends Container {
     /**
@@ -462,176 +455,125 @@ export default class Application extends Container {
         return join_paths(basePath, path);
     }
 
-    //     /**
-    //      * Get the path to the environment file directory.
-    //      *
-    //      * @return string
-    //      */
-    //     public environmentPath()
-    //     {
-    //         return $this->environmentPath ?: $this->basePath;
-    //     }
+    /**
+     * Get the path to the environment file directory.
+     */
+    public getEnvironmentPath(): string | undefined {
+        return this.environmentPath ?? this.basePath;
+    }
 
-    //     /**
-    //      * Set the directory for the environment file.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public useEnvironmentPath($path)
-    //     {
-    //         $this->environmentPath = $path;
+    /**
+     * Set the directory for the environment file.
+     */
+    public useEnvironmentPath(path: string): this {
+        this.environmentPath = path;
 
-    //         return $this;
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Set the environment file to be loaded during bootstrapping.
-    //      *
-    //      * @param  string  $file
-    //      * @return $this
-    //      */
-    //     public loadEnvironmentFrom($file)
-    //     {
-    //         $this->environmentFile = $file;
+    /**
+     * Set the environment file to be loaded during bootstrapping.
+     */
+    public loadEnvironmentFrom(file: string): this {
+        this.environmentFile = file;
 
-    //         return $this;
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Get the environment file the application is using.
-    //      *
-    //      * @return string
-    //      */
-    //     public environmentFile()
-    //     {
-    //         return $this->environmentFile ?: '.env';
-    //     }
+    /**
+     * Get the environment file the application is using.
+     */
+    public getEnvironmentFile(): string {
+        return this.environmentFile || '.env';
+    }
 
-    //     /**
-    //      * Get the fully qualified path to the environment file.
-    //      *
-    //      * @return string
-    //      */
-    //     public environmentFilePath()
-    //     {
-    //         return $this->environmentPath().DIRECTORY_SEPARATOR.$this->environmentFile();
-    //     }
+    /**
+     * Get the fully qualified path to the environment file.
+     */
+    public environmentFilePath(): string {
+        return this.getEnvironmentPath() + SEPARATOR + this.getEnvironmentFile();
+    }
 
-    //     /**
-    //      * Get or check the current application environment.
-    //      *
-    //      * @param  string|array  ...$environments
-    //      * @return string|bool
-    //      */
-    //     public environment(...$environments)
-    //     {
-    //         if (count($environments) > 0) {
-    //             $patterns = is_array($environments[0]) ? $environments[0] : $environments;
+    /**
+     * Get or check the current application environment.
+     */
+    public environment(...environments: string[]): string | boolean {
+        if (environments.length > 0) {
+            const patterns = Array.isArray(environments[0]) ? environments[0] : environments;
 
-    //             return Str::is($patterns, $this['env']);
-    //         }
+            return Str.is(patterns, this.make('env') as string);
+        }
 
-    //         return $this['env'];
-    //     }
+        return this.make('env') as string;
+    }
 
-    //     /**
-    //      * Determine if the application is in the local environment.
-    //      *
-    //      * @return bool
-    //      */
-    //     public isLocal()
-    //     {
-    //         return $this['env'] === 'local';
-    //     }
+    /**
+     * Determine if the application is in the local environment.
+     */
+    public isLocal(): boolean {
+        return this.make('env') === 'local';
+    }
 
-    //     /**
-    //      * Determine if the application is in the production environment.
-    //      *
-    //      * @return bool
-    //      */
-    //     public isProduction()
-    //     {
-    //         return $this['env'] === 'production';
-    //     }
+    /**
+     * Determine if the application is in the production environment.
+     */
+    public isProduction(): boolean {
+        return this.make('env') === 'production';
+    }
 
-    //     /**
-    //      * Detect the application's current environment.
-    //      *
-    //      * @param  \Closure  $callback
-    //      * @return string
-    //      */
-    //     public detectEnvironment(Closure $callback)
-    //     {
-    //         $args = $this->runningInConsole() && isset($_SERVER['argv'])
-    //             ? $_SERVER['argv']
-    //             : null;
+    /**
+     * Detect the application's current environment.
+     */
+    public detectEnvironment(callback: () => unknown): string {
+        const args = this.runningInConsole() && Deno.args ? Deno.args : null;
 
-    //         return $this['env'] = (new EnvironmentDetector)->detect($callback, $args);
-    //     }
+        this.bind('env', () => new EnvironmentDetector().detect(callback, args));
 
-    //     /**
-    //      * Determine if the application is running in the console.
-    //      *
-    //      * @return bool
-    //      */
-    //     public runningInConsole()
-    //     {
-    //         if ($this->isRunningInConsole === null) {
-    //             $this->isRunningInConsole = Env::get('APP_RUNNING_IN_CONSOLE') ?? (\PHP_SAPI === 'cli' || \PHP_SAPI === 'phpdbg');
-    //         }
+        return this.make('env') as string;
+    }
 
-    //         return $this->isRunningInConsole;
-    //     }
+    /**
+     * Determine if the application is running in the console.
+     */
+    public runningInConsole(): boolean {
+        if (this.isRunningInConsole === undefined) {
+            this.isRunningInConsole = Env.get('APP_RUNNING_IN_CONSOLE') ?? Deno.env.get('TERM') !== undefined;
+        }
 
-    //     /**
-    //      * Determine if the application is running any of the given console commands.
-    //      *
-    //      * @param  string|array  ...$commands
-    //      * @return bool
-    //      */
-    //     public runningConsoleCommand(...$commands)
-    //     {
-    //         if (! $this->runningInConsole()) {
-    //             return false;
-    //         }
+        return this.isRunningInConsole as boolean;
+    }
 
-    //         return in_array(
-    //             $_SERVER['argv'][1] ?? null,
-    //             is_array($commands[0]) ? $commands[0] : $commands
-    //         );
-    //     }
+    /**
+     * Determine if the application is running any of the given console commands.
+     */
+    public runningConsoleCommand(...commands: string[]): boolean {
+        if (!this.runningInConsole()) {
+            return false;
+        }
 
-    //     /**
-    //      * Determine if the application is running unit tests.
-    //      *
-    //      * @return bool
-    //      */
-    //     public runningUnitTests()
-    //     {
-    //         return $this->bound('env') && $this['env'] === 'testing';
-    //     }
+        return in_array(Deno.args[0] ?? null, Array.isArray(commands[0]) ? commands[0] : commands);
+    }
 
-    //     /**
-    //      * Determine if the application is running with debug mode enabled.
-    //      *
-    //      * @return bool
-    //      */
-    //     public hasDebugModeEnabled()
-    //     {
-    //         return (bool) $this['config']->get('app.debug');
-    //     }
+    /**
+     * Determine if the application is running unit tests.
+     */
+    public runningUnitTests(): boolean {
+        return this.bound('env') && this.make('env') === 'testing';
+    }
 
-    //     /**
-    //      * Register a new registered listener.
-    //      *
-    //      * @param  callable  $callback
-    //      * @return void
-    //      */
-    //     public registered($callback)
-    //     {
-    //         $this->registeredCallbacks[] = $callback;
-    //     }
+    /**
+     * Determine if the application is running with debug mode enabled.
+     */
+    public hasDebugModeEnabled(): boolean {
+        return !!this.make('config').get('app.debug');
+    }
+
+    /**
+     * Register a new registered listener.
+     */
+    public registered(callback: () => unknown): void {
+        this.registeredCallbacks.push(callback);
+    }
 
     //     /**
     //      * Register all of the configured providers.
