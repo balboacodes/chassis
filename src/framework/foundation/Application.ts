@@ -609,10 +609,7 @@ export default class Application extends Container
     /**
      * Register a service provider with the application.
      */
-    public register(
-        provider: InstanceType<typeof ServiceProvider> | Class<ServiceProvider>,
-        force: boolean = false,
-    ): ServiceProvider {
+    public register(provider: ServiceProvider | Class<ServiceProvider>, force: boolean = false): ServiceProvider {
         const registered = this.getProvider(provider);
 
         if (registered && !force) {
@@ -654,9 +651,7 @@ export default class Application extends Container
     /**
      * Get the registered service provider instance if it exists.
      */
-    public getProvider(
-        provider: InstanceType<typeof ServiceProvider> | Class<ServiceProvider>,
-    ): ServiceProvider | undefined {
+    public getProvider(provider: ServiceProvider | Class<ServiceProvider>): ServiceProvider | undefined {
         const name = isClass(provider) ? provider : provider.constructor.name;
 
         return this.serviceProviders.get(name);
@@ -703,7 +698,7 @@ export default class Application extends Container
     /**
      * Load the provider for a deferred service.
      */
-    public loadDeferredProvider(service: string | Class<ServiceProvider>): void {
+    public loadDeferredProvider(service: string | Class<ServiceProvider> | symbol): void {
         if (!this.isDeferredService(service)) {
             return;
         }
@@ -723,7 +718,10 @@ export default class Application extends Container
     /**
      * Register a deferred provider and service.
      */
-    public registerDeferredProvider(provider: Class<ServiceProvider>, service?: string | Class<ServiceProvider>): void {
+    public registerDeferredProvider(
+        provider: Class<ServiceProvider>,
+        service?: string | Class<ServiceProvider> | symbol,
+    ): void {
         // Once the provider that provides the deferred service has been registered we
         // will remove it from our local list of the deferred services with related
         // providers so that this container does not try to resolve it out again.
@@ -745,7 +743,7 @@ export default class Application extends Container
     /**
      * Resolve the given type from the container.
      */
-    public override make<TClass extends string | Class<ServiceProvider>>(
+    public override make<TClass extends string | Class<ServiceProvider> | symbol>(
         abstract: TClass,
         parameters: unknown[] = [],
     ): TClass extends Class<ServiceProvider> ? InstanceType<TClass> : unknown {
@@ -760,7 +758,7 @@ export default class Application extends Container
     /**
      * Resolve the given type from the container.
      */
-    protected override resolve<TClass extends string | Class<ServiceProvider>>(
+    protected override resolve<TClass extends string | Class<ServiceProvider> | symbol>(
         abstract: TClass,
         parameters: unknown[] = [],
         raiseEvents: boolean = true,
@@ -776,7 +774,7 @@ export default class Application extends Container
     /**
      * Load the deferred provider if the given type is a deferred service and the instance has not been loaded.
      */
-    protected loadDeferredProviderIfNeeded(abstract: string | Class<ServiceProvider>): void {
+    protected loadDeferredProviderIfNeeded(abstract: string | Class<ServiceProvider> | symbol): void {
         if (this.isDeferredService(abstract) && !this.instances.has(abstract)) {
             this.loadDeferredProvider(abstract);
         }
@@ -785,7 +783,7 @@ export default class Application extends Container
     /**
      * Determine if the given abstract type has been bound.
      */
-    public override bound(abstract: string | Class<ServiceProvider>): boolean {
+    public override bound(abstract: string | Class<ServiceProvider> | symbol): boolean {
         return this.isDeferredService(abstract) || super.bound(abstract);
     }
 
@@ -1063,7 +1061,7 @@ export default class Application extends Container
     /**
      * Get the service providers that have been loaded.
      */
-    public getLoadedProviders(): Map<string | Class<ServiceProvider>, boolean> {
+    public getLoadedProviders(): Map<string | symbol | Class<ServiceProvider>, boolean> {
         return this.loadedProviders;
     }
 
@@ -1077,28 +1075,28 @@ export default class Application extends Container
     /**
      * Get the application's deferred services.
      */
-    public getDeferredServices(): Map<string | Class<ServiceProvider>, Class<ServiceProvider>> {
+    public getDeferredServices(): Map<string | symbol | Class<ServiceProvider>, Class<ServiceProvider>> {
         return this.deferredServices;
     }
 
     /**
      * Set the application's deferred services.
      */
-    public setDeferredServices(services: Map<string | Class<ServiceProvider>, Class<ServiceProvider>>): void {
+    public setDeferredServices(services: Map<string | symbol | Class<ServiceProvider>, Class<ServiceProvider>>): void {
         this.deferredServices = services;
     }
 
     /**
      * Determine if the given service is a deferred service.
      */
-    public isDeferredService(service: string | Class<ServiceProvider>): boolean {
+    public isDeferredService(service: string | Class<ServiceProvider> | symbol): boolean {
         return this.deferredServices.has(service);
     }
 
     /**
      * Add a map of services to the application's deferred services.
      */
-    public addDeferredServices(services: Map<string | Class<ServiceProvider>, Class<ServiceProvider>>): void {
+    public addDeferredServices(services: Map<string | Class<ServiceProvider> | symbol, Class<ServiceProvider>>): void {
         for (const [service, provider] of services.entries()) {
             this.deferredServices.set(service, provider);
         }
@@ -1107,7 +1105,9 @@ export default class Application extends Container
     /**
      * Remove an array of services from the application's deferred services.
      */
-    public removeDeferredServices(services: Map<string | Class<ServiceProvider>, Class<ServiceProvider>>): void {
+    public removeDeferredServices(
+        services: Map<string | Class<ServiceProvider> | symbol, Class<ServiceProvider>>,
+    ): void {
         for (const service of services.keys()) {
             this.deferredServices.delete(service);
         }

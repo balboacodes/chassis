@@ -29,7 +29,7 @@ export default class Container {
     /**
      * The container's shared instances.
      */
-    protected instances: Map<string | Class | symbol, InstanceType<Class>> = new Map();
+    protected instances: Map<string | Class | symbol, unknown> = new Map();
 
     /**
      * The registered type aliases.
@@ -235,7 +235,7 @@ export default class Container {
     /**
      * Register an existing instance as shared in the container.
      */
-    public instance(abstract: string | Class | symbol, instance: InstanceType<Class>): InstanceType<Class> {
+    public instance<T>(abstract: string | Class | symbol, instance: T): T {
         this.removeAbstractAlias(abstract);
 
         const isBound = this.bound(abstract);
