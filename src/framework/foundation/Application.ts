@@ -33,7 +33,7 @@ export default class Application extends Container {
     /**
      * Indicates if the application has "booted".
      */
-    protected booted: boolean = false;
+    protected hasBooted: boolean = false;
 
     /**
      * The array of booting callbacks.
@@ -43,7 +43,7 @@ export default class Application extends Container {
     /**
      * The array of booted callbacks.
      */
-    protected bootedCallbacks: (() => unknown)[] = [];
+    protected bootedCallbacks: ((application?: Application) => unknown)[] = [];
 
     /**
      * The array of terminating callbacks.
@@ -767,111 +767,87 @@ export default class Application extends Container {
         }
     }
 
-    //     /**
-    //      * Determine if the given abstract type has been bound.
-    //      *
-    //      * @param  string  $abstract
-    //      * @return bool
-    //      */
-    //     public bound($abstract)
-    //     {
-    //         return $this->isDeferredService($abstract) || parent::bound($abstract);
-    //     }
+    /**
+     * Determine if the given abstract type has been bound.
+     */
+    public override bound(abstract: string | Class): boolean {
+        return this.isDeferredService(abstract) || super.bound(abstract);
+    }
 
-    //     /**
-    //      * Determine if the application has booted.
-    //      *
-    //      * @return bool
-    //      */
-    //     public isBooted()
-    //     {
-    //         return $this->booted;
-    //     }
+    /**
+     * Determine if the application has booted.
+     */
+    public isBooted(): boolean {
+        return this.hasBooted;
+    }
 
-    //     /**
-    //      * Boot the application's service providers.
-    //      *
-    //      * @return void
-    //      */
-    //     public boot()
-    //     {
-    //         if ($this->isBooted()) {
-    //             return;
-    //         }
+    /**
+     * Boot the application's service providers.
+     */
+    public boot(): void {
+        if (this.isBooted()) {
+            return;
+        }
 
-    //         // Once the application has booted we will also fire some "booted" callbacks
-    //         // for any listeners that need to do work after this initial booting gets
-    //         // finished. This is useful when ordering the boot-up processes we run.
-    //         $this->fireAppCallbacks($this->bootingCallbacks);
+        // Once the application has booted we will also fire some "booted" callbacks
+        // for any listeners that need to do work after this initial booting gets
+        // finished. This is useful when ordering the boot-up processes we run.
+        this.fireAppCallbacks(this.bootingCallbacks);
 
-    //         array_walk($this->serviceProviders, function ($p) {
-    //             $this->bootProvider($p);
-    //         });
+        for (const p of Object.values(this.serviceProviders)) {
+            this.bootProvider(p);
+        }
 
-    //         $this->booted = true;
+        this.hasBooted = true;
 
-    //         $this->fireAppCallbacks($this->bootedCallbacks);
-    //     }
+        this.fireAppCallbacks(this.bootedCallbacks);
+    }
 
-    //     /**
-    //      * Boot the given service provider.
-    //      *
-    //      * @param  \Illuminate\Support\ServiceProvider  $provider
-    //      * @return void
-    //      */
-    //     protected bootProvider(ServiceProvider $provider)
-    //     {
-    //         $provider->callBootingCallbacks();
+    /**
+     * Boot the given service provider.
+     *
+     * @param  \Illuminate\Support\ServiceProvider  $provider
+     */
+    protected bootProvider(provider: ServiceProvider): void {
+        provider.callBootingCallbacks();
 
-    //         if (method_exists($provider, 'boot')) {
-    //             $this->call([$provider, 'boot']);
-    //         }
+        if (provider.boot) {
+            provider.boot();
+        }
 
-    //         $provider->callBootedCallbacks();
-    //     }
+        provider.callBootedCallbacks();
+    }
 
-    //     /**
-    //      * Register a new boot listener.
-    //      *
-    //      * @param  callable  $callback
-    //      * @return void
-    //      */
-    //     public booting($callback)
-    //     {
-    //         $this->bootingCallbacks[] = $callback;
-    //     }
+    /**
+     * Register a new boot listener.
+     */
+    public booting(callback: () => unknown): void {
+        this.bootingCallbacks.push(callback);
+    }
 
-    //     /**
-    //      * Register a new "booted" listener.
-    //      *
-    //      * @param  callable  $callback
-    //      * @return void
-    //      */
-    //     public booted($callback)
-    //     {
-    //         $this->bootedCallbacks[] = $callback;
+    /**
+     * Register a new "booted" listener.
+     */
+    public booted(callback: (application?: Application) => unknown): void {
+        this.bootedCallbacks.push(callback);
 
-    //         if ($this->isBooted()) {
-    //             $callback($this);
-    //         }
-    //     }
+        if (this.isBooted()) {
+            callback(this);
+        }
+    }
 
-    //     /**
-    //      * Call the booting callbacks for the application.
-    //      *
-    //      * @param  callable[]  $callbacks
-    //      * @return void
-    //      */
-    //     protected fireAppCallbacks(array &$callbacks)
-    //     {
-    //         $index = 0;
+    /**
+     * Call the booting callbacks for the application.
+     */
+    protected fireAppCallbacks(callbacks: ((application: Application) => unknown)[]): void {
+        let index = 0;
 
-    //         while ($index < count($callbacks)) {
-    //             $callbacks[$index]($this);
+        while (index < callbacks.length) {
+            callbacks[index](this);
 
-    //             $index++;
-    //         }
-    //     }
+            index++;
+        }
+    }
 
     //     /**
     //      * {@inheritdoc}
