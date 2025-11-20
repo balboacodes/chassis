@@ -7,17 +7,22 @@ import '@std/dotenv/load';
 // // }
 
 import Container from '../container/Container.ts';
+import { Class } from '../types.ts';
+import { rtrim } from '@balboacodes/php-utils';
+import { value } from '../main.ts';
+import { SEPARATOR } from '@std/path';
+import { join_paths } from '../filesystem/functions.ts';
 
 export default class Application extends Container {
     /**
-     * The Chassis framework version.
+     * The framework version.
      */
     static readonly VERSION = '0.1.0';
 
     /**
-     * The base path for the Chassis installation.
+     * The base path for the installation.
      */
-    protected basePath: string;
+    protected basePath?: string;
 
     /**
      * The array of registered callbacks.
@@ -69,42 +74,42 @@ export default class Application extends Container {
     /**
      * The custom bootstrap path defined by the developer.
      */
-    protected bootstrapPath: string;
+    protected bootstrapPath?: string;
 
     /**
      * The custom application path defined by the developer.
      */
-    protected appPath: string;
+    protected appPath?: string;
 
     /**
      * The custom configuration path defined by the developer.
      */
-    protected configPath: string;
+    protected configPath?: string;
 
     /**
      * The custom database path defined by the developer.
      */
-    protected databasePath: string;
+    protected databasePath?: string;
 
     /**
      * The custom language file path defined by the developer.
      */
-    protected langPath: string;
+    protected langPath?: string;
 
     /**
      * The custom public / web path defined by the developer.
      */
-    protected publicPath: string;
+    protected publicPath?: string;
 
     /**
      * The custom storage path defined by the developer.
      */
-    protected storagePath: string;
+    protected storagePath?: string;
 
     /**
      * The custom environment path defined by the developer.
      */
-    protected environmentPath: string;
+    protected environmentPath?: string;
 
     /**
      * The environment file to load during bootstrapping.
@@ -119,7 +124,7 @@ export default class Application extends Container {
     /**
      * The application namespace.
      */
-    protected namespace: string;
+    protected namespace?: string;
 
     /**
      * Indicates if the framework's base configuration should be merged.
@@ -132,7 +137,7 @@ export default class Application extends Container {
     protected $absoluteCachePathPrefixes: string[] = ['/', '\\'];
 
     /**
-     * Create a new Illuminate application instance.
+     * Create a new application instance.
      */
     public constructor(basePath?: string) {
         super();
@@ -147,7 +152,7 @@ export default class Application extends Container {
     }
 
     /**
-     * Begin configuring a new Laravel application instance.
+     * Begin configuring a new application instance.
      * @return \Illuminate\Foundation\Configuration\ApplicationBuilder
      */
     public static configure(basePath?: string): ApplicationBuilder {
@@ -166,7 +171,9 @@ export default class Application extends Container {
      * Infer the application's base directory from the environment.
      */
     public static inferBasePath(): string {
+        // @ts-expect-error:
         if (Deno.env.APP_BASE_PATH) {
+            // @ts-expect-error:
             return Deno.env.APP_BASE_PATH;
         }
 
@@ -180,424 +187,287 @@ export default class Application extends Container {
         return Application.VERSION;
     }
 
-    //     /**
-    //      * Register the basic bindings into the container.
-    //      *
-    //      * @return void
-    //      */
-    //     protected function registerBaseBindings()
-    //     {
-    //         static::setInstance($this);
+    /**
+     * Register the basic bindings into the container.
+     */
+    protected registerBaseBindings(): void {
+        Application.setInstance(this);
 
-    //         $this->instance('app', $this);
+        this.instance('app', this);
 
-    //         $this->instance(Container::class, $this);
-    //         $this->singleton(Mix::class);
+        this.instance(Container, this);
+    }
 
-    //         $this->singleton(PackageManifest::class, fn () => new PackageManifest(
-    //             new Filesystem, $this->basePath(), $this->getCachedPackagesPath()
-    //         ));
-    //     }
+    /**
+     * Register all of the base service providers.
+     */
+    protected registerBaseServiceProviders(): void {
+        this.register(new EventServiceProvider(this));
+        this.register(new LogServiceProvider(this));
+        this.register(new ContextServiceProvider(this));
+        this.register(new RoutingServiceProvider(this));
+    }
 
-    //     /**
-    //      * Register all of the base service providers.
-    //      *
-    //      * @return void
-    //      */
-    //     protected function registerBaseServiceProviders()
-    //     {
-    //         $this->register(new EventServiceProvider($this));
-    //         $this->register(new LogServiceProvider($this));
-    //         $this->register(new ContextServiceProvider($this));
-    //         $this->register(new RoutingServiceProvider($this));
-    //     }
+    /**
+     * Run the given array of bootstrap classes.
+     */
+    public bootstrapWith(bootstrappers: string[]): void {
+        this.hasBeenBootstrapped = true;
 
-    //     /**
-    //      * Register any services needed for Laravel Cloud.
-    //      *
-    //      * @return void
-    //      */
-    //     protected function registerLaravelCloudServices()
-    //     {
-    //         if (! laravel_cloud()) {
-    //             return;
-    //         }
+        for (const bootstrapper of bootstrappers) {
+            // @ts-expect-error: need better typing
+            this.make('events').dispatch('bootstrapping: ' + bootstrapper, [this]);
 
-    //         $this['events']->listen(
-    //             'bootstrapping: *',
-    //             fn ($bootstrapper) => Cloud::bootstrapperBootstrapping($this, Str::after($bootstrapper, 'bootstrapping: '))
-    //         );
+            // @ts-expect-error: need better typing
+            this.make(bootstrapper).bootstrap(this);
 
-    //         $this['events']->listen(
-    //             'bootstrapped: *',
-    //             fn ($bootstrapper) => Cloud::bootstrapperBootstrapped($this, Str::after($bootstrapper, 'bootstrapped: '))
-    //         );
-    //     }
+            // @ts-expect-error: need better typing
+            this.make('events').dispatch('bootstrapped: ' + bootstrapper, [this]);
+        }
+    }
 
-    //     /**
-    //      * Run the given array of bootstrap classes.
-    //      *
-    //      * @param  string[]  $bootstrappers
-    //      * @return void
-    //      */
-    //     public function bootstrapWith(array $bootstrappers)
-    //     {
-    //         $this->hasBeenBootstrapped = true;
+    /**
+     * Register a callback to run after loading the environment.
+     */
+    public afterLoadingEnvironment(callback: () => unknown): void {
+        this.afterBootstrapping(LoadEnvironmentVariables.name, callback);
+    }
 
-    //         foreach ($bootstrappers as $bootstrapper) {
-    //             $this['events']->dispatch('bootstrapping: '.$bootstrapper, [$this]);
+    /**
+     * Register a callback to run before a bootstrapper.
+     */
+    public beforeBootstrapping(bootstrapper: string, callback: () => unknown): void {
+        // @ts-expect-error: need better typing
+        this.make('events').listen('bootstrapping: ' + bootstrapper, callback);
+    }
 
-    //             $this->make($bootstrapper)->bootstrap($this);
+    /**
+     * Register a callback to run after a bootstrapper.
+     */
+    public afterBootstrapping(bootstrapper: string, callback: () => unknown): void {
+        // @ts-expect-error: need better typing
+        this.make('events').listen('bootstrapped: ' + bootstrapper, callback);
+    }
 
-    //             $this['events']->dispatch('bootstrapped: '.$bootstrapper, [$this]);
-    //         }
-    //     }
+    /**
+     * Determine if the application has been bootstrapped before.
+     */
+    public getHasBeenBootstrapped(): boolean {
+        return this.hasBeenBootstrapped;
+    }
 
-    //     /**
-    //      * Register a callback to run after loading the environment.
-    //      *
-    //      * @param  \Closure  $callback
-    //      * @return void
-    //      */
-    //     public function afterLoadingEnvironment(Closure $callback)
-    //     {
-    //         $this->afterBootstrapping(
-    //             LoadEnvironmentVariables::class, $callback
-    //         );
-    //     }
+    /**
+     * Set the base path for the application.
+     */
+    public setBasePath(basePath: string): this {
+        this.basePath = rtrim(basePath, '/');
 
-    //     /**
-    //      * Register a callback to run before a bootstrapper.
-    //      *
-    //      * @param  string  $bootstrapper
-    //      * @param  \Closure  $callback
-    //      * @return void
-    //      */
-    //     public function beforeBootstrapping($bootstrapper, Closure $callback)
-    //     {
-    //         $this['events']->listen('bootstrapping: '.$bootstrapper, $callback);
-    //     }
+        this.bindPathsInContainer();
 
-    //     /**
-    //      * Register a callback to run after a bootstrapper.
-    //      *
-    //      * @param  string  $bootstrapper
-    //      * @param  \Closure  $callback
-    //      * @return void
-    //      */
-    //     public function afterBootstrapping($bootstrapper, Closure $callback)
-    //     {
-    //         $this['events']->listen('bootstrapped: '.$bootstrapper, $callback);
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Determine if the application has been bootstrapped before.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function hasBeenBootstrapped()
-    //     {
-    //         return $this->hasBeenBootstrapped;
-    //     }
+    /**
+     * Bind all of the application paths in the container.
+     */
+    protected bindPathsInContainer(): void {
+        this.instance('path', this.path());
+        this.instance('path.base', this.getBasePath());
+        this.instance('path.config', this.getConfigPath());
+        this.instance('path.database', this.getDatabasePath());
+        this.instance('path.public', this.getPublicPath());
+        this.instance('path.resources', this.getResourcePath());
+        this.instance('path.storage', this.getStoragePath());
 
-    //     /**
-    //      * Set the base path for the application.
-    //      *
-    //      * @param  string  $basePath
-    //      * @return $this
-    //      */
-    //     public function setBasePath($basePath)
-    //     {
-    //         $this->basePath = rtrim($basePath, '\/');
+        this.useBootstrapPath(value(() => {
+            const directory = this.getBasePath('.laravel');
+            return is_dir(directory) ? directory : this.getBasePath('bootstrap');
+        }));
 
-    //         $this->bindPathsInContainer();
+        this.useLangPath(value(() => {
+            const directory = this.getResourcePath('lang');
+            return is_dir(directory) ? directory : this.getBasePath('lang');
+        }));
+    }
 
-    //         return $this;
-    //     }
+    /**
+     * Get the path to the application "app" directory.
+     */
+    public path(path: string = ''): string {
+        return this.joinPaths(this.appPath ?? this.getBasePath('app'), path);
+    }
 
-    //     /**
-    //      * Bind all of the application paths in the container.
-    //      *
-    //      * @return void
-    //      */
-    //     protected function bindPathsInContainer()
-    //     {
-    //         $this->instance('path', $this->path());
-    //         $this->instance('path.base', $this->basePath());
-    //         $this->instance('path.config', $this->configPath());
-    //         $this->instance('path.database', $this->databasePath());
-    //         $this->instance('path.public', $this->publicPath());
-    //         $this->instance('path.resources', $this->resourcePath());
-    //         $this->instance('path.storage', $this->storagePath());
+    /**
+     * Set the application directory.
+     */
+    public useAppPath(path: string): this {
+        this.appPath = path;
 
-    //         $this->useBootstrapPath(value(function () {
-    //             return is_dir($directory = $this->basePath('.laravel'))
-    //                 ? $directory
-    //                 : $this->basePath('bootstrap');
-    //         }));
+        this.instance('path', path);
 
-    //         $this->useLangPath(value(function () {
-    //             return is_dir($directory = $this->resourcePath('lang'))
-    //                 ? $directory
-    //                 : $this->basePath('lang');
-    //         }));
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Get the path to the application "app" directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function path($path = '')
-    //     {
-    //         return $this->joinPaths($this->appPath ?: $this->basePath('app'), $path);
-    //     }
+    /**
+     * Get the base path of the installation.
+     */
+    public getBasePath(path: string = ''): string {
+        return this.joinPaths(this.basePath, path);
+    }
 
-    //     /**
-    //      * Set the application directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useAppPath($path)
-    //     {
-    //         $this->appPath = $path;
+    /**
+     * Get the path to the bootstrap directory.
+     */
+    public getBootstrapPath(path: string = ''): string {
+        return this.joinPaths(this.bootstrapPath, path);
+    }
 
-    //         $this->instance('path', $path);
+    /**
+     * Get the path to the service provider list in the bootstrap directory.
+     */
+    public getBootstrapProvidersPath(): string {
+        return this.getBootstrapPath('providers.ts');
+    }
 
-    //         return $this;
-    //     }
+    /**
+     * Set the bootstrap file directory.
+     */
+    public useBootstrapPath(path: string): this {
+        this.bootstrapPath = path;
 
-    //     /**
-    //      * Get the base path of the Laravel installation.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function basePath($path = '')
-    //     {
-    //         return $this->joinPaths($this->basePath, $path);
-    //     }
+        this.instance('path.bootstrap', path);
 
-    //     /**
-    //      * Get the path to the bootstrap directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function bootstrapPath($path = '')
-    //     {
-    //         return $this->joinPaths($this->bootstrapPath, $path);
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Get the path to the service provider list in the bootstrap directory.
-    //      *
-    //      * @return string
-    //      */
-    //     public function getBootstrapProvidersPath()
-    //     {
-    //         return $this->bootstrapPath('providers.php');
-    //     }
+    /**
+     * Get the path to the application configuration files.
+     */
+    public getConfigPath(path: string = ''): string {
+        return this.joinPaths(this.configPath ?? this.getBasePath('config'), path);
+    }
 
-    //     /**
-    //      * Set the bootstrap file directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useBootstrapPath($path)
-    //     {
-    //         $this->bootstrapPath = $path;
+    /**
+     * Set the configuration directory.
+     */
+    public useConfigPath(path: string): this {
+        this.configPath = path;
 
-    //         $this->instance('path.bootstrap', $path);
+        this.instance('path.config', path);
 
-    //         return $this;
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Get the path to the application configuration files.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function configPath($path = '')
-    //     {
-    //         return $this->joinPaths($this->configPath ?: $this->basePath('config'), $path);
-    //     }
+    /**
+     * Get the path to the database directory.
+     */
+    public getDatabasePath(path: string = ''): string {
+        return this.joinPaths(this.databasePath ?? this.getBasePath('database'), path);
+    }
 
-    //     /**
-    //      * Set the configuration directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useConfigPath($path)
-    //     {
-    //         $this->configPath = $path;
+    /**
+     * Set the database directory.
+     */
+    public useDatabasePath(path: string): this {
+        this.databasePath = path;
 
-    //         $this->instance('path.config', $path);
+        this.instance('path.database', path);
 
-    //         return $this;
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Get the path to the database directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function databasePath($path = '')
-    //     {
-    //         return $this->joinPaths($this->databasePath ?: $this->basePath('database'), $path);
-    //     }
+    /**
+     * Get the path to the language files.
+     */
+    public getLangPath(path: string = ''): string {
+        return this.joinPaths(this.langPath, path);
+    }
 
-    //     /**
-    //      * Set the database directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useDatabasePath($path)
-    //     {
-    //         $this->databasePath = $path;
+    /**
+     * Set the language file directory.
+     */
+    public useLangPath(path: string): this {
+        this.langPath = path;
 
-    //         $this->instance('path.database', $path);
+        this.instance('path.lang', path);
 
-    //         return $this;
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Get the path to the language files.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function langPath($path = '')
-    //     {
-    //         return $this->joinPaths($this->langPath, $path);
-    //     }
+    /**
+     * Get the path to the public / web directory.
+     */
+    public getPublicPath(path: string = ''): string {
+        return this.joinPaths(this.publicPath ?? this.getBasePath('public'), path);
+    }
 
-    //     /**
-    //      * Set the language file directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useLangPath($path)
-    //     {
-    //         $this->langPath = $path;
+    /**
+     * Set the public / web directory.
+     */
+    public usePublicPath(path: string): this {
+        this.publicPath = path;
 
-    //         $this->instance('path.lang', $path);
+        this.instance('path.public', path);
 
-    //         return $this;
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Get the path to the public / web directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function publicPath($path = '')
-    //     {
-    //         return $this->joinPaths($this->publicPath ?: $this->basePath('public'), $path);
-    //     }
+    /**
+     * Get the path to the storage directory.
+     */
+    public getStoragePath(path: string = ''): string {
+        // @ts-expect-error:
+        if (Deno.env.LARAVEL_STORAGE_PATH) {
+            // @ts-expect-error:
+            return this.joinPaths(this.storagePath ?? Deno.env.LARAVEL_STORAGE_PATH, path);
+        }
 
-    //     /**
-    //      * Set the public / web directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function usePublicPath($path)
-    //     {
-    //         $this->publicPath = $path;
+        return this.joinPaths(this.storagePath ?? this.getBasePath('storage'), path);
+    }
 
-    //         $this->instance('path.public', $path);
+    /**
+     * Set the storage directory.
+     */
+    public useStoragePath(path: string): this {
+        this.storagePath = path;
 
-    //         return $this;
-    //     }
+        this.instance('path.storage', path);
 
-    //     /**
-    //      * Get the path to the storage directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function storagePath($path = '')
-    //     {
-    //         if (isset($_ENV['LARAVEL_STORAGE_PATH'])) {
-    //             return $this->joinPaths($this->storagePath ?: $_ENV['LARAVEL_STORAGE_PATH'], $path);
-    //         }
+        return this;
+    }
 
-    //         if (isset($_SERVER['LARAVEL_STORAGE_PATH'])) {
-    //             return $this->joinPaths($this->storagePath ?: $_SERVER['LARAVEL_STORAGE_PATH'], $path);
-    //         }
+    /**
+     * Get the path to the resources directory.
+     */
+    public resourcePath(path: string = ''): string {
+        return this.joinPaths(this.getBasePath('resources'), path);
+    }
 
-    //         return $this->joinPaths($this->storagePath ?: $this->basePath('storage'), $path);
-    //     }
+    /**
+     * Get the path to the views directory.
+     *
+     * This method returns the first configured path in the array of view paths.
+     */
+    public viewPath(path: string = ''): string {
+        // @ts-expect-error: need better typing
+        const viewPath = rtrim(this.make('config').get('view.paths')[0], SEPARATOR);
 
-    //     /**
-    //      * Set the storage directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useStoragePath($path)
-    //     {
-    //         $this->storagePath = $path;
+        return this.joinPaths(viewPath, path);
+    }
 
-    //         $this->instance('path.storage', $path);
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Get the path to the resources directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function resourcePath($path = '')
-    //     {
-    //         return $this->joinPaths($this->basePath('resources'), $path);
-    //     }
-
-    //     /**
-    //      * Get the path to the views directory.
-    //      *
-    //      * This method returns the first configured path in the array of view paths.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function viewPath($path = '')
-    //     {
-    //         $viewPath = rtrim($this['config']->get('view.paths')[0], DIRECTORY_SEPARATOR);
-
-    //         return $this->joinPaths($viewPath, $path);
-    //     }
-
-    //     /**
-    //      * Join the given paths together.
-    //      *
-    //      * @param  string  $basePath
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function joinPaths($basePath, $path = '')
-    //     {
-    //         return join_paths($basePath, $path);
-    //     }
+    /**
+     * Join the given paths together.
+     */
+    public joinPaths(basePath: string, path: string = ''): string {
+        return join_paths(basePath, path);
+    }
 
     //     /**
     //      * Get the path to the environment file directory.
     //      *
     //      * @return string
     //      */
-    //     public function environmentPath()
+    //     public environmentPath()
     //     {
     //         return $this->environmentPath ?: $this->basePath;
     //     }
@@ -608,7 +478,7 @@ export default class Application extends Container {
     //      * @param  string  $path
     //      * @return $this
     //      */
-    //     public function useEnvironmentPath($path)
+    //     public useEnvironmentPath($path)
     //     {
     //         $this->environmentPath = $path;
 
@@ -621,7 +491,7 @@ export default class Application extends Container {
     //      * @param  string  $file
     //      * @return $this
     //      */
-    //     public function loadEnvironmentFrom($file)
+    //     public loadEnvironmentFrom($file)
     //     {
     //         $this->environmentFile = $file;
 
@@ -633,7 +503,7 @@ export default class Application extends Container {
     //      *
     //      * @return string
     //      */
-    //     public function environmentFile()
+    //     public environmentFile()
     //     {
     //         return $this->environmentFile ?: '.env';
     //     }
@@ -643,7 +513,7 @@ export default class Application extends Container {
     //      *
     //      * @return string
     //      */
-    //     public function environmentFilePath()
+    //     public environmentFilePath()
     //     {
     //         return $this->environmentPath().DIRECTORY_SEPARATOR.$this->environmentFile();
     //     }
@@ -654,7 +524,7 @@ export default class Application extends Container {
     //      * @param  string|array  ...$environments
     //      * @return string|bool
     //      */
-    //     public function environment(...$environments)
+    //     public environment(...$environments)
     //     {
     //         if (count($environments) > 0) {
     //             $patterns = is_array($environments[0]) ? $environments[0] : $environments;
@@ -670,7 +540,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function isLocal()
+    //     public isLocal()
     //     {
     //         return $this['env'] === 'local';
     //     }
@@ -680,7 +550,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function isProduction()
+    //     public isProduction()
     //     {
     //         return $this['env'] === 'production';
     //     }
@@ -691,7 +561,7 @@ export default class Application extends Container {
     //      * @param  \Closure  $callback
     //      * @return string
     //      */
-    //     public function detectEnvironment(Closure $callback)
+    //     public detectEnvironment(Closure $callback)
     //     {
     //         $args = $this->runningInConsole() && isset($_SERVER['argv'])
     //             ? $_SERVER['argv']
@@ -705,7 +575,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function runningInConsole()
+    //     public runningInConsole()
     //     {
     //         if ($this->isRunningInConsole === null) {
     //             $this->isRunningInConsole = Env::get('APP_RUNNING_IN_CONSOLE') ?? (\PHP_SAPI === 'cli' || \PHP_SAPI === 'phpdbg');
@@ -720,7 +590,7 @@ export default class Application extends Container {
     //      * @param  string|array  ...$commands
     //      * @return bool
     //      */
-    //     public function runningConsoleCommand(...$commands)
+    //     public runningConsoleCommand(...$commands)
     //     {
     //         if (! $this->runningInConsole()) {
     //             return false;
@@ -737,7 +607,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function runningUnitTests()
+    //     public runningUnitTests()
     //     {
     //         return $this->bound('env') && $this['env'] === 'testing';
     //     }
@@ -747,7 +617,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function hasDebugModeEnabled()
+    //     public hasDebugModeEnabled()
     //     {
     //         return (bool) $this['config']->get('app.debug');
     //     }
@@ -758,7 +628,7 @@ export default class Application extends Container {
     //      * @param  callable  $callback
     //      * @return void
     //      */
-    //     public function registered($callback)
+    //     public registered($callback)
     //     {
     //         $this->registeredCallbacks[] = $callback;
     //     }
@@ -768,7 +638,7 @@ export default class Application extends Container {
     //      *
     //      * @return void
     //      */
-    //     public function registerConfiguredProviders()
+    //     public registerConfiguredProviders()
     //     {
     //         $providers = (new Collection($this->make('config')->get('app.providers')))
     //             ->partition(fn ($provider) => str_starts_with($provider, 'Illuminate\\'));
@@ -788,7 +658,7 @@ export default class Application extends Container {
     //      * @param  bool  $force
     //      * @return \Illuminate\Support\ServiceProvider
     //      */
-    //     public function register($provider, $force = false)
+    //     public register($provider, $force = false)
     //     {
     //         if (($registered = $this->getProvider($provider)) && ! $force) {
     //             return $registered;
@@ -838,7 +708,7 @@ export default class Application extends Container {
     //      * @param  \Illuminate\Support\ServiceProvider|string  $provider
     //      * @return \Illuminate\Support\ServiceProvider|null
     //      */
-    //     public function getProvider($provider)
+    //     public getProvider($provider)
     //     {
     //         $name = is_string($provider) ? $provider : get_class($provider);
 
@@ -851,7 +721,7 @@ export default class Application extends Container {
     //      * @param  \Illuminate\Support\ServiceProvider|string  $provider
     //      * @return array
     //      */
-    //     public function getProviders($provider)
+    //     public getProviders($provider)
     //     {
     //         $name = is_string($provider) ? $provider : get_class($provider);
 
@@ -864,7 +734,7 @@ export default class Application extends Container {
     //      * @param  string  $provider
     //      * @return \Illuminate\Support\ServiceProvider
     //      */
-    //     public function resolveProvider($provider)
+    //     public resolveProvider($provider)
     //     {
     //         return new $provider($this);
     //     }
@@ -889,7 +759,7 @@ export default class Application extends Container {
     //      *
     //      * @return void
     //      */
-    //     public function loadDeferredProviders()
+    //     public loadDeferredProviders()
     //     {
     //         // We will simply spin through each of the deferred providers and register each
     //         // one and boot them if the application has booted. This should make each of
@@ -907,7 +777,7 @@ export default class Application extends Container {
     //      * @param  string  $service
     //      * @return void
     //      */
-    //     public function loadDeferredProvider($service)
+    //     public loadDeferredProvider($service)
     //     {
     //         if (! $this->isDeferredService($service)) {
     //             return;
@@ -930,7 +800,7 @@ export default class Application extends Container {
     //      * @param  string|null  $service
     //      * @return void
     //      */
-    //     public function registerDeferredProvider($provider, $service = null)
+    //     public registerDeferredProvider($provider, $service = null)
     //     {
     //         // Once the provider that provides the deferred service has been registered we
     //         // will remove it from our local list of the deferred services with related
@@ -959,7 +829,7 @@ export default class Application extends Container {
     //      *
     //      * @throws \Illuminate\Contracts\Container\BindingResolutionException
     //      */
-    //     public function make($abstract, array $parameters = [])
+    //     public make($abstract, array $parameters = [])
     //     {
     //         $this->loadDeferredProviderIfNeeded($abstract = $this->getAlias($abstract));
 
@@ -1005,7 +875,7 @@ export default class Application extends Container {
     //      * @param  string  $abstract
     //      * @return bool
     //      */
-    //     public function bound($abstract)
+    //     public bound($abstract)
     //     {
     //         return $this->isDeferredService($abstract) || parent::bound($abstract);
     //     }
@@ -1015,7 +885,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function isBooted()
+    //     public isBooted()
     //     {
     //         return $this->booted;
     //     }
@@ -1025,7 +895,7 @@ export default class Application extends Container {
     //      *
     //      * @return void
     //      */
-    //     public function boot()
+    //     public boot()
     //     {
     //         if ($this->isBooted()) {
     //             return;
@@ -1068,7 +938,7 @@ export default class Application extends Container {
     //      * @param  callable  $callback
     //      * @return void
     //      */
-    //     public function booting($callback)
+    //     public booting($callback)
     //     {
     //         $this->bootingCallbacks[] = $callback;
     //     }
@@ -1079,7 +949,7 @@ export default class Application extends Container {
     //      * @param  callable  $callback
     //      * @return void
     //      */
-    //     public function booted($callback)
+    //     public booted($callback)
     //     {
     //         $this->bootedCallbacks[] = $callback;
 
@@ -1110,7 +980,7 @@ export default class Application extends Container {
     //      *
     //      * @return \Symfony\Component\HttpFoundation\Response
     //      */
-    //     public function handle(SymfonyRequest $request, int $type = self::MAIN_REQUEST, bool $catch = true): SymfonyResponse
+    //     public handle(SymfonyRequest $request, int $type = self::MAIN_REQUEST, bool $catch = true): SymfonyResponse
     //     {
     //         return $this[HttpKernelContract::class]->handle(Request::createFromBase($request));
     //     }
@@ -1121,7 +991,7 @@ export default class Application extends Container {
     //      * @param  \Illuminate\Http\Request  $request
     //      * @return void
     //      */
-    //     public function handleRequest(Request $request)
+    //     public handleRequest(Request $request)
     //     {
     //         $kernel = $this->make(HttpKernelContract::class);
 
@@ -1136,7 +1006,7 @@ export default class Application extends Container {
     //      * @param  \Symfony\Component\Console\Input\InputInterface  $input
     //      * @return int
     //      */
-    //     public function handleCommand(InputInterface $input)
+    //     public handleCommand(InputInterface $input)
     //     {
     //         $kernel = $this->make(ConsoleKernelContract::class);
 
@@ -1155,7 +1025,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function shouldMergeFrameworkConfiguration()
+    //     public shouldMergeFrameworkConfiguration()
     //     {
     //         return $this->mergeFrameworkConfiguration;
     //     }
@@ -1165,7 +1035,7 @@ export default class Application extends Container {
     //      *
     //      * @return $this
     //      */
-    //     public function dontMergeFrameworkConfiguration()
+    //     public dontMergeFrameworkConfiguration()
     //     {
     //         $this->mergeFrameworkConfiguration = false;
 
@@ -1177,7 +1047,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function shouldSkipMiddleware()
+    //     public shouldSkipMiddleware()
     //     {
     //         return $this->bound('middleware.disable') &&
     //                $this->make('middleware.disable') === true;
@@ -1188,7 +1058,7 @@ export default class Application extends Container {
     //      *
     //      * @return string
     //      */
-    //     public function getCachedServicesPath()
+    //     public getCachedServicesPath()
     //     {
     //         return $this->normalizeCachePath('APP_SERVICES_CACHE', 'cache/services.php');
     //     }
@@ -1198,7 +1068,7 @@ export default class Application extends Container {
     //      *
     //      * @return string
     //      */
-    //     public function getCachedPackagesPath()
+    //     public getCachedPackagesPath()
     //     {
     //         return $this->normalizeCachePath('APP_PACKAGES_CACHE', 'cache/packages.php');
     //     }
@@ -1208,7 +1078,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function configurationIsCached()
+    //     public configurationIsCached()
     //     {
     //         if ($this->bound('config_loaded_from_cache')) {
     //             return (bool) $this->make('config_loaded_from_cache');
@@ -1222,7 +1092,7 @@ export default class Application extends Container {
     //      *
     //      * @return string
     //      */
-    //     public function getCachedConfigPath()
+    //     public getCachedConfigPath()
     //     {
     //         return $this->normalizeCachePath('APP_CONFIG_CACHE', 'cache/config.php');
     //     }
@@ -1232,7 +1102,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function routesAreCached()
+    //     public routesAreCached()
     //     {
     //         if ($this->bound('routes.cached')) {
     //             return (bool) $this->make('routes.cached');
@@ -1246,7 +1116,7 @@ export default class Application extends Container {
     //      *
     //      * @return string
     //      */
-    //     public function getCachedRoutesPath()
+    //     public getCachedRoutesPath()
     //     {
     //         return $this->normalizeCachePath('APP_ROUTES_CACHE', 'cache/routes-v7.php');
     //     }
@@ -1256,7 +1126,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function eventsAreCached()
+    //     public eventsAreCached()
     //     {
     //         if ($this->bound('events.cached')) {
     //             return (bool) $this->make('events.cached');
@@ -1272,7 +1142,7 @@ export default class Application extends Container {
     //      *
     //      * @return string
     //      */
-    //     public function getCachedEventsPath()
+    //     public getCachedEventsPath()
     //     {
     //         return $this->normalizeCachePath('APP_EVENTS_CACHE', 'cache/events.php');
     //     }
@@ -1301,7 +1171,7 @@ export default class Application extends Container {
     //      * @param  string  $prefix
     //      * @return $this
     //      */
-    //     public function addAbsoluteCachePathPrefix($prefix)
+    //     public addAbsoluteCachePathPrefix($prefix)
     //     {
     //         $this->absoluteCachePathPrefixes[] = $prefix;
 
@@ -1313,7 +1183,7 @@ export default class Application extends Container {
     //      *
     //      * @return \Illuminate\Contracts\Foundation\MaintenanceMode
     //      */
-    //     public function maintenanceMode()
+    //     public maintenanceMode()
     //     {
     //         return $this->make(MaintenanceModeContract::class);
     //     }
@@ -1323,7 +1193,7 @@ export default class Application extends Container {
     //      *
     //      * @return bool
     //      */
-    //     public function isDownForMaintenance()
+    //     public isDownForMaintenance()
     //     {
     //         return $this->maintenanceMode()->active();
     //     }
@@ -1339,7 +1209,7 @@ export default class Application extends Container {
     //      * @throws \Symfony\Component\HttpKernel\Exception\HttpException
     //      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
     //      */
-    //     public function abort($code, $message = '', array $headers = [])
+    //     public abort($code, $message = '', array $headers = [])
     //     {
     //         if ($code == 404) {
     //             throw new NotFoundHttpException($message, null, 0, $headers);
@@ -1354,7 +1224,7 @@ export default class Application extends Container {
     //      * @param  callable|string  $callback
     //      * @return $this
     //      */
-    //     public function terminating($callback)
+    //     public terminating($callback)
     //     {
     //         $this->terminatingCallbacks[] = $callback;
 
@@ -1366,7 +1236,7 @@ export default class Application extends Container {
     //      *
     //      * @return void
     //      */
-    //     public function terminate()
+    //     public terminate()
     //     {
     //         $index = 0;
 
@@ -1382,7 +1252,7 @@ export default class Application extends Container {
     //      *
     //      * @return array<string, bool>
     //      */
-    //     public function getLoadedProviders()
+    //     public getLoadedProviders()
     //     {
     //         return $this->loadedProviders;
     //     }
@@ -1393,7 +1263,7 @@ export default class Application extends Container {
     //      * @param  string  $provider
     //      * @return bool
     //      */
-    //     public function providerIsLoaded(string $provider)
+    //     public providerIsLoaded(string $provider)
     //     {
     //         return isset($this->loadedProviders[$provider]);
     //     }
@@ -1403,7 +1273,7 @@ export default class Application extends Container {
     //      *
     //      * @return array
     //      */
-    //     public function getDeferredServices()
+    //     public getDeferredServices()
     //     {
     //         return $this->deferredServices;
     //     }
@@ -1414,7 +1284,7 @@ export default class Application extends Container {
     //      * @param  array  $services
     //      * @return void
     //      */
-    //     public function setDeferredServices(array $services)
+    //     public setDeferredServices(array $services)
     //     {
     //         $this->deferredServices = $services;
     //     }
@@ -1425,7 +1295,7 @@ export default class Application extends Container {
     //      * @param  string  $service
     //      * @return bool
     //      */
-    //     public function isDeferredService($service)
+    //     public isDeferredService($service)
     //     {
     //         return isset($this->deferredServices[$service]);
     //     }
@@ -1436,7 +1306,7 @@ export default class Application extends Container {
     //      * @param  array  $services
     //      * @return void
     //      */
-    //     public function addDeferredServices(array $services)
+    //     public addDeferredServices(array $services)
     //     {
     //         $this->deferredServices = array_merge($this->deferredServices, $services);
     //     }
@@ -1447,7 +1317,7 @@ export default class Application extends Container {
     //      * @param  array  $services
     //      * @return void
     //      */
-    //     public function removeDeferredServices(array $services)
+    //     public removeDeferredServices(array $services)
     //     {
     //         foreach ($services as $service) {
     //             unset($this->deferredServices[$service]);
@@ -1460,7 +1330,7 @@ export default class Application extends Container {
     //      * @param  string  $namespace
     //      * @return void
     //      */
-    //     public function provideFacades($namespace)
+    //     public provideFacades($namespace)
     //     {
     //         AliasLoader::setFacadeNamespace($namespace);
     //     }
@@ -1470,7 +1340,7 @@ export default class Application extends Container {
     //      *
     //      * @return string
     //      */
-    //     public function getLocale()
+    //     public getLocale()
     //     {
     //         return $this['config']->get('app.locale');
     //     }
@@ -1480,7 +1350,7 @@ export default class Application extends Container {
     //      *
     //      * @return string
     //      */
-    //     public function currentLocale()
+    //     public currentLocale()
     //     {
     //         return $this->getLocale();
     //     }
@@ -1490,7 +1360,7 @@ export default class Application extends Container {
     //      *
     //      * @return string
     //      */
-    //     public function getFallbackLocale()
+    //     public getFallbackLocale()
     //     {
     //         return $this['config']->get('app.fallback_locale');
     //     }
@@ -1501,7 +1371,7 @@ export default class Application extends Container {
     //      * @param  string  $locale
     //      * @return void
     //      */
-    //     public function setLocale($locale)
+    //     public setLocale($locale)
     //     {
     //         $this['config']->set('app.locale', $locale);
 
@@ -1516,7 +1386,7 @@ export default class Application extends Container {
     //      * @param  string  $fallbackLocale
     //      * @return void
     //      */
-    //     public function setFallbackLocale($fallbackLocale)
+    //     public setFallbackLocale($fallbackLocale)
     //     {
     //         $this['config']->set('app.fallback_locale', $fallbackLocale);
 
@@ -1529,7 +1399,7 @@ export default class Application extends Container {
     //      * @param  string  $locale
     //      * @return bool
     //      */
-    //     public function isLocale($locale)
+    //     public isLocale($locale)
     //     {
     //         return $this->getLocale() == $locale;
     //     }
@@ -1539,7 +1409,7 @@ export default class Application extends Container {
     //      *
     //      * @return void
     //      */
-    //     public function registerCoreContainerAliases()
+    //     public registerCoreContainerAliases()
     //     {
     //         foreach ([
     //             'app' => [self::class, \Illuminate\Contracts\Container\Container::class, \Illuminate\Contracts\Foundation\Application::class, \Psr\Container\ContainerInterface::class],
@@ -1593,7 +1463,7 @@ export default class Application extends Container {
     //      *
     //      * @return void
     //      */
-    //     public function flush()
+    //     public flush()
     //     {
     //         parent::flush();
 
@@ -1620,7 +1490,7 @@ export default class Application extends Container {
     //      *
     //      * @throws \RuntimeException
     //      */
-    //     public function getNamespace()
+    //     public getNamespace()
     //     {
     //         if (! is_null($this->namespace)) {
     //             return $this->namespace;

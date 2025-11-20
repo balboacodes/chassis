@@ -29,7 +29,7 @@ export default class Container {
     /**
      * The container's shared instances.
      */
-    protected instances: Map<string | Class, Class> = new Map();
+    protected instances: Map<string | Class, InstanceType<Class>> = new Map();
 
     /**
      * The parameter override stack.
@@ -213,7 +213,7 @@ export default class Container {
     /**
      * Register an existing instance as shared in the container.
      */
-    public instance<TInstance extends Class>(abstract: string | Class, instance: TInstance): TInstance {
+    public instance(abstract: string | Class, instance: InstanceType<Class>): InstanceType<Class> {
         const isBound = this.bound(abstract);
 
         // We'll check to determine if this type has been bound before, and if it has
@@ -244,7 +244,7 @@ export default class Container {
      */
     public refresh(abstract: string | Class, target: object, method: string): unknown {
         return this.rebinding(abstract, (_container, instance) => {
-            // @ts-ignore: need a better type for target
+            // @ts-expect-error: need a better typing
             target[method](instance);
         });
     }
@@ -291,8 +291,6 @@ export default class Container {
             this.fireBeforeResolvingCallbacks(abstract, parameters);
         }
 
-        let concrete = null;
-
         const needsContextualBuild = parameters.length;
 
         // If an instance of the type is currently being managed as a singleton we'll
@@ -304,7 +302,7 @@ export default class Container {
 
         this.with.push(parameters);
 
-        concrete = this.getConcrete(abstract);
+        const concrete = this.getConcrete(abstract);
 
         // We're ready to instantiate an instance of the concrete type registered for
         // the binding. This will instantiate the types, as well as resolve any of
