@@ -60,12 +60,12 @@ export default class Application extends Container {
     /**
      * The names of the loaded service providers.
      */
-    protected loadedProviders: ServiceProvider[] = [];
+    protected loadedProviders: Record<string, boolean> = {};
 
     /**
      * The deferred services and their providers.
      */
-    protected deferredServices: Record<string, ServiceProvider> = {};
+    protected deferredServices: Map<string | Class, ServiceProvider> = new Map();
 
     /**
      * The custom bootstrap path defined by the developer.
@@ -684,27 +684,27 @@ export default class Application extends Container {
         // We will simply spin through each of the deferred providers and register each
         // one and boot them if the application has booted. This should make each of
         // the remaining services available to this application for immediate use.
-        for (const [service, _provider] of Object.entries(this.deferredServices)) {
+        for (const [service, _provider] of this.deferredServices.entries()) {
             this.loadDeferredProvider(service);
         }
 
-        this.deferredServices = [];
+        this.deferredServices.clear();
     }
 
     /**
      * Load the provider for a deferred service.
      */
-    public loadDeferredProvider(service: string): void {
+    public loadDeferredProvider(service: string | Class): void {
         if (!this.isDeferredService(service)) {
             return;
         }
 
-        const provider = this.deferredServices[service];
+        const provider = this.deferredServices.get(service);
 
         // If the service provider has not already been loaded and registered we can
         // register it with the application and remove the service from this list
         // of deferred services, since it will already be loaded on subsequent.
-        if (!this.loadedProviders.includes(provider)) {
+        if (!this.loadedProviders[provider]) {
             this.registerDeferredProvider(provider, service);
         }
     }
@@ -712,12 +712,12 @@ export default class Application extends Container {
     /**
      * Register a deferred provider and service.
      */
-    public registerDeferredProvider(provider: ServiceProvider, service?: string): void {
+    public registerDeferredProvider(provider: ServiceProvider, service?: string | Class): void {
         // Once the provider that provides the deferred service has been registered we
         // will remove it from our local list of the deferred services with related
         // providers so that this container does not try to resolve it out again.
         if (service) {
-            unset(this.deferredServices, service);
+            this.deferredServices.delete(service);
         }
 
         const instance = new provider(this);
@@ -731,56 +731,41 @@ export default class Application extends Container {
         }
     }
 
-    //     /**
-    //      * Resolve the given type from the container.
-    //      *
-    //      * @template TClass of object
-    //      *
-    //      * @param  string|class-string<TClass>  $abstract
-    //      * @param  array  $parameters
-    //      * @return ($abstract is class-string<TClass> ? TClass : mixed)
-    //      *
-    //      * @throws \Illuminate\Contracts\Container\BindingResolutionException
-    //      */
-    //     public make($abstract, array $parameters = [])
-    //     {
-    //         $this->loadDeferredProviderIfNeeded($abstract = $this->getAlias($abstract));
+    /**
+     * Resolve the given type from the container.
+     */
+    public override make<TClass extends string | Class>(
+        abstract: TClass,
+        parameters: unknown[] = [],
+    ): TClass extends Class ? InstanceType<TClass> : unknown {
+        this.loadDeferredProviderIfNeeded(abstract);
 
-    //         return parent::make($abstract, $parameters);
-    //     }
+        // @ts-expect-error: need better typing
+        return super.make(abstract, parameters);
+    }
 
-    //     /**
-    //      * Resolve the given type from the container.
-    //      *
-    //      * @template TClass of object
-    //      *
-    //      * @param  string|class-string<TClass>|callable  $abstract
-    //      * @param  array  $parameters
-    //      * @param  bool  $raiseEvents
-    //      * @return ($abstract is class-string<TClass> ? TClass : mixed)
-    //      *
-    //      * @throws \Illuminate\Contracts\Container\BindingResolutionException
-    //      * @throws \Illuminate\Contracts\Container\CircularDependencyException
-    //      */
-    //     protected resolve($abstract, $parameters = [], $raiseEvents = true)
-    //     {
-    //         $this->loadDeferredProviderIfNeeded($abstract = $this->getAlias($abstract));
+    /**
+     * Resolve the given type from the container.
+     */
+    protected override resolve<TClass extends string | Class>(
+        abstract: TClass,
+        parameters: unknown[] = [],
+        raiseEvents: boolean = true,
+    ): TClass extends Class ? InstanceType<TClass> : unknown {
+        this.loadDeferredProviderIfNeeded(abstract);
 
-    //         return parent::resolve($abstract, $parameters, $raiseEvents);
-    //     }
+        // @ts-expect-error: need better typing
+        return super.resolve(abstract, parameters, raiseEvents);
+    }
 
-    //     /**
-    //      * Load the deferred provider if the given type is a deferred service and the instance has not been loaded.
-    //      *
-    //      * @param  string  $abstract
-    //      * @return void
-    //      */
-    //     protected loadDeferredProviderIfNeeded($abstract)
-    //     {
-    //         if ($this->isDeferredService($abstract) && ! isset($this->instances[$abstract])) {
-    //             $this->loadDeferredProvider($abstract);
-    //         }
-    //     }
+    /**
+     * Load the deferred provider if the given type is a deferred service and the instance has not been loaded.
+     */
+    protected loadDeferredProviderIfNeeded(abstract: string | Class): void {
+        if (this.isDeferredService(abstract) && !this.instances.has(abstract)) {
+            this.loadDeferredProvider(abstract);
+        }
+    }
 
     //     /**
     //      * Determine if the given abstract type has been bound.
