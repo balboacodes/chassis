@@ -1,10 +1,13 @@
-import { in_array, rtrim } from '@balboacodes/php-utils';
+import { in_array, isset, rtrim, unset } from '@balboacodes/php-utils';
 import '@std/dotenv/load';
 import { SEPARATOR } from '@std/path';
 import Container from '../container/Container.ts';
 import { join_paths } from '../filesystem/functions.ts';
+import Arr from '../support/Arr.ts';
+import Collection from '../support/Collection.ts';
 import Str from '../support/Str.ts';
 import { value } from '../support/helpers.ts';
+import { Class } from '../types.ts';
 
 export default class Application extends Container {
     /**
@@ -52,7 +55,7 @@ export default class Application extends Container {
      *
      * @var array<string, \Illuminate\Support\ServiceProvider>
      */
-    protected serviceProviders: ServiceProvider[] = [];
+    protected serviceProviders: Record<string, ServiceProvider> = {};
 
     /**
      * The names of the loaded service providers.
@@ -62,7 +65,7 @@ export default class Application extends Container {
     /**
      * The deferred services and their providers.
      */
-    protected deferredServices: ServiceProvider[] = [];
+    protected deferredServices: Record<string, ServiceProvider> = {};
 
     /**
      * The custom bootstrap path defined by the developer.
@@ -575,190 +578,158 @@ export default class Application extends Container {
         this.registeredCallbacks.push(callback);
     }
 
-    //     /**
-    //      * Register all of the configured providers.
-    //      *
-    //      * @return void
-    //      */
-    //     public registerConfiguredProviders()
-    //     {
-    //         $providers = (new Collection($this->make('config')->get('app.providers')))
-    //             ->partition(fn ($provider) => str_starts_with($provider, 'Illuminate\\'));
+    /**
+     * Register all of the configured providers.
+     */
+    public registerConfiguredProviders(): void {
+        const providers = new Collection(this.make('config').get('app.providers'));
 
-    //         $providers->splice(1, 0, [$this->make(PackageManifest::class)->providers()]);
+        (new ProviderRepository(this, new Filesystem(), this.getCachedServicesPath()))
+            .load(providers.collapse().toArray());
 
-    //         (new ProviderRepository($this, new Filesystem, $this->getCachedServicesPath()))
-    //             ->load($providers->collapse()->toArray());
+        this.fireAppCallbacks(this.registeredCallbacks);
+    }
 
-    //         $this->fireAppCallbacks($this->registeredCallbacks);
-    //     }
+    /**
+     * Register a service provider with the application.
+     *
+     * @param  \Illuminate\Support\ServiceProvider|string  $provider
+     * @return \Illuminate\Support\ServiceProvider
+     */
+    public register(provider: ServiceProvider, force: boolean = false): ServiceProvider {
+        const registered = this.getProvider(provider);
 
-    //     /**
-    //      * Register a service provider with the application.
-    //      *
-    //      * @param  \Illuminate\Support\ServiceProvider|string  $provider
-    //      * @param  bool  $force
-    //      * @return \Illuminate\Support\ServiceProvider
-    //      */
-    //     public register($provider, $force = false)
-    //     {
-    //         if (($registered = $this->getProvider($provider)) && ! $force) {
-    //             return $registered;
-    //         }
+        if (registered && !force) {
+            return registered;
+        }
 
-    //         // If the given "provider" is a string, we will resolve it, passing in the
-    //         // application instance automatically for the developer. This is simply
-    //         // a more convenient way of specifying your service provider classes.
-    //         if (is_string($provider)) {
-    //             $provider = $this->resolveProvider($provider);
-    //         }
+        provider = this.resolveProvider(provider);
+        provider.register();
 
-    //         $provider->register();
+        // If there are bindings / singletons set as properties on the provider we
+        // will spin through them and register them with the application, which
+        // serves as a convenience layer while registering a lot of bindings.
+        if (provider.bindings) {
+            for (const [key, value] of Object.entries(provider.bindings)) {
+                this.bind(key, value as ((container: Container, parameters?: unknown[]) => unknown) | Class);
+            }
+        }
 
-    //         // If there are bindings / singletons set as properties on the provider we
-    //         // will spin through them and register them with the application, which
-    //         // serves as a convenience layer while registering a lot of bindings.
-    //         if (property_exists($provider, 'bindings')) {
-    //             foreach ($provider->bindings as $key => $value) {
-    //                 $this->bind($key, $value);
-    //             }
-    //         }
+        if (provider.singletons) {
+            for (const [key, value] of Object.entries(provider.singletons)) {
+                this.singleton(key, value as ((container: Container, parameters?: unknown[]) => unknown) | Class);
+            }
+        }
 
-    //         if (property_exists($provider, 'singletons')) {
-    //             foreach ($provider->singletons as $key => $value) {
-    //                 $key = is_int($key) ? $value : $key;
+        this.markAsRegistered(provider);
 
-    //                 $this->singleton($key, $value);
-    //             }
-    //         }
+        // If the application has already booted, we will call this boot method on
+        // the provider class so it has an opportunity to do its boot logic and
+        // will be ready for any usage by this developer's application logic.
+        if (this.isBooted()) {
+            this.bootProvider(provider);
+        }
 
-    //         $this->markAsRegistered($provider);
+        return provider;
+    }
 
-    //         // If the application has already booted, we will call this boot method on
-    //         // the provider class so it has an opportunity to do its boot logic and
-    //         // will be ready for any usage by this developer's application logic.
-    //         if ($this->isBooted()) {
-    //             $this->bootProvider($provider);
-    //         }
+    /**
+     * Get the registered service provider instance if it exists.
+     *
+     * @param  \Illuminate\Support\ServiceProvider|string  $provider
+     * @return \Illuminate\Support\ServiceProvider|null
+     */
+    public getProvider(provider: ServiceProvider | string): ServiceProvider | null {
+        const name = typeof provider === 'string' ? provider : provider.name;
 
-    //         return $provider;
-    //     }
+        return this.serviceProviders[name] ?? null;
+    }
 
-    //     /**
-    //      * Get the registered service provider instance if it exists.
-    //      *
-    //      * @param  \Illuminate\Support\ServiceProvider|string  $provider
-    //      * @return \Illuminate\Support\ServiceProvider|null
-    //      */
-    //     public getProvider($provider)
-    //     {
-    //         $name = is_string($provider) ? $provider : get_class($provider);
+    /**
+     * Get the registered service provider instances if any exist.
+     *
+     * @param  \Illuminate\Support\ServiceProvider|string  $provider
+     */
+    public getProviders(provider: ServiceProvider | string): Record<string, ServiceProvider> {
+        const name = typeof provider === 'string' ? provider : provider.name;
 
-    //         return $this->serviceProviders[$name] ?? null;
-    //     }
+        return Arr.where(this.serviceProviders, (value) => value instanceof name);
+    }
 
-    //     /**
-    //      * Get the registered service provider instances if any exist.
-    //      *
-    //      * @param  \Illuminate\Support\ServiceProvider|string  $provider
-    //      * @return array
-    //      */
-    //     public getProviders($provider)
-    //     {
-    //         $name = is_string($provider) ? $provider : get_class($provider);
+    /**
+     * Resolve a service provider instance from the class name.
+     * @return \Illuminate\Support\ServiceProvider
+     */
+    public resolveProvider(provider: ServiceProvider): ServiceProvider {
+        return new provider(this);
+    }
 
-    //         return Arr::where($this->serviceProviders, fn ($value) => $value instanceof $name);
-    //     }
+    /**
+     * Mark the given provider as registered.
+     *
+     * @param  \Illuminate\Support\ServiceProvider  $provider
+     */
+    protected markAsRegistered(provider: ServiceProvider): void {
+        const className = provider.name;
 
-    //     /**
-    //      * Resolve a service provider instance from the class name.
-    //      *
-    //      * @param  string  $provider
-    //      * @return \Illuminate\Support\ServiceProvider
-    //      */
-    //     public resolveProvider($provider)
-    //     {
-    //         return new $provider($this);
-    //     }
+        this.serviceProviders[className] = provider;
 
-    //     /**
-    //      * Mark the given provider as registered.
-    //      *
-    //      * @param  \Illuminate\Support\ServiceProvider  $provider
-    //      * @return void
-    //      */
-    //     protected function markAsRegistered($provider)
-    //     {
-    //         $class = get_class($provider);
+        this.loadedProviders[className] = true;
+    }
 
-    //         $this->serviceProviders[$class] = $provider;
+    /**
+     * Load and boot all of the remaining deferred providers.
+     */
+    public loadDeferredProviders(): void {
+        // We will simply spin through each of the deferred providers and register each
+        // one and boot them if the application has booted. This should make each of
+        // the remaining services available to this application for immediate use.
+        for (const [service, _provider] of Object.entries(this.deferredServices)) {
+            this.loadDeferredProvider(service);
+        }
 
-    //         $this->loadedProviders[$class] = true;
-    //     }
+        this.deferredServices = [];
+    }
 
-    //     /**
-    //      * Load and boot all of the remaining deferred providers.
-    //      *
-    //      * @return void
-    //      */
-    //     public loadDeferredProviders()
-    //     {
-    //         // We will simply spin through each of the deferred providers and register each
-    //         // one and boot them if the application has booted. This should make each of
-    //         // the remaining services available to this application for immediate use.
-    //         foreach ($this->deferredServices as $service => $provider) {
-    //             $this->loadDeferredProvider($service);
-    //         }
+    /**
+     * Load the provider for a deferred service.
+     */
+    public loadDeferredProvider(service: string): void {
+        if (!this.isDeferredService(service)) {
+            return;
+        }
 
-    //         $this->deferredServices = [];
-    //     }
+        const provider = this.deferredServices[service];
 
-    //     /**
-    //      * Load the provider for a deferred service.
-    //      *
-    //      * @param  string  $service
-    //      * @return void
-    //      */
-    //     public loadDeferredProvider($service)
-    //     {
-    //         if (! $this->isDeferredService($service)) {
-    //             return;
-    //         }
+        // If the service provider has not already been loaded and registered we can
+        // register it with the application and remove the service from this list
+        // of deferred services, since it will already be loaded on subsequent.
+        if (!this.loadedProviders.includes(provider)) {
+            this.registerDeferredProvider(provider, service);
+        }
+    }
 
-    //         $provider = $this->deferredServices[$service];
+    /**
+     * Register a deferred provider and service.
+     */
+    public registerDeferredProvider(provider: ServiceProvider, service?: string): void {
+        // Once the provider that provides the deferred service has been registered we
+        // will remove it from our local list of the deferred services with related
+        // providers so that this container does not try to resolve it out again.
+        if (service) {
+            unset(this.deferredServices, service);
+        }
 
-    //         // If the service provider has not already been loaded and registered we can
-    //         // register it with the application and remove the service from this list
-    //         // of deferred services, since it will already be loaded on subsequent.
-    //         if (! isset($this->loadedProviders[$provider])) {
-    //             $this->registerDeferredProvider($provider, $service);
-    //         }
-    //     }
+        const instance = new provider(this);
 
-    //     /**
-    //      * Register a deferred provider and service.
-    //      *
-    //      * @param  string  $provider
-    //      * @param  string|null  $service
-    //      * @return void
-    //      */
-    //     public registerDeferredProvider($provider, $service = null)
-    //     {
-    //         // Once the provider that provides the deferred service has been registered we
-    //         // will remove it from our local list of the deferred services with related
-    //         // providers so that this container does not try to resolve it out again.
-    //         if ($service) {
-    //             unset($this->deferredServices[$service]);
-    //         }
+        this.register(instance);
 
-    //         $this->register($instance = new $provider($this));
-
-    //         if (! $this->isBooted()) {
-    //             $this->booting(function () use ($instance) {
-    //                 $this->bootProvider($instance);
-    //             });
-    //         }
-    //     }
+        if (!this.isBooted()) {
+            this.booting(() => {
+                this.bootProvider(instance);
+            });
+        }
+    }
 
     //     /**
     //      * Resolve the given type from the container.
@@ -791,7 +762,7 @@ export default class Application extends Container {
     //      * @throws \Illuminate\Contracts\Container\BindingResolutionException
     //      * @throws \Illuminate\Contracts\Container\CircularDependencyException
     //      */
-    //     protected function resolve($abstract, $parameters = [], $raiseEvents = true)
+    //     protected resolve($abstract, $parameters = [], $raiseEvents = true)
     //     {
     //         $this->loadDeferredProviderIfNeeded($abstract = $this->getAlias($abstract));
 
@@ -804,7 +775,7 @@ export default class Application extends Container {
     //      * @param  string  $abstract
     //      * @return void
     //      */
-    //     protected function loadDeferredProviderIfNeeded($abstract)
+    //     protected loadDeferredProviderIfNeeded($abstract)
     //     {
     //         if ($this->isDeferredService($abstract) && ! isset($this->instances[$abstract])) {
     //             $this->loadDeferredProvider($abstract);
@@ -863,7 +834,7 @@ export default class Application extends Container {
     //      * @param  \Illuminate\Support\ServiceProvider  $provider
     //      * @return void
     //      */
-    //     protected function bootProvider(ServiceProvider $provider)
+    //     protected bootProvider(ServiceProvider $provider)
     //     {
     //         $provider->callBootingCallbacks();
 
@@ -906,7 +877,7 @@ export default class Application extends Container {
     //      * @param  callable[]  $callbacks
     //      * @return void
     //      */
-    //     protected function fireAppCallbacks(array &$callbacks)
+    //     protected fireAppCallbacks(array &$callbacks)
     //     {
     //         $index = 0;
 
@@ -1096,7 +1067,7 @@ export default class Application extends Container {
     //      * @param  string  $default
     //      * @return string
     //      */
-    //     protected function normalizeCachePath($key, $default)
+    //     protected normalizeCachePath($key, $default)
     //     {
     //         if (is_null($env = Env::get($key))) {
     //             return $this->bootstrapPath($default);
