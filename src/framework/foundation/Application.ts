@@ -4,13 +4,13 @@ import '@std/dotenv/load';
 import { exists } from '@std/fs';
 import { SEPARATOR } from '@std/path';
 import Container from '../container/Container.ts';
-import { default as ApplicationContract } from '../contracts/foundation/Application.ts';
-import CachesConfiguration from '../contracts/foundation/CachesConfiguration.ts';
-import CachesRoutes from '../contracts/foundation/CachesRoutes.ts';
-import { Kernel as HttpKernelContract } from '../contracts/http/Kernel.ts';
-import HttpKernelInterface from '../contracts/symfony/HttpKernelInterface.ts';
+import { KernelSymbol as ConsoleKernelContract } from '../contracts/console/Kernel.ts';
+import { MaintenanceMode, MaintenanceModeSymbol } from '../contracts/foundation/MaintenanceMode.ts';
+import { KernelSymbol } from '../contracts/http/Kernel.ts';
+import InputInterface from '../contracts/symfony/InputInterface.ts';
 import EventServiceProvider from '../events/EventServiceProvider.ts';
 import { join_paths } from '../filesystem/functions.ts';
+import Request from '../http/Request.ts';
 import LogServiceProvider from '../log/LogServiceProvider.ts';
 import ContextServiceProvider from '../log/context/ContextServiceProvider.ts';
 import RoutingServiceProvider from '../routing/RoutingServiceProvider.ts';
@@ -20,17 +20,20 @@ import Env from '../support/Env.ts';
 import ServiceProvider from '../support/ServiceProvider.ts';
 import Str from '../support/Str.ts';
 import { value } from '../support/helpers.ts';
+import ConsoleOutput from '../symfony/ConsoleOutput.ts';
+import HttpException from '../symfony/HttpException.ts';
+import NotFoundHttpException from '../symfony/NotFoundHttpException.ts';
+import { default as SymfonyRequest } from '../symfony/Request.ts';
+import { default as SymfonyResponse } from '../symfony/Response.ts';
 import { Class } from '../types.ts';
+import AliasLoader from './AliasLoader.ts';
 import EnvironmentDetector from './EnvironmentDetector.ts';
 import ProviderRepository from './ProviderRepository.ts';
 import LoadEnvironmentVariables from './bootstrap/LoadEnvironmentVariables.ts';
 import ApplicationBuilder from './configuration/ApplicationBuilder.ts';
 import Filesystem from './filesystem/Filesystem.ts';
-import { default as SymfonyRequest } from './symfony/Request.ts';
-import { default as SymfonyResponse } from './symfony/Response.ts';
 
-export default class Application extends Container
-    implements ApplicationContract, CachesConfiguration, CachesRoutes, HttpKernelInterface {
+export default class Application extends Container {
     /**
      * The framework version.
      */
@@ -862,32 +865,30 @@ export default class Application extends Container
      * {@inheritdoc}
      */
     public handle(request: SymfonyRequest): SymfonyResponse {
-        return this.make(HttpKernelContract).handle(Request.createFromBase(request));
+        // @ts-expect-error: need better typing
+        return this.make(KernelSymbol).handle(Request.createFromBase(request));
     }
 
     /**
      * Handle the incoming HTTP request and send the response to the browser.
-     *
-     * @param  \Illuminate\Http\Request  $request
      */
     public handleRequest(request: Request): void {
-        const kernel = this.make(HttpKernelContract);
+        const kernel = this.make(KernelSymbol);
 
+        // @ts-expect-error: need better typing
         const response = kernel.handle(request).send();
-
+        // @ts-expect-error: need better typing
         kernel.terminate(request, response);
     }
 
     /**
      * Handle the incoming Artisan command.
-     *
-     * @param  \Symfony\Component\Console\Input\InputInterface  $input
      */
     public handleCommand(input: InputInterface): number {
         const kernel = this.make(ConsoleKernelContract);
-
+        // @ts-expect-error: need better typing
         const status = kernel.handle(input, new ConsoleOutput());
-
+        // @ts-expect-error: need better typing
         kernel.terminate(input, status);
 
         return status;
@@ -1015,7 +1016,7 @@ export default class Application extends Container
      * Get an instance of the maintenance mode manager implementation.
      */
     public maintenanceMode(): MaintenanceMode {
-        return this.make(MaintenanceModeContract);
+        return this.make(MaintenanceModeSymbol) as MaintenanceMode;
     }
 
     /**
@@ -1030,10 +1031,10 @@ export default class Application extends Container
      */
     public abort(code: number, message: string = '', headers: unknown[] = []): never {
         if (code == 404) {
-            throw new NotFoundHttpException(message, null, 0, headers);
+            throw new NotFoundHttpException(message, undefined, 0, headers);
         }
 
-        throw new HttpException(code, message, null, headers);
+        throw new HttpException(code, message, undefined, headers);
     }
 
     /**
@@ -1061,7 +1062,7 @@ export default class Application extends Container
     /**
      * Get the service providers that have been loaded.
      */
-    public getLoadedProviders(): Map<string | symbol | Class<ServiceProvider>, boolean> {
+    public getLoadedProviders(): Map<string | Class<ServiceProvider> | symbol, boolean> {
         return this.loadedProviders;
     }
 
@@ -1075,14 +1076,14 @@ export default class Application extends Container
     /**
      * Get the application's deferred services.
      */
-    public getDeferredServices(): Map<string | symbol | Class<ServiceProvider>, Class<ServiceProvider>> {
+    public getDeferredServices(): Map<string | Class<ServiceProvider> | symbol, Class<ServiceProvider>> {
         return this.deferredServices;
     }
 
     /**
      * Set the application's deferred services.
      */
-    public setDeferredServices(services: Map<string | symbol | Class<ServiceProvider>, Class<ServiceProvider>>): void {
+    public setDeferredServices(services: Map<string | Class<ServiceProvider> | symbol, Class<ServiceProvider>>): void {
         this.deferredServices = services;
     }
 

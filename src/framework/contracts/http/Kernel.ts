@@ -1,6 +1,6 @@
-export const Kernel = Symbol('Kernel');
+export const KernelSymbol = Symbol('Kernel');
 
-export interface Kernel {
+export interface KernelContract {
     //     /**
     //      * Bootstrap the application for HTTP requests.
     //      *
