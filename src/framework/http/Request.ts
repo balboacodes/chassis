@@ -1,4 +1,4 @@
-import { default as SymfonyRequest } from '../symfony/Request.ts';
+import { default as SymfonyRequest } from '../symfony/http-foundation/Request.ts';
 
 /**
  * @method array validate(array $rules, ...$params)

@@ -14,6 +14,7 @@ import HttpException from './HttpException.ts';
  */
 export default class NotFoundHttpException extends HttpException {
     public constructor(message: string = '', previous?: Error, code: number = 0, headers: unknown[] = []) {
+        super();
         // parent::__construct(404, $message, $previous, $headers, $code);
     }
 }
