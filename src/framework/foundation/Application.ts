@@ -1,5 +1,6 @@
-import { in_array, isset, rtrim, unset } from '@balboacodes/php-utils';
+import { rtrim } from '@balboacodes/php-utils';
 import '@std/dotenv/load';
+import { exists } from '@std/fs';
 import { SEPARATOR } from '@std/path';
 import Container from '../container/Container.ts';
 import { join_paths } from '../filesystem/functions.ts';
@@ -130,7 +131,7 @@ export default class Application extends Container {
     /**
      * The prefixes of absolute cache paths for use during normalization.
      */
-    protected $absoluteCachePathPrefixes: string[] = ['/', '\\'];
+    protected absoluteCachePathPrefixes: string[] = ['/', '\\'];
 
     /**
      * Create a new application instance.
@@ -554,7 +555,7 @@ export default class Application extends Container {
             return false;
         }
 
-        return in_array(Deno.args[0] ?? null, Array.isArray(commands[0]) ? commands[0] : commands);
+        return (Array.isArray(commands[0]) ? commands[0] : commands).includes(Deno.args[0] ?? null);
     }
 
     /**
@@ -849,537 +850,394 @@ export default class Application extends Container {
         }
     }
 
-    //     /**
-    //      * {@inheritdoc}
-    //      *
-    //      * @return \Symfony\Component\HttpFoundation\Response
-    //      */
-    //     public handle(SymfonyRequest $request, int $type = self::MAIN_REQUEST, bool $catch = true): SymfonyResponse
-    //     {
-    //         return $this[HttpKernelContract::class]->handle(Request::createFromBase($request));
-    //     }
+    /**
+     * {@inheritdoc}
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public handle(
+        request: SymfonyRequest,
+        _type: number = Application.MAIN_REQUEST,
+        _catch: boolean = true,
+    ): SymfonyResponse {
+        return this.make(HttpKernelContract).handle(Request.createFromBase(request));
+    }
 
-    //     /**
-    //      * Handle the incoming HTTP request and send the response to the browser.
-    //      *
-    //      * @param  \Illuminate\Http\Request  $request
-    //      * @return void
-    //      */
-    //     public handleRequest(Request $request)
-    //     {
-    //         $kernel = $this->make(HttpKernelContract::class);
+    /**
+     * Handle the incoming HTTP request and send the response to the browser.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     */
+    public handleRequest(request: Request): void {
+        const kernel = this.make(HttpKernelContract);
 
-    //         $response = $kernel->handle($request)->send();
+        const response = kernel.handle(request).send();
 
-    //         $kernel->terminate($request, $response);
-    //     }
+        kernel.terminate(request, response);
+    }
 
-    //     /**
-    //      * Handle the incoming Artisan command.
-    //      *
-    //      * @param  \Symfony\Component\Console\Input\InputInterface  $input
-    //      * @return int
-    //      */
-    //     public handleCommand(InputInterface $input)
-    //     {
-    //         $kernel = $this->make(ConsoleKernelContract::class);
+    /**
+     * Handle the incoming Artisan command.
+     *
+     * @param  \Symfony\Component\Console\Input\InputInterface  $input
+     */
+    public handleCommand(input: InputInterface): number {
+        const kernel = this.make(ConsoleKernelContract);
 
-    //         $status = $kernel->handle(
-    //             $input,
-    //             new ConsoleOutput
-    //         );
+        const status = kernel.handle(input, new ConsoleOutput());
 
-    //         $kernel->terminate($input, $status);
+        kernel.terminate(input, status);
 
-    //         return $status;
-    //     }
+        return status;
+    }
 
-    //     /**
-    //      * Determine if the framework's base configuration should be merged.
-    //      *
-    //      * @return bool
-    //      */
-    //     public shouldMergeFrameworkConfiguration()
-    //     {
-    //         return $this->mergeFrameworkConfiguration;
-    //     }
+    /**
+     * Determine if the framework's base configuration should be merged.
+     */
+    public shouldMergeFrameworkConfiguration(): boolean {
+        return this.mergeFrameworkConfiguration;
+    }
 
-    //     /**
-    //      * Indicate that the framework's base configuration should not be merged.
-    //      *
-    //      * @return $this
-    //      */
-    //     public dontMergeFrameworkConfiguration()
-    //     {
-    //         $this->mergeFrameworkConfiguration = false;
+    /**
+     * Indicate that the framework's base configuration should not be merged.
+     */
+    public dontMergeFrameworkConfiguration(): this {
+        this.mergeFrameworkConfiguration = false;
 
-    //         return $this;
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Determine if middleware has been disabled for the application.
-    //      *
-    //      * @return bool
-    //      */
-    //     public shouldSkipMiddleware()
-    //     {
-    //         return $this->bound('middleware.disable') &&
-    //                $this->make('middleware.disable') === true;
-    //     }
+    /**
+     * Determine if middleware has been disabled for the application.
+     */
+    public shouldSkipMiddleware(): boolean {
+        return this.bound('middleware.disable') && this.make('middleware.disable') === true;
+    }
 
-    //     /**
-    //      * Get the path to the cached services.php file.
-    //      *
-    //      * @return string
-    //      */
-    //     public getCachedServicesPath()
-    //     {
-    //         return $this->normalizeCachePath('APP_SERVICES_CACHE', 'cache/services.php');
-    //     }
+    /**
+     * Get the path to the cached services.ts file.
+     */
+    public getCachedServicesPath(): string {
+        return this.normalizeCachePath('APP_SERVICES_CACHE', 'cache/services.ts');
+    }
 
-    //     /**
-    //      * Get the path to the cached packages.php file.
-    //      *
-    //      * @return string
-    //      */
-    //     public getCachedPackagesPath()
-    //     {
-    //         return $this->normalizeCachePath('APP_PACKAGES_CACHE', 'cache/packages.php');
-    //     }
+    /**
+     * Get the path to the cached packages.ts file.
+     */
+    public getCachedPackagesPath(): string {
+        return this.normalizeCachePath('APP_PACKAGES_CACHE', 'cache/packages.ts');
+    }
 
-    //     /**
-    //      * Determine if the application configuration is cached.
-    //      *
-    //      * @return bool
-    //      */
-    //     public configurationIsCached()
-    //     {
-    //         if ($this->bound('config_loaded_from_cache')) {
-    //             return (bool) $this->make('config_loaded_from_cache');
-    //         }
+    /**
+     * Determine if the application configuration is cached.
+     */
+    public async configurationIsCached(): Promise<boolean> {
+        if (this.bound('config_loaded_from_cache')) {
+            return !!this.make('config_loaded_from_cache');
+        }
 
-    //         return $this->instance('config_loaded_from_cache', is_file($this->getCachedConfigPath()));
-    //     }
+        return this.instance(
+            'config_loaded_from_cache',
+            await exists(this.getCachedConfigPath(), { isFile: true }),
+        ) as boolean;
+    }
 
-    //     /**
-    //      * Get the path to the configuration cache file.
-    //      *
-    //      * @return string
-    //      */
-    //     public getCachedConfigPath()
-    //     {
-    //         return $this->normalizeCachePath('APP_CONFIG_CACHE', 'cache/config.php');
-    //     }
+    /**
+     * Get the path to the configuration cache file.
+     */
+    public getCachedConfigPath(): string {
+        return this.normalizeCachePath('APP_CONFIG_CACHE', 'cache/config.ts');
+    }
 
-    //     /**
-    //      * Determine if the application routes are cached.
-    //      *
-    //      * @return bool
-    //      */
-    //     public routesAreCached()
-    //     {
-    //         if ($this->bound('routes.cached')) {
-    //             return (bool) $this->make('routes.cached');
-    //         }
+    /**
+     * Determine if the application routes are cached.
+     */
+    public routesAreCached(): boolean {
+        if (this.bound('routes.cached')) {
+            return !!this.make('routes.cached');
+        }
 
-    //         return $this->instance('routes.cached', $this['files']->exists($this->getCachedRoutesPath()));
-    //     }
+        return this.instance('routes.cached', this.make('files').exists(this.getCachedRoutesPath())) as boolean;
+    }
 
-    //     /**
-    //      * Get the path to the routes cache file.
-    //      *
-    //      * @return string
-    //      */
-    //     public getCachedRoutesPath()
-    //     {
-    //         return $this->normalizeCachePath('APP_ROUTES_CACHE', 'cache/routes-v7.php');
-    //     }
+    /**
+     * Get the path to the routes cache file.
+     */
+    public getCachedRoutesPath(): string {
+        return this.normalizeCachePath('APP_ROUTES_CACHE', 'cache/routes-v7.ts');
+    }
 
-    //     /**
-    //      * Determine if the application events are cached.
-    //      *
-    //      * @return bool
-    //      */
-    //     public eventsAreCached()
-    //     {
-    //         if ($this->bound('events.cached')) {
-    //             return (bool) $this->make('events.cached');
-    //         }
+    /**
+     * Determine if the application events are cached.
+     */
+    public eventsAreCached(): boolean {
+        if (this.bound('events.cached')) {
+            return !!this.make('events.cached');
+        }
 
-    //         return $this->instance(
-    //             'events.cached', $this['files']->exists($this->getCachedEventsPath())
-    //         );
-    //     }
+        return this.instance('events.cached', this.make('files').exists(this.getCachedEventsPath())) as boolean;
+    }
 
-    //     /**
-    //      * Get the path to the events cache file.
-    //      *
-    //      * @return string
-    //      */
-    //     public getCachedEventsPath()
-    //     {
-    //         return $this->normalizeCachePath('APP_EVENTS_CACHE', 'cache/events.php');
-    //     }
+    /**
+     * Get the path to the events cache file.
+     */
+    public getCachedEventsPath(): string {
+        return this.normalizeCachePath('APP_EVENTS_CACHE', 'cache/events.ts');
+    }
 
-    //     /**
-    //      * Normalize a relative or absolute path to a cache file.
-    //      *
-    //      * @param  string  $key
-    //      * @param  string  $default
-    //      * @return string
-    //      */
-    //     protected normalizeCachePath($key, $default)
-    //     {
-    //         if (is_null($env = Env::get($key))) {
-    //             return $this->bootstrapPath($default);
-    //         }
+    /**
+     * Normalize a relative or absolute path to a cache file.
+     */
+    protected normalizeCachePath(key: string, defaultValue: string): string {
+        const env = Env.get(key);
 
-    //         return Str::startsWith($env, $this->absoluteCachePathPrefixes)
-    //             ? $env
-    //             : $this->basePath($env);
-    //     }
+        if (env === null) {
+            return this.getBootstrapPath(defaultValue);
+        }
 
-    //     /**
-    //      * Add new prefix to list of absolute path prefixes.
-    //      *
-    //      * @param  string  $prefix
-    //      * @return $this
-    //      */
-    //     public addAbsoluteCachePathPrefix($prefix)
-    //     {
-    //         $this->absoluteCachePathPrefixes[] = $prefix;
+        return Str.startsWith(env, this.absoluteCachePathPrefixes) ? env : this.getBasePath(env);
+    }
 
-    //         return $this;
-    //     }
+    /**
+     * Add new prefix to list of absolute path prefixes.
+     */
+    public addAbsoluteCachePathPrefix(prefix: string): this {
+        this.absoluteCachePathPrefixes.push(prefix);
 
-    //     /**
-    //      * Get an instance of the maintenance mode manager implementation.
-    //      *
-    //      * @return \Illuminate\Contracts\Foundation\MaintenanceMode
-    //      */
-    //     public maintenanceMode()
-    //     {
-    //         return $this->make(MaintenanceModeContract::class);
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Determine if the application is currently down for maintenance.
-    //      *
-    //      * @return bool
-    //      */
-    //     public isDownForMaintenance()
-    //     {
-    //         return $this->maintenanceMode()->active();
-    //     }
+    /**
+     * Get an instance of the maintenance mode manager implementation.
+     *
+     * @return \Illuminate\Contracts\Foundation\MaintenanceMode
+     */
+    public maintenanceMode(): MaintenanceMode {
+        return this.make(MaintenanceModeContract);
+    }
 
-    //     /**
-    //      * Throw an HttpException with the given data.
-    //      *
-    //      * @param  int  $code
-    //      * @param  string  $message
-    //      * @param  array  $headers
-    //      * @return never
-    //      *
-    //      * @throws \Symfony\Component\HttpKernel\Exception\HttpException
-    //      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-    //      */
-    //     public abort($code, $message = '', array $headers = [])
-    //     {
-    //         if ($code == 404) {
-    //             throw new NotFoundHttpException($message, null, 0, $headers);
-    //         }
+    /**
+     * Determine if the application is currently down for maintenance.
+     */
+    public isDownForMaintenance(): boolean {
+        return this.maintenanceMode().active();
+    }
 
-    //         throw new HttpException($code, $message, null, $headers);
-    //     }
+    /**
+     * Throw an HttpException with the given data.
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     */
+    public abort(code: number, message: string = '', headers: unknown[] = []): never {
+        if (code == 404) {
+            throw new NotFoundHttpException(message, null, 0, headers);
+        }
 
-    //     /**
-    //      * Register a terminating callback with the application.
-    //      *
-    //      * @param  callable|string  $callback
-    //      * @return $this
-    //      */
-    //     public terminating($callback)
-    //     {
-    //         $this->terminatingCallbacks[] = $callback;
+        throw new HttpException(code, message, null, headers);
+    }
 
-    //         return $this;
-    //     }
+    /**
+     * Register a terminating callback with the application.
+     */
+    public terminating(callback: () => unknown): this {
+        this.terminatingCallbacks.push(callback);
 
-    //     /**
-    //      * Terminate the application.
-    //      *
-    //      * @return void
-    //      */
-    //     public terminate()
-    //     {
-    //         $index = 0;
+        return this;
+    }
 
-    //         while ($index < count($this->terminatingCallbacks)) {
-    //             $this->call($this->terminatingCallbacks[$index]);
+    /**
+     * Terminate the application.
+     */
+    public terminate(): void {
+        let index = 0;
 
-    //             $index++;
-    //         }
-    //     }
+        while (index < this.terminatingCallbacks.length) {
+            this.terminatingCallbacks[index]();
 
-    //     /**
-    //      * Get the service providers that have been loaded.
-    //      *
-    //      * @return array<string, bool>
-    //      */
-    //     public getLoadedProviders()
-    //     {
-    //         return $this->loadedProviders;
-    //     }
+            index++;
+        }
+    }
 
-    //     /**
-    //      * Determine if the given service provider is loaded.
-    //      *
-    //      * @param  string  $provider
-    //      * @return bool
-    //      */
-    //     public providerIsLoaded(string $provider)
-    //     {
-    //         return isset($this->loadedProviders[$provider]);
-    //     }
+    /**
+     * Get the service providers that have been loaded.
+     */
+    public getLoadedProviders(): Record<string, boolean> {
+        return this.loadedProviders;
+    }
 
-    //     /**
-    //      * Get the application's deferred services.
-    //      *
-    //      * @return array
-    //      */
-    //     public getDeferredServices()
-    //     {
-    //         return $this->deferredServices;
-    //     }
+    /**
+     * Determine if the given service provider is loaded.
+     */
+    public providerIsLoaded(provider: string): boolean {
+        return !!this.loadedProviders[provider];
+    }
 
-    //     /**
-    //      * Set the application's deferred services.
-    //      *
-    //      * @param  array  $services
-    //      * @return void
-    //      */
-    //     public setDeferredServices(array $services)
-    //     {
-    //         $this->deferredServices = $services;
-    //     }
+    /**
+     * Get the application's deferred services.
+     */
+    public getDeferredServices(): Map<string | Class, ServiceProvider> {
+        return this.deferredServices;
+    }
 
-    //     /**
-    //      * Determine if the given service is a deferred service.
-    //      *
-    //      * @param  string  $service
-    //      * @return bool
-    //      */
-    //     public isDeferredService($service)
-    //     {
-    //         return isset($this->deferredServices[$service]);
-    //     }
+    /**
+     * Set the application's deferred services.
+     */
+    public setDeferredServices(services: Map<string | Class, ServiceProvider>): void {
+        this.deferredServices = services;
+    }
 
-    //     /**
-    //      * Add an array of services to the application's deferred services.
-    //      *
-    //      * @param  array  $services
-    //      * @return void
-    //      */
-    //     public addDeferredServices(array $services)
-    //     {
-    //         $this->deferredServices = array_merge($this->deferredServices, $services);
-    //     }
+    /**
+     * Determine if the given service is a deferred service.
+     */
+    public isDeferredService(service: string | Class): boolean {
+        return this.deferredServices.has(service);
+    }
 
-    //     /**
-    //      * Remove an array of services from the application's deferred services.
-    //      *
-    //      * @param  array  $services
-    //      * @return void
-    //      */
-    //     public removeDeferredServices(array $services)
-    //     {
-    //         foreach ($services as $service) {
-    //             unset($this->deferredServices[$service]);
-    //         }
-    //     }
+    /**
+     * Add a map of services to the application's deferred services.
+     */
+    public addDeferredServices(services: Map<string | Class, ServiceProvider>): void {
+        for (const [service, provider] of services.entries()) {
+            this.deferredServices.set(service, provider);
+        }
+    }
 
-    //     /**
-    //      * Configure the real-time facade namespace.
-    //      *
-    //      * @param  string  $namespace
-    //      * @return void
-    //      */
-    //     public provideFacades($namespace)
-    //     {
-    //         AliasLoader::setFacadeNamespace($namespace);
-    //     }
+    /**
+     * Remove an array of services from the application's deferred services.
+     */
+    public removeDeferredServices(services: Map<string | Class, ServiceProvider>): void {
+        for (const service of services.keys()) {
+            this.deferredServices.delete(service);
+        }
+    }
 
-    //     /**
-    //      * Get the current application locale.
-    //      *
-    //      * @return string
-    //      */
-    //     public getLocale()
-    //     {
-    //         return $this['config']->get('app.locale');
-    //     }
+    /**
+     * Configure the real-time facade namespace.
+     */
+    public provideFacades(namespace: string): void {
+        AliasLoader.setFacadeNamespace(namespace);
+    }
 
-    //     /**
-    //      * Get the current application locale.
-    //      *
-    //      * @return string
-    //      */
-    //     public currentLocale()
-    //     {
-    //         return $this->getLocale();
-    //     }
+    /**
+     * Get the current application locale.
+     */
+    public getLocale(): string {
+        return this.make('config').get('app.locale');
+    }
 
-    //     /**
-    //      * Get the current application fallback locale.
-    //      *
-    //      * @return string
-    //      */
-    //     public getFallbackLocale()
-    //     {
-    //         return $this['config']->get('app.fallback_locale');
-    //     }
+    /**
+     * Get the current application locale.
+     */
+    public currentLocale(): string {
+        return this.getLocale();
+    }
 
-    //     /**
-    //      * Set the current application locale.
-    //      *
-    //      * @param  string  $locale
-    //      * @return void
-    //      */
-    //     public setLocale($locale)
-    //     {
-    //         $this['config']->set('app.locale', $locale);
+    /**
+     * Get the current application fallback locale.
+     */
+    public getFallbackLocale(): string {
+        return this.make('config').get('app.fallback_locale');
+    }
 
-    //         $this['translator']->setLocale($locale);
+    /**
+     * Set the current application locale.
+     */
+    public setLocale(locale: string): void {
+        this.make('config').set('app.locale', locale);
 
-    //         $this['events']->dispatch(new LocaleUpdated($locale));
-    //     }
+        this.make('translator').setLocale(locale);
 
-    //     /**
-    //      * Set the current application fallback locale.
-    //      *
-    //      * @param  string  $fallbackLocale
-    //      * @return void
-    //      */
-    //     public setFallbackLocale($fallbackLocale)
-    //     {
-    //         $this['config']->set('app.fallback_locale', $fallbackLocale);
+        this.make('events').dispatch(new LocaleUpdated(locale));
+    }
 
-    //         $this['translator']->setFallback($fallbackLocale);
-    //     }
+    /**
+     * Set the current application fallback locale.
+     */
+    public setFallbackLocale(fallbackLocale: string): void {
+        this.make('config').set('app.fallback_locale', fallbackLocale);
 
-    //     /**
-    //      * Determine if the application locale is the given locale.
-    //      *
-    //      * @param  string  $locale
-    //      * @return bool
-    //      */
-    //     public isLocale($locale)
-    //     {
-    //         return $this->getLocale() == $locale;
-    //     }
+        this.make('translator').setFallback(fallbackLocale);
+    }
 
-    //     /**
-    //      * Register the core class aliases in the container.
-    //      *
-    //      * @return void
-    //      */
-    //     public registerCoreContainerAliases()
-    //     {
-    //         foreach ([
-    //             'app' => [self::class, \Illuminate\Contracts\Container\Container::class, \Illuminate\Contracts\Foundation\Application::class, \Psr\Container\ContainerInterface::class],
-    //             'auth' => [\Illuminate\Auth\AuthManager::class, \Illuminate\Contracts\Auth\Factory::class],
-    //             'auth.driver' => [\Illuminate\Contracts\Auth\Guard::class],
-    //             'auth.password' => [\Illuminate\Auth\Passwords\PasswordBrokerManager::class, \Illuminate\Contracts\Auth\PasswordBrokerFactory::class],
-    //             'auth.password.broker' => [\Illuminate\Auth\Passwords\PasswordBroker::class, \Illuminate\Contracts\Auth\PasswordBroker::class],
-    //             'blade.compiler' => [\Illuminate\View\Compilers\BladeCompiler::class],
-    //             'cache' => [\Illuminate\Cache\CacheManager::class, \Illuminate\Contracts\Cache\Factory::class],
-    //             'cache.store' => [\Illuminate\Cache\Repository::class, \Illuminate\Contracts\Cache\Repository::class, \Psr\SimpleCache\CacheInterface::class],
-    //             'cache.psr6' => [\Symfony\Component\Cache\Adapter\Psr16Adapter::class, \Symfony\Component\Cache\Adapter\AdapterInterface::class, \Psr\Cache\CacheItemPoolInterface::class],
-    //             'config' => [\Illuminate\Config\Repository::class, \Illuminate\Contracts\Config\Repository::class],
-    //             'cookie' => [\Illuminate\Cookie\CookieJar::class, \Illuminate\Contracts\Cookie\Factory::class, \Illuminate\Contracts\Cookie\QueueingFactory::class],
-    //             'db' => [\Illuminate\Database\DatabaseManager::class, \Illuminate\Database\ConnectionResolverInterface::class],
-    //             'db.connection' => [\Illuminate\Database\Connection::class, \Illuminate\Database\ConnectionInterface::class],
-    //             'db.schema' => [\Illuminate\Database\Schema\Builder::class],
-    //             'encrypter' => [\Illuminate\Encryption\Encrypter::class, \Illuminate\Contracts\Encryption\Encrypter::class, \Illuminate\Contracts\Encryption\StringEncrypter::class],
-    //             'events' => [\Illuminate\Events\Dispatcher::class, \Illuminate\Contracts\Events\Dispatcher::class],
-    //             'files' => [\Illuminate\Filesystem\Filesystem::class],
-    //             'filesystem' => [\Illuminate\Filesystem\FilesystemManager::class, \Illuminate\Contracts\Filesystem\Factory::class],
-    //             'filesystem.disk' => [\Illuminate\Contracts\Filesystem\Filesystem::class],
-    //             'filesystem.cloud' => [\Illuminate\Contracts\Filesystem\Cloud::class],
-    //             'hash' => [\Illuminate\Hashing\HashManager::class],
-    //             'hash.driver' => [\Illuminate\Contracts\Hashing\Hasher::class],
-    //             'log' => [\Illuminate\Log\LogManager::class, \Psr\Log\LoggerInterface::class],
-    //             'mail.manager' => [\Illuminate\Mail\MailManager::class, \Illuminate\Contracts\Mail\Factory::class],
-    //             'mailer' => [\Illuminate\Mail\Mailer::class, \Illuminate\Contracts\Mail\Mailer::class, \Illuminate\Contracts\Mail\MailQueue::class],
-    //             'queue' => [\Illuminate\Queue\QueueManager::class, \Illuminate\Contracts\Queue\Factory::class, \Illuminate\Contracts\Queue\Monitor::class],
-    //             'queue.connection' => [\Illuminate\Contracts\Queue\Queue::class],
-    //             'queue.failer' => [\Illuminate\Queue\Failed\FailedJobProviderInterface::class],
-    //             'redirect' => [\Illuminate\Routing\Redirector::class],
-    //             'redis' => [\Illuminate\Redis\RedisManager::class, \Illuminate\Contracts\Redis\Factory::class],
-    //             'redis.connection' => [\Illuminate\Redis\Connections\Connection::class, \Illuminate\Contracts\Redis\Connection::class],
-    //             'request' => [\Illuminate\Http\Request::class, \Symfony\Component\HttpFoundation\Request::class],
-    //             'router' => [\Illuminate\Routing\Router::class, \Illuminate\Contracts\Routing\Registrar::class, \Illuminate\Contracts\Routing\BindingRegistrar::class],
-    //             'session' => [\Illuminate\Session\SessionManager::class],
-    //             'session.store' => [\Illuminate\Session\Store::class, \Illuminate\Contracts\Session\Session::class],
-    //             'translator' => [\Illuminate\Translation\Translator::class, \Illuminate\Contracts\Translation\Translator::class],
-    //             'url' => [\Illuminate\Routing\UrlGenerator::class, \Illuminate\Contracts\Routing\UrlGenerator::class],
-    //             'validator' => [\Illuminate\Validation\Factory::class, \Illuminate\Contracts\Validation\Factory::class],
-    //             'view' => [\Illuminate\View\Factory::class, \Illuminate\Contracts\View\Factory::class],
-    //         ] as $key => $aliases) {
-    //             foreach ($aliases as $alias) {
-    //                 $this->alias($key, $alias);
-    //             }
-    //         }
-    //     }
+    /**
+     * Determine if the application locale is the given locale.
+     */
+    public isLocale(locale: string): boolean {
+        return this.getLocale() == locale;
+    }
 
-    //     /**
-    //      * Flush the container of all bindings and resolved instances.
-    //      *
-    //      * @return void
-    //      */
-    //     public flush()
-    //     {
-    //         parent::flush();
+    /**
+     * Register the core class aliases in the container.
+     */
+    public registerCoreContainerAliases(): void {
+        // for (
+        //     const [key, aliases] of Object.entries({
+        //         // 'app' : [self::class, \Illuminate\Contracts\Container\Container::class, \Illuminate\Contracts\Foundation\Application::class, \Psr\Container\ContainerInterface::class],
+        //         // 'auth' : [\Illuminate\Auth\AuthManager::class, \Illuminate\Contracts\Auth\Factory::class],
+        //         // 'auth.driver' : [\Illuminate\Contracts\Auth\Guard::class],
+        //         // 'auth.password' : [\Illuminate\Auth\Passwords\PasswordBrokerManager::class, \Illuminate\Contracts\Auth\PasswordBrokerFactory::class],
+        //         // 'auth.password.broker' : [\Illuminate\Auth\Passwords\PasswordBroker::class, \Illuminate\Contracts\Auth\PasswordBroker::class],
+        //         // 'blade.compiler' : [\Illuminate\View\Compilers\BladeCompiler::class],
+        //         // 'cache' : [\Illuminate\Cache\CacheManager::class, \Illuminate\Contracts\Cache\Factory::class],
+        //         // 'cache.store' : [\Illuminate\Cache\Repository::class, \Illuminate\Contracts\Cache\Repository::class, \Psr\SimpleCache\CacheInterface::class],
+        //         // 'cache.psr6' : [\Symfony\Component\Cache\Adapter\Psr16Adapter::class, \Symfony\Component\Cache\Adapter\AdapterInterface::class, \Psr\Cache\CacheItemPoolInterface::class],
+        //         // 'config' : [\Illuminate\Config\Repository::class, \Illuminate\Contracts\Config\Repository::class],
+        //         // 'cookie' : [\Illuminate\Cookie\CookieJar::class, \Illuminate\Contracts\Cookie\Factory::class, \Illuminate\Contracts\Cookie\QueueingFactory::class],
+        //         // 'db' : [\Illuminate\Database\DatabaseManager::class, \Illuminate\Database\ConnectionResolverInterface::class],
+        //         // 'db.connection' : [\Illuminate\Database\Connection::class, \Illuminate\Database\ConnectionInterface::class],
+        //         // 'db.schema' : [\Illuminate\Database\Schema\Builder::class],
+        //         // 'encrypter' : [\Illuminate\Encryption\Encrypter::class, \Illuminate\Contracts\Encryption\Encrypter::class, \Illuminate\Contracts\Encryption\StringEncrypter::class],
+        //         // 'events' : [\Illuminate\Events\Dispatcher::class, \Illuminate\Contracts\Events\Dispatcher::class],
+        //         // 'files' : [\Illuminate\Filesystem\Filesystem::class],
+        //         // 'filesystem' : [\Illuminate\Filesystem\FilesystemManager::class, \Illuminate\Contracts\Filesystem\Factory::class],
+        //         // 'filesystem.disk' : [\Illuminate\Contracts\Filesystem\Filesystem::class],
+        //         // 'filesystem.cloud' : [\Illuminate\Contracts\Filesystem\Cloud::class],
+        //         // 'hash' : [\Illuminate\Hashing\HashManager::class],
+        //         // 'hash.driver' : [\Illuminate\Contracts\Hashing\Hasher::class],
+        //         // 'log' : [\Illuminate\Log\LogManager::class, \Psr\Log\LoggerInterface::class],
+        //         // 'mail.manager' : [\Illuminate\Mail\MailManager::class, \Illuminate\Contracts\Mail\Factory::class],
+        //         // 'mailer' : [\Illuminate\Mail\Mailer::class, \Illuminate\Contracts\Mail\Mailer::class, \Illuminate\Contracts\Mail\MailQueue::class],
+        //         // 'queue' : [\Illuminate\Queue\QueueManager::class, \Illuminate\Contracts\Queue\Factory::class, \Illuminate\Contracts\Queue\Monitor::class],
+        //         // 'queue.connection' : [\Illuminate\Contracts\Queue\Queue::class],
+        //         // 'queue.failer' : [\Illuminate\Queue\Failed\FailedJobProviderInterface::class],
+        //         // 'redirect' : [\Illuminate\Routing\Redirector::class],
+        //         // 'redis' : [\Illuminate\Redis\RedisManager::class, \Illuminate\Contracts\Redis\Factory::class],
+        //         // 'redis.connection' : [\Illuminate\Redis\Connections\Connection::class, \Illuminate\Contracts\Redis\Connection::class],
+        //         // 'request' : [\Illuminate\Http\Request::class, \Symfony\Component\HttpFoundation\Request::class],
+        //         // 'router' : [\Illuminate\Routing\Router::class, \Illuminate\Contracts\Routing\Registrar::class, \Illuminate\Contracts\Routing\BindingRegistrar::class],
+        //         // 'session' : [\Illuminate\Session\SessionManager::class],
+        //         // 'session.store' : [\Illuminate\Session\Store::class, \Illuminate\Contracts\Session\Session::class],
+        //         // 'translator' : [\Illuminate\Translation\Translator::class, \Illuminate\Contracts\Translation\Translator::class],
+        //         // 'url' : [\Illuminate\Routing\UrlGenerator::class, \Illuminate\Contracts\Routing\UrlGenerator::class],
+        //         // 'validator' : [\Illuminate\Validation\Factory::class, \Illuminate\Contracts\Validation\Factory::class],
+        //         // 'view' : [\Illuminate\View\Factory::class, \Illuminate\Contracts\View\Factory::class],
+        //     })
+        // ) {
+        //     for (const alias of aliases) {
+        //         this.alias(key, alias);
+        //     }
+        // }
+    }
 
-    //         $this->buildStack = [];
-    //         $this->loadedProviders = [];
-    //         $this->bootedCallbacks = [];
-    //         $this->bootingCallbacks = [];
-    //         $this->deferredServices = [];
-    //         $this->reboundCallbacks = [];
-    //         $this->serviceProviders = [];
-    //         $this->resolvingCallbacks = [];
-    //         $this->terminatingCallbacks = [];
-    //         $this->beforeResolvingCallbacks = [];
-    //         $this->afterResolvingCallbacks = [];
-    //         $this->globalBeforeResolvingCallbacks = [];
-    //         $this->globalResolvingCallbacks = [];
-    //         $this->globalAfterResolvingCallbacks = [];
-    //     }
+    /**
+     * Flush the container of all bindings and resolved instances.
+     */
+    public override flush(): void {
+        super.flush();
 
-    //     /**
-    //      * Get the application namespace.
-    //      *
-    //      * @return string
-    //      *
-    //      * @throws \RuntimeException
-    //      */
-    //     public getNamespace()
-    //     {
-    //         if (! is_null($this->namespace)) {
-    //             return $this->namespace;
-    //         }
-
-    //         $composer = json_decode(file_get_contents($this->basePath('composer.json')), true);
-
-    //         foreach ((array) data_get($composer, 'autoload.psr-4') as $namespace => $path) {
-    //             foreach ((array) $path as $pathChoice) {
-    //                 if (realpath($this->path()) === realpath($this->basePath($pathChoice))) {
-    //                     return $this->namespace = $namespace;
-    //                 }
-    //             }
-    //         }
-
-    //         throw new RuntimeException('Unable to detect application namespace.');
-    //     }
+        this.loadedProviders = {};
+        this.bootedCallbacks = [];
+        this.bootingCallbacks = [];
+        this.deferredServices.clear();
+        this.reboundCallbacks.clear();
+        this.serviceProviders = {};
+        this.resolvingCallbacks.clear();
+        this.terminatingCallbacks = [];
+        this.beforeResolvingCallbacks.clear();
+        this.afterResolvingCallbacks.clear();
+        this.globalBeforeResolvingCallbacks = [];
+        this.globalResolvingCallbacks = [];
+        this.globalAfterResolvingCallbacks = [];
+    }
 }

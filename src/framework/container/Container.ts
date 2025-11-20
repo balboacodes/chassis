@@ -1,6 +1,6 @@
 import { array_merge, array_pop, count } from '@balboacodes/php-utils';
+import { isClass } from '@balboacodes/chassis';
 import { Class } from '../types.ts';
-import { isClass } from '../main.ts';
 
 export default class Container {
     /**
@@ -213,7 +213,7 @@ export default class Container {
     /**
      * Register an existing instance as shared in the container.
      */
-    public instance(abstract: string | Class, instance: InstanceType<Class>): InstanceType<Class> {
+    public instance(abstract: string | Class, instance: InstanceType<Class> | unknown): InstanceType<Class> | unknown {
         const isBound = this.bound(abstract);
 
         // We'll check to determine if this type has been bound before, and if it has

@@ -10,6 +10,7 @@
     "@balboacodes/php-utils": "npm:@balboacodes/php-utils@^0.9.0",
     "@std/assert": "jsr:@std/assert@1",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.5",
+    "@std/fs": "jsr:@std/fs@^1.0.20",
     "@std/path": "jsr:@std/path@^1.1.3",
     "vitest": "npm:vitest@^4.0.10"
   },
