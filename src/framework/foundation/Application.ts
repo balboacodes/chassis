@@ -4,6 +4,11 @@ import '@std/dotenv/load';
 import { exists } from '@std/fs';
 import { SEPARATOR } from '@std/path';
 import Container from '../container/Container.ts';
+import { default as ApplicationContract } from '../contracts/foundation/Application.ts';
+import CachesConfiguration from '../contracts/foundation/CachesConfiguration.ts';
+import CachesRoutes from '../contracts/foundation/CachesRoutes.ts';
+import { Kernel as HttpKernelContract } from '../contracts/http/Kernel.ts';
+import HttpKernelInterface from '../contracts/symfony/HttpKernelInterface.ts';
 import EventServiceProvider from '../events/EventServiceProvider.ts';
 import { join_paths } from '../filesystem/functions.ts';
 import LogServiceProvider from '../log/LogServiceProvider.ts';
@@ -21,8 +26,11 @@ import ProviderRepository from './ProviderRepository.ts';
 import LoadEnvironmentVariables from './bootstrap/LoadEnvironmentVariables.ts';
 import ApplicationBuilder from './configuration/ApplicationBuilder.ts';
 import Filesystem from './filesystem/Filesystem.ts';
+import { default as SymfonyRequest } from './symfony/Request.ts';
+import { default as SymfonyResponse } from './symfony/Response.ts';
 
-export default class Application extends Container {
+export default class Application extends Container
+    implements ApplicationContract, CachesConfiguration, CachesRoutes, HttpKernelInterface {
     /**
      * The framework version.
      */
@@ -66,17 +74,17 @@ export default class Application extends Container {
     /**
      * All of the registered service providers.
      */
-    protected serviceProviders: Map<string | Class<ServiceProvider>, InstanceType<typeof ServiceProvider>> = new Map();
+    protected serviceProviders: Map<string | Class<ServiceProvider> | symbol, ServiceProvider> = new Map();
 
     /**
      * The names of the loaded service providers.
      */
-    protected loadedProviders: Map<string | Class<ServiceProvider>, boolean> = new Map();
+    protected loadedProviders: Map<string | Class<ServiceProvider> | symbol, boolean> = new Map();
 
     /**
      * The deferred services and their providers.
      */
-    protected deferredServices: Map<string | Class<ServiceProvider>, Class<ServiceProvider>> = new Map();
+    protected deferredServices: Map<string | Class<ServiceProvider> | symbol, Class<ServiceProvider>> = new Map();
 
     /**
      * The custom bootstrap path defined by the developer.
@@ -777,7 +785,7 @@ export default class Application extends Container {
     /**
      * Determine if the given abstract type has been bound.
      */
-    public override bound(abstract: string | Class): boolean {
+    public override bound(abstract: string | Class<ServiceProvider>): boolean {
         return this.isDeferredService(abstract) || super.bound(abstract);
     }
 
@@ -812,15 +820,11 @@ export default class Application extends Container {
 
     /**
      * Boot the given service provider.
-     *
-     * @param  \Illuminate\Support\ServiceProvider  $provider
      */
     protected bootProvider(provider: ServiceProvider): void {
         provider.callBootingCallbacks();
 
-        if (provider.boot) {
-            provider.boot();
-        }
+        provider.boot();
 
         provider.callBootedCallbacks();
     }
@@ -858,14 +862,8 @@ export default class Application extends Container {
 
     /**
      * {@inheritdoc}
-     *
-     * @return \Symfony\Component\HttpFoundation\Response
      */
-    public handle(
-        request: SymfonyRequest,
-        _type: number = Application.MAIN_REQUEST,
-        _catch: boolean = true,
-    ): SymfonyResponse {
+    public handle(request: SymfonyRequest): SymfonyResponse {
         return this.make(HttpKernelContract).handle(Request.createFromBase(request));
     }
 
@@ -963,6 +961,7 @@ export default class Application extends Container {
             return !!this.make('routes.cached');
         }
 
+        // @ts-expect-error: need better typing
         return this.instance('routes.cached', this.make('files').exists(this.getCachedRoutesPath())) as boolean;
     }
 
@@ -981,6 +980,7 @@ export default class Application extends Container {
             return !!this.make('events.cached');
         }
 
+        // @ts-expect-error: need better typing
         return this.instance('events.cached', this.make('files').exists(this.getCachedEventsPath())) as boolean;
     }
 
@@ -995,7 +995,7 @@ export default class Application extends Container {
      * Normalize a relative or absolute path to a cache file.
      */
     protected normalizeCachePath(key: string, defaultValue: string): string {
-        const env = Env.get(key);
+        const env = Env.get(key) as string;
 
         if (env === null) {
             return this.getBootstrapPath(defaultValue);
@@ -1015,8 +1015,6 @@ export default class Application extends Container {
 
     /**
      * Get an instance of the maintenance mode manager implementation.
-     *
-     * @return \Illuminate\Contracts\Foundation\MaintenanceMode
      */
     public maintenanceMode(): MaintenanceMode {
         return this.make(MaintenanceModeContract);
@@ -1031,9 +1029,6 @@ export default class Application extends Container {
 
     /**
      * Throw an HttpException with the given data.
-     *
-     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
     public abort(code: number, message: string = '', headers: unknown[] = []): never {
         if (code == 404) {
@@ -1068,7 +1063,7 @@ export default class Application extends Container {
     /**
      * Get the service providers that have been loaded.
      */
-    public getLoadedProviders(): Record<string, boolean> {
+    public getLoadedProviders(): Map<string | Class<ServiceProvider>, boolean> {
         return this.loadedProviders;
     }
 
@@ -1076,34 +1071,34 @@ export default class Application extends Container {
      * Determine if the given service provider is loaded.
      */
     public providerIsLoaded(provider: string): boolean {
-        return !!this.loadedProviders[provider];
+        return !!this.loadedProviders.get(provider);
     }
 
     /**
      * Get the application's deferred services.
      */
-    public getDeferredServices(): Map<string | Class, ServiceProvider> {
+    public getDeferredServices(): Map<string | Class<ServiceProvider>, Class<ServiceProvider>> {
         return this.deferredServices;
     }
 
     /**
      * Set the application's deferred services.
      */
-    public setDeferredServices(services: Map<string | Class, ServiceProvider>): void {
+    public setDeferredServices(services: Map<string | Class<ServiceProvider>, Class<ServiceProvider>>): void {
         this.deferredServices = services;
     }
 
     /**
      * Determine if the given service is a deferred service.
      */
-    public isDeferredService(service: string | Class): boolean {
+    public isDeferredService(service: string | Class<ServiceProvider>): boolean {
         return this.deferredServices.has(service);
     }
 
     /**
      * Add a map of services to the application's deferred services.
      */
-    public addDeferredServices(services: Map<string | Class, ServiceProvider>): void {
+    public addDeferredServices(services: Map<string | Class<ServiceProvider>, Class<ServiceProvider>>): void {
         for (const [service, provider] of services.entries()) {
             this.deferredServices.set(service, provider);
         }
@@ -1112,7 +1107,7 @@ export default class Application extends Container {
     /**
      * Remove an array of services from the application's deferred services.
      */
-    public removeDeferredServices(services: Map<string | Class, ServiceProvider>): void {
+    public removeDeferredServices(services: Map<string | Class<ServiceProvider>, Class<ServiceProvider>>): void {
         for (const service of services.keys()) {
             this.deferredServices.delete(service);
         }
@@ -1129,6 +1124,7 @@ export default class Application extends Container {
      * Get the current application locale.
      */
     public getLocale(): string {
+        // @ts-expect-error: need better typing
         return this.make('config').get('app.locale');
     }
 
@@ -1143,6 +1139,7 @@ export default class Application extends Container {
      * Get the current application fallback locale.
      */
     public getFallbackLocale(): string {
+        // @ts-expect-error: need better typing
         return this.make('config').get('app.fallback_locale');
     }
 
@@ -1150,10 +1147,11 @@ export default class Application extends Container {
      * Set the current application locale.
      */
     public setLocale(locale: string): void {
+        // @ts-expect-error: need better typing
         this.make('config').set('app.locale', locale);
-
+        // @ts-expect-error: need better typing
         this.make('translator').setLocale(locale);
-
+        // @ts-expect-error: need better typing
         this.make('events').dispatch(new LocaleUpdated(locale));
     }
 
@@ -1161,8 +1159,9 @@ export default class Application extends Container {
      * Set the current application fallback locale.
      */
     public setFallbackLocale(fallbackLocale: string): void {
+        // @ts-expect-error: need better typing
         this.make('config').set('app.fallback_locale', fallbackLocale);
-
+        // @ts-expect-error: need better typing
         this.make('translator').setFallback(fallbackLocale);
     }
 
@@ -1179,44 +1178,45 @@ export default class Application extends Container {
     public registerCoreContainerAliases(): void {
         for (
             const [key, aliases] of Object.entries({
-                // 'app': [Application, Container],
-                // 'auth': [AuthManager, Factory],
-                // 'auth.driver': [Guard],
-                // 'auth.password': [PasswordBrokerManager, PasswordBrokerFactory],
-                // 'auth.password.broker': [PasswordBroker],
-                // 'blade.compiler': [BladeCompiler],
-                // 'cache': [CacheManager, Factory],
-                // 'cache.store': [Repository],
-                // 'config': [Repository],
-                // 'cookie': [CookieJar, Factory, QueueingFactory],
-                // 'db': [DatabaseManager, ConnectionResolverInterface],
-                // 'db.connection': [Connection, ConnectionInterface],
-                // 'db.schema': [Builder],
-                // 'encrypter': [Encrypter, StringEncrypter],
-                // 'events': [Dispatcher],
-                // 'files': [Filesystem],
-                // 'filesystem': [FilesystemManager, Factory],
-                // 'filesystem.disk': [Filesystem],
-                // 'filesystem.cloud': [Cloud],
-                // 'hash': [HashManager],
-                // 'hash.driver': [Hasher],
-                // 'log': [LogManager],
-                // 'mail.manager': [MailManager, Factory],
-                // 'mailer': [Mailer, MailQueue],
-                // 'queue': [QueueManager, Factory, Monitor],
-                // 'queue.connection': [Queue],
-                // 'queue.failer': [FailedJobProviderInterface],
-                // 'redirect': [Redirector],
-                // 'redis': [RedisManager, Factory],
-                // 'redis.connection': [Connections],
-                // 'request': [Request],
-                // 'router': [Router, Registrar, BindingRegistrar],
-                // 'session': [SessionManager],
-                // 'session.store': [Store, Session],
-                // 'translator': [Translator],
-                // 'url': [UrlGenerator],
-                // 'validator': [Factory],
-                // 'view': [Factory],
+                // 'app' => [self::class, \Illuminate\Contracts\Container\Container::class, \Illuminate\Contracts\Foundation\Application::class, \Psr\Container\ContainerInterface::class],
+                // 'auth' => [\Illuminate\Auth\AuthManager::class, \Illuminate\Contracts\Auth\Factory::class],
+                // 'auth.driver' => [\Illuminate\Contracts\Auth\Guard::class],
+                // 'auth.password' => [\Illuminate\Auth\Passwords\PasswordBrokerManager::class, \Illuminate\Contracts\Auth\PasswordBrokerFactory::class],
+                // 'auth.password.broker' => [\Illuminate\Auth\Passwords\PasswordBroker::class, \Illuminate\Contracts\Auth\PasswordBroker::class],
+                // 'blade.compiler' => [\Illuminate\View\Compilers\BladeCompiler::class],
+                // 'cache' => [\Illuminate\Cache\CacheManager::class, \Illuminate\Contracts\Cache\Factory::class],
+                // 'cache.store' => [\Illuminate\Cache\Repository::class, \Illuminate\Contracts\Cache\Repository::class, \Psr\SimpleCache\CacheInterface::class],
+                // 'cache.psr6' => [\Symfony\Component\Cache\Adapter\Psr16Adapter::class, \Symfony\Component\Cache\Adapter\AdapterInterface::class, \Psr\Cache\CacheItemPoolInterface::class],
+                // 'config' => [\Illuminate\Config\Repository::class, \Illuminate\Contracts\Config\Repository::class],
+                // 'cookie' => [\Illuminate\Cookie\CookieJar::class, \Illuminate\Contracts\Cookie\Factory::class, \Illuminate\Contracts\Cookie\QueueingFactory::class],
+                // 'db' => [\Illuminate\Database\DatabaseManager::class, \Illuminate\Database\ConnectionResolverInterface::class],
+                // 'db.connection' => [\Illuminate\Database\Connection::class, \Illuminate\Database\ConnectionInterface::class],
+                // 'db.schema' => [\Illuminate\Database\Schema\Builder::class],
+                // 'encrypter' => [\Illuminate\Encryption\Encrypter::class, \Illuminate\Contracts\Encryption\Encrypter::class, \Illuminate\Contracts\Encryption\StringEncrypter::class],
+                // 'events' => [\Illuminate\Events\Dispatcher::class, \Illuminate\Contracts\Events\Dispatcher::class],
+                // 'files' => [\Illuminate\Filesystem\Filesystem::class],
+                // 'filesystem' => [\Illuminate\Filesystem\FilesystemManager::class, \Illuminate\Contracts\Filesystem\Factory::class],
+                // 'filesystem.disk' => [\Illuminate\Contracts\Filesystem\Filesystem::class],
+                // 'filesystem.cloud' => [\Illuminate\Contracts\Filesystem\Cloud::class],
+                // 'hash' => [\Illuminate\Hashing\HashManager::class],
+                // 'hash.driver' => [\Illuminate\Contracts\Hashing\Hasher::class],
+                // 'log' => [\Illuminate\Log\LogManager::class, \Psr\Log\LoggerInterface::class],
+                // 'mail.manager' => [\Illuminate\Mail\MailManager::class, \Illuminate\Contracts\Mail\Factory::class],
+                // 'mailer' => [\Illuminate\Mail\Mailer::class, \Illuminate\Contracts\Mail\Mailer::class, \Illuminate\Contracts\Mail\MailQueue::class],
+                // 'queue' => [\Illuminate\Queue\QueueManager::class, \Illuminate\Contracts\Queue\Factory::class, \Illuminate\Contracts\Queue\Monitor::class],
+                // 'queue.connection' => [\Illuminate\Contracts\Queue\Queue::class],
+                // 'queue.failer' => [\Illuminate\Queue\Failed\FailedJobProviderInterface::class],
+                // 'redirect' => [\Illuminate\Routing\Redirector::class],
+                // 'redis' => [\Illuminate\Redis\RedisManager::class, \Illuminate\Contracts\Redis\Factory::class],
+                // 'redis.connection' => [\Illuminate\Redis\Connections\Connection::class, \Illuminate\Contracts\Redis\Connection::class],
+                // 'request' => [\Illuminate\Http\Request::class, \Symfony\Component\HttpFoundation\Request::class],
+                // 'router' => [\Illuminate\Routing\Router::class, \Illuminate\Contracts\Routing\Registrar::class, \Illuminate\Contracts\Routing\BindingRegistrar::class],
+                // 'session' => [\Illuminate\Session\SessionManager::class],
+                // 'session.store' => [\Illuminate\Session\Store::class, \Illuminate\Contracts\Session\Session::class],
+                // 'translator' => [\Illuminate\Translation\Translator::class, \Illuminate\Contracts\Translation\Translator::class],
+                // 'url' => [\Illuminate\Routing\UrlGenerator::class, \Illuminate\Contracts\Routing\UrlGenerator::class],
+                // 'validator' => [\Illuminate\Validation\Factory::class, \Illuminate\Contracts\Validation\Factory::class],
+                // 'view' => [\Illuminate\View\Factory::class, \Illuminate\Contracts\View\Factory::class],
             })
         ) {
             for (const alias of aliases as Class[]) {
@@ -1231,12 +1231,12 @@ export default class Application extends Container {
     public override flush(): void {
         super.flush();
 
-        this.loadedProviders = {};
+        this.loadedProviders.clear();
         this.bootedCallbacks = [];
         this.bootingCallbacks = [];
         this.deferredServices.clear();
         this.reboundCallbacks.clear();
-        this.serviceProviders = {};
+        this.serviceProviders.clear();
         this.resolvingCallbacks.clear();
         this.terminatingCallbacks = [];
         this.beforeResolvingCallbacks.clear();

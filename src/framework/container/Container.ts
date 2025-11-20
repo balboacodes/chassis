@@ -11,35 +11,35 @@ export default class Container {
     /**
      * An array of the types that have been resolved.
      */
-    protected resolvedTypes: Map<string | Class, boolean> = new Map();
+    protected resolvedTypes: Map<string | Class | symbol, boolean> = new Map();
 
     /**
      * The container's bindings.
      */
     protected bindings: Map<
-        string | Class,
+        string | Class | symbol,
         { concrete: ((container: Container, parameters?: unknown[]) => unknown) | Class; shared: boolean }
     > = new Map();
 
     /**
      * The container's method bindings.
      */
-    protected methodBindings: Map<string, (instance: unknown, container: Container) => unknown> = new Map();
+    protected methodBindings: Map<string | symbol, (instance: unknown, container: Container) => unknown> = new Map();
 
     /**
      * The container's shared instances.
      */
-    protected instances: Map<string | Class, InstanceType<Class>> = new Map();
+    protected instances: Map<string | Class | symbol, InstanceType<Class>> = new Map();
 
     /**
      * The registered type aliases.
      */
-    protected aliases: Map<string | Class, string | Class> = new Map();
+    protected aliases: Map<string | Class | symbol, string | Class | symbol> = new Map();
 
     /**
      * The registered aliases keyed by the abstract name.
      */
-    protected abstractAliases: Map<string | Class, (string | Class)[]> = new Map();
+    protected abstractAliases: Map<string | Class | symbol, (string | Class | symbol)[]> = new Map();
 
     /**
      * The parameter override stack.
@@ -49,7 +49,8 @@ export default class Container {
     /**
      * All of the registered rebound callbacks.
      */
-    protected reboundCallbacks: Map<string | Class, ((container: Container, instance: Class) => unknown)[]> = new Map();
+    protected reboundCallbacks: Map<string | Class | symbol, ((container: Container, instance: Class) => unknown)[]> =
+        new Map();
 
     /**
      * All of the global before resolving callbacks.
@@ -69,18 +70,18 @@ export default class Container {
     /**
      * All of the before resolving callbacks by class type.
      */
-    protected beforeResolvingCallbacks: Map<string | Class, (() => unknown)[]> = new Map();
+    protected beforeResolvingCallbacks: Map<string | Class | symbol, (() => unknown)[]> = new Map();
 
     /**
      * All of the resolving callbacks by class type.
      */
-    protected resolvingCallbacks: Map<string | Class, ((object: unknown, container: Container) => unknown)[]> =
+    protected resolvingCallbacks: Map<string | Class | symbol, ((object: unknown, container: Container) => unknown)[]> =
         new Map();
 
     /**
      * All of the after resolving callbacks by class type.
      */
-    protected afterResolvingCallbacks: Map<string | Class, (() => unknown)[]> = new Map();
+    protected afterResolvingCallbacks: Map<string | Class | symbol, (() => unknown)[]> = new Map();
 
     /**
      * The callback used to determine the container's environment.
@@ -90,14 +91,14 @@ export default class Container {
     /**
      * Determine if the given abstract type has been bound.
      */
-    public bound(abstract: string | Class): boolean {
+    public bound(abstract: string | Class | symbol): boolean {
         return this.bindings.has(abstract) || this.instances.has(abstract) || this.isAlias(abstract);
     }
 
     /**
      * Determine if the given abstract type has been resolved.
      */
-    public resolved(abstract: string | Class): boolean {
+    public resolved(abstract: string | Class | symbol): boolean {
         if (this.isAlias(abstract)) {
             abstract = this.getAlias(abstract);
         }
@@ -108,7 +109,7 @@ export default class Container {
     /**
      * Determine if a given type is shared.
      */
-    public isShared(abstract: string | Class): boolean {
+    public isShared(abstract: string | Class | symbol): boolean {
         if (this.instances.has(abstract)) {
             return true;
         }
@@ -119,7 +120,7 @@ export default class Container {
     /**
      * Determine if a given string or class is an alias.
      */
-    public isAlias(name: string | Class): boolean {
+    public isAlias(name: string | Class | symbol): boolean {
         return this.aliases.has(name);
     }
 
@@ -129,7 +130,7 @@ export default class Container {
      * @throws {TypeError} if concrete is not a function or string.
      */
     public bind(
-        abstract: string | Class,
+        abstract: string | Class | symbol,
         concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Class,
         shared: boolean = false,
     ): void {
@@ -145,7 +146,7 @@ export default class Container {
         // If the factory is not a Closure, it means it is just a class name which is
         // bound into this container to the abstract type and we will just wrap it
         // up inside its own Closure to give us more convenience when extending.
-        if (typeof concrete === 'function' && concrete.toString().startsWith('class')) {
+        if (typeof concrete === 'function' && isClass(concrete)) {
             concrete = this.getClosure(abstract, concrete as Class);
         }
 
@@ -163,7 +164,7 @@ export default class Container {
      * Get the Closure to be used when building a type.
      */
     protected getClosure(
-        abstract: string | Class,
+        abstract: string | Class | symbol,
         concrete: Class,
     ): (container: Container, parameters?: unknown[]) => unknown {
         return (container: Container, parameters: unknown[] = []) => {
@@ -200,7 +201,7 @@ export default class Container {
      * Register a binding if it hasn't already been registered.
      */
     public bindIf(
-        abstract: string | Class,
+        abstract: string | Class | symbol,
         concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Class,
         shared: boolean = false,
     ): void {
@@ -213,7 +214,7 @@ export default class Container {
      * Register a shared binding in the container.
      */
     public singleton(
-        abstract: string | Class,
+        abstract: string | Class | symbol,
         concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Class,
     ): void {
         this.bind(abstract, concrete, true);
@@ -223,7 +224,7 @@ export default class Container {
      * Register a shared binding if it hasn't already been registered.
      */
     public singletonIf(
-        abstract: string | Class,
+        abstract: string | Class | symbol,
         concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Class,
     ): void {
         if (!this.bound(abstract)) {
@@ -234,7 +235,7 @@ export default class Container {
     /**
      * Register an existing instance as shared in the container.
      */
-    public instance(abstract: string | Class, instance: InstanceType<Class> | unknown): InstanceType<Class> | unknown {
+    public instance(abstract: string | Class | symbol, instance: InstanceType<Class>): InstanceType<Class> {
         this.removeAbstractAlias(abstract);
 
         const isBound = this.bound(abstract);
@@ -256,12 +257,12 @@ export default class Container {
     /**
      * Remove an alias from the contextual binding alias cache.
      */
-    protected removeAbstractAlias(searched: string | Class): void {
+    protected removeAbstractAlias(searched: string | Class | symbol): void {
         if (!this.aliases.has(searched)) {
             return;
         }
 
-        for (const [abstract, aliases] of this.abstractAliases.entries()) {
+        for (const [abstract, aliases] of this.abstractAliases) {
             for (const [index, alias] of Object.entries(aliases)) {
                 if (alias === searched) {
                     unset(this.abstractAliases.get(abstract) ?? [], index);
@@ -275,7 +276,7 @@ export default class Container {
      *
      * @throws {Error}
      */
-    public alias(abstract: string | Class, alias: string | Class): void {
+    public alias(abstract: string | Class | symbol, alias: string | Class | symbol): void {
         if (alias === abstract) {
             throw new Error('[{abstract}] is aliased to itself.');
         }
@@ -294,7 +295,10 @@ export default class Container {
     /**
      * Bind a new callback to an abstract's rebind event.
      */
-    public rebinding(abstract: string | Class, callback: (container: Container, instance: Class) => unknown): unknown {
+    public rebinding(
+        abstract: string | Class | symbol,
+        callback: (container: Container, instance: Class) => unknown,
+    ): unknown {
         abstract = this.getAlias(abstract);
 
         if (!this.reboundCallbacks.has(abstract)) {
@@ -311,7 +315,7 @@ export default class Container {
     /**
      * Refresh an instance on the given target and method.
      */
-    public refresh(abstract: string | Class, target: object, method: string): unknown {
+    public refresh(abstract: string | Class | symbol, target: object, method: string): unknown {
         return this.rebinding(abstract, (_container, instance) => {
             // @ts-expect-error: need a better typing
             target[method](instance);
@@ -321,7 +325,7 @@ export default class Container {
     /**
      * Fire the "rebound" callbacks for the given abstract type.
      */
-    protected rebound(abstract: string | Class): void {
+    protected rebound(abstract: string | Class | symbol): void {
         const callbacks = this.getReboundCallbacks(abstract);
 
         if (!callbacks) {
@@ -338,21 +342,27 @@ export default class Container {
     /**
      * Get the rebound callbacks for a given type.
      */
-    protected getReboundCallbacks(abstract: string | Class): ((container: Container, instance: Class) => unknown)[] {
+    protected getReboundCallbacks(
+        abstract: string | Class | symbol,
+    ): ((container: Container, instance: Class) => unknown)[] {
         return this.reboundCallbacks.get(abstract) ?? [];
     }
 
     /**
      * Resolve the given type from the container.
      */
-    public make(abstract: string | Class, parameters: unknown[] = []): unknown {
+    public make(abstract: string | Class | symbol, parameters: unknown[] = []): unknown {
         return this.resolve(abstract, parameters);
     }
 
     /**
      * Resolve the given type from the container.
      */
-    protected resolve(abstract: string | Class, parameters: unknown[] = [], raiseEvents: boolean = true): unknown {
+    protected resolve(
+        abstract: string | Class | symbol,
+        parameters: unknown[] = [],
+        raiseEvents: boolean = true,
+    ): unknown {
         abstract = this.getAlias(abstract);
 
         // First we'll fire any event handlers which handle the "before" resolving of
@@ -380,7 +390,7 @@ export default class Container {
         // its "nested" dependencies recursively until all have gotten resolved.
         const object = this.isBuildable(concrete, abstract)
             ? this.build(concrete as ((container: Container, parameters: unknown[]) => Class) | Class)
-            : this.make(concrete as string | Class);
+            : this.make(concrete as string | Class | symbol);
 
         // If the requested type is registered as a singleton we'll want to cache off
         // the instances in "memory" so we can return it later without creating an
@@ -408,7 +418,7 @@ export default class Container {
     /**
      * Get the concrete type for a given abstract.
      */
-    protected getConcrete(abstract: string | Class): unknown {
+    protected getConcrete(abstract: string | Class | symbol): unknown {
         // If we don't have a registered resolver or concrete for the type, we'll just
         // assume each type is a concrete name and will attempt to resolve it as is
         // since the container should be able to resolve concretes automatically.
@@ -418,25 +428,27 @@ export default class Container {
     /**
      * Determine if the given concrete is buildable.
      */
-    protected isBuildable(concrete: unknown, abstract: string | Class): boolean {
+    protected isBuildable(concrete: unknown, abstract: string | Class | symbol): boolean {
         return concrete === abstract || typeof concrete === 'function';
     }
 
     /**
      * Instantiate a concrete instance of the given type.
      */
-    public build(concrete: ((container: Container, parameters: unknown[]) => Class) | Class): Class {
+    public build(
+        concrete: ((container: Container, parameters: unknown[]) => InstanceType<Class>) | Class,
+    ): InstanceType<Class> {
         // If the concrete type is actually a Closure, we will just execute it and
         // hand back the results of the functions, which allows functions to be
         // used as resolvers for more fine-tuned resolution of these objects.
         if (!isClass(concrete)) {
-            return (concrete as (container: Container, parameters: unknown[]) => Class)(
+            return (concrete as (container: Container, parameters: unknown[]) => InstanceType<Class>)(
                 this,
                 this.getLastParameterOverride(),
             );
         }
 
-        return new (concrete as Class)() as Class;
+        return new (concrete as Class)() as InstanceType<Class>;
     }
 
     /**
@@ -449,12 +461,14 @@ export default class Container {
     /**
      * Register a new before resolving callback for all types.
      */
-    public beforeResolving(abstract: (() => unknown) | string | Class, callback?: () => unknown): void {
-        if (!isClass(abstract) && typeof abstract !== 'string' && callback === undefined) {
+    public beforeResolving(abstract: (() => unknown) | string | Class | symbol, callback?: () => unknown): void {
+        if (
+            typeof abstract === 'function' && !isClass(abstract) && callback === undefined
+        ) {
             this.globalBeforeResolvingCallbacks.push(abstract);
         } else {
-            abstract = this.getAlias(abstract as string | Class);
-            this.beforeResolvingCallbacks.get(abstract as string | Class)?.push(callback as () => unknown);
+            abstract = this.getAlias(abstract as string | Class | symbol);
+            this.beforeResolvingCallbacks.get(abstract)?.push(callback as () => unknown);
         }
     }
 
@@ -462,14 +476,14 @@ export default class Container {
      * Register a new resolving callback.
      */
     public resolving(
-        abstract: ((object: unknown, container: Container) => unknown) | string | Class,
+        abstract: ((object: unknown, container: Container) => unknown) | string | Class | symbol,
         callback?: (object: unknown, container: Container) => unknown,
     ): void {
-        if (!isClass(abstract) && typeof abstract !== 'string' && callback === undefined) {
+        if (typeof abstract === 'function' && !isClass(abstract) && callback === undefined) {
             this.globalResolvingCallbacks.push(abstract);
         } else {
-            abstract = this.getAlias(abstract as string | Class);
-            this.resolvingCallbacks.get(abstract as string | Class)?.push(
+            abstract = this.getAlias(abstract as string | Class | symbol);
+            this.resolvingCallbacks.get(abstract)?.push(
                 callback as (object: unknown, container: Container) => unknown,
             );
         }
@@ -478,19 +492,19 @@ export default class Container {
     /**
      * Register a new after resolving callback for all types.
      */
-    public afterResolving(abstract: (() => unknown) | string | Class, callback?: () => unknown): void {
-        if (!isClass(abstract) && typeof abstract !== 'string' && callback === undefined) {
+    public afterResolving(abstract: (() => unknown) | string | Class | symbol, callback?: () => unknown): void {
+        if (typeof abstract === 'function' && !isClass(abstract) && callback === undefined) {
             this.globalAfterResolvingCallbacks.push(abstract);
         } else {
-            abstract = this.getAlias(abstract as string | Class);
-            this.afterResolvingCallbacks.get(abstract as string | Class)?.push(callback as () => unknown);
+            abstract = this.getAlias(abstract as string | Class | symbol);
+            this.afterResolvingCallbacks.get(abstract)?.push(callback as () => unknown);
         }
     }
 
     /**
      * Fire all of the before resolving callbacks.
      */
-    protected fireBeforeResolvingCallbacks(abstract: string | Class, parameters: unknown[] = []): void {
+    protected fireBeforeResolvingCallbacks(abstract: string | Class | symbol, parameters: unknown[] = []): void {
         this.fireBeforeCallbackArray(abstract, parameters, this.globalBeforeResolvingCallbacks);
 
         for (const [type, callbacks] of Object.entries(this.beforeResolvingCallbacks)) {
@@ -504,9 +518,9 @@ export default class Container {
      * Fire an array of callbacks with an object.
      */
     protected fireBeforeCallbackArray(
-        abstract: string | Class,
+        abstract: string | Class | symbol,
         parameters: unknown[],
-        callbacks: ((abstract: string | Class, parameters: unknown[], container: Container) => unknown)[],
+        callbacks: ((abstract: string | Class | symbol, parameters: unknown[], container: Container) => unknown)[],
     ): void {
         for (const callback of callbacks) {
             callback(abstract, parameters, this);
@@ -516,7 +530,7 @@ export default class Container {
     /**
      * Fire all of the resolving callbacks.
      */
-    protected fireResolvingCallbacks(abstract: string | Class, object: unknown): void {
+    protected fireResolvingCallbacks(abstract: string | Class | symbol, object: unknown): void {
         this.fireCallbackArray(object, this.globalResolvingCallbacks);
 
         this.fireCallbackArray(
@@ -530,7 +544,7 @@ export default class Container {
     /**
      * Fire all of the after resolving callbacks.
      */
-    protected fireAfterResolvingCallbacks(abstract: string | Class, object: unknown): void {
+    protected fireAfterResolvingCallbacks(abstract: string | Class | symbol, object: unknown): void {
         this.fireCallbackArray(object, this.globalAfterResolvingCallbacks);
 
         this.fireCallbackArray(
@@ -543,14 +557,14 @@ export default class Container {
      * Get all callbacks for a given type.
      */
     protected getCallbacksForType(
-        abstract: string | Class,
+        abstract: string | Class | symbol,
         object: object,
-        callbacksPerType: Map<string | Class, ((object: unknown, container: Container) => unknown)[]>,
+        callbacksPerType: Map<string | Class | symbol, ((object: unknown, container: Container) => unknown)[]>,
     ): ((object: unknown, container: Container) => unknown)[] {
         let results: ((object: unknown, container: Container) => unknown)[] = [];
 
         for (const [type, callbacks] of callbacksPerType) {
-            if (type === abstract || (typeof type !== 'string' && object instanceof type)) {
+            if (type === abstract || (isClass(type) && object instanceof type)) {
                 results = array_merge(results, callbacks) as ((object: unknown, container: Container) => unknown)[];
             }
         }
@@ -573,7 +587,7 @@ export default class Container {
     /**
      * Get the container's bindings.
      */
-    public getBindings(): Map<string | Class, {
+    public getBindings(): Map<string | Class | symbol, {
         concrete: ((container: Container, parameters?: unknown[]) => unknown) | Class;
         shared: boolean;
     }> {
@@ -583,16 +597,19 @@ export default class Container {
     /**
      * Get the alias for an abstract if available.
      */
-    public getAlias(abstract: string | Class): string | Class {
+    public getAlias(abstract: string | Class | symbol): string | Class | symbol {
         return this.aliases.get(abstract) ?? abstract;
     }
 
     /**
      * Drop all of the stale instances and aliases.
      */
-    protected dropStaleInstances(abstract: string | Class): void {
+    protected dropStaleInstances(abstract: string | Class | symbol): void {
         this.instances.delete(abstract);
-        this.aliases.delete(abstract);
+
+        if (typeof abstract !== 'symbol') {
+            this.aliases.delete(abstract);
+        }
     }
 
     /**

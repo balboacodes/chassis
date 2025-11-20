@@ -71,7 +71,12 @@ export default abstract class ServiceProvider {
     /**
      * Register any application services.
      */
-    public register(): void {}
+    public abstract register(): void;
+
+    /**
+     * Boot any application services.
+     */
+    public abstract boot(): void;
 
     //     /**
     //      * Register a booting callback to be run before the "boot" method is called.
@@ -95,37 +100,31 @@ export default abstract class ServiceProvider {
     //         $this->bootedCallbacks[] = $callback;
     //     }
 
-    //     /**
-    //      * Call the registered booting callbacks.
-    //      *
-    //      * @return void
-    //      */
-    //     public function callBootingCallbacks()
-    //     {
-    //         $index = 0;
+    /**
+     * Call the registered booting callbacks.
+     */
+    public callBootingCallbacks(): void {
+        //         $index = 0;
 
-    //         while ($index < count($this->bootingCallbacks)) {
-    //             $this->app->call($this->bootingCallbacks[$index]);
+        //         while ($index < count($this->bootingCallbacks)) {
+        //             $this->app->call($this->bootingCallbacks[$index]);
 
-    //             $index++;
-    //         }
-    //     }
+        //             $index++;
+        //         }
+    }
 
-    //     /**
-    //      * Call the registered booted callbacks.
-    //      *
-    //      * @return void
-    //      */
-    //     public function callBootedCallbacks()
-    //     {
-    //         $index = 0;
+    /**
+     * Call the registered booted callbacks.
+     */
+    public callBootedCallbacks(): void {
+        //         $index = 0;
 
-    //         while ($index < count($this->bootedCallbacks)) {
-    //             $this->app->call($this->bootedCallbacks[$index]);
+        //         while ($index < count($this->bootedCallbacks)) {
+        //             $this->app->call($this->bootedCallbacks[$index]);
 
-    //             $index++;
-    //         }
-    //     }
+        //             $index++;
+        //         }
+    }
 
     //     /**
     //      * Merge the given configuration with the existing configuration.
