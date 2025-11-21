@@ -1,10 +1,12 @@
 import { isClass } from '@balboacodes/chassis';
-import { array_merge, array_pop, unset } from '@balboacodes/php-utils';
+import { array_merge, array_pop, array_slice, unset } from '@balboacodes/php-utils';
 import { default as ContainerContract } from '../contracts/container/Container.ts';
 import { default as ContextualBindingBuilderContract } from '../contracts/container/ContextualBindingBuilder.ts';
 import Arr from '../support/Arr.ts';
 import { Class } from '../types.ts';
+import BoundMethod from './BoundMethod.ts';
 import ContextualBindingBuilder from './ContextualBindingBuilder.ts';
+import RewindableGenerator from './RewindableGenerator.ts';
 
 export default class Container implements ContainerContract {
     /**
@@ -53,12 +55,13 @@ export default class Container implements ContainerContract {
     /**
      * The extension closures for services.
      */
-    protected extenders: unknown[] = [];
+    protected extenders: Map<string | Class | symbol, ((instance: unknown, container: Container) => unknown)[]> =
+        new Map();
 
     /**
      * All of the registered tags.
      */
-    protected tags: unknown[] = [];
+    protected tags: Map<string, (string | Class | symbol)[]> = new Map();
 
     /**
      * The stack of concretions currently being built.
@@ -352,7 +355,7 @@ export default class Container implements ContainerContract {
     /**
      * Register a binding if it hasn't already been registered.
      *
-     * TODO: abstract can be a closure
+     * @todo: abstract can be a closure
      */
     public bindIf(
         abstract: string | Class | symbol,
@@ -367,7 +370,7 @@ export default class Container implements ContainerContract {
     /**
      * Register a shared binding in the container.
      *
-     * TODO: abstract can be a closure
+     * @todo: abstract can be a closure
      */
     public singleton(
         abstract: string | Class | symbol,
@@ -379,7 +382,7 @@ export default class Container implements ContainerContract {
     /**
      * Register a shared binding if it hasn't already been registered.
      *
-     * TODO: abstract can be a closure
+     * @todo: abstract can be a closure
      */
     public singletonIf(
         abstract: string | Class | symbol,
@@ -393,30 +396,24 @@ export default class Container implements ContainerContract {
     /**
      * Register a scoped binding in the container.
      *
-     * @param  \Closure|string  $abstract
-     * @param  \Closure|string|null  $concrete
-     * @return void
+     * @todo: abstract can be a closure
      */
-    // public scoped($abstract, $concrete = null)
-    // {
-    //     $this->scopedInstances[] = $abstract;
+    public scoped(abstract: string | Class | symbol, concrete?: (() => unknown) | Class): void {
+        this.scopedInstances.push(abstract);
 
-    //     $this->singleton($abstract, $concrete);
-    // }
+        this.singleton(abstract, concrete);
+    }
 
     /**
      * Register a scoped binding if it hasn't already been registered.
      *
-     * @param  \Closure|string  $abstract
-     * @param  \Closure|string|null  $concrete
-     * @return void
+     * @todo: abstract can be a closure
      */
-    // public scopedIf($abstract, $concrete = null)
-    // {
-    //     if (! $this->bound($abstract)) {
-    //         $this->scoped($abstract, $concrete);
-    //     }
-    // }
+    public scopedIf(abstract: string | Class | symbol, concrete?: (() => unknown) | Class): void {
+        if (!this.bound(abstract)) {
+            this.scoped(abstract, concrete);
+        }
+    }
 
     /**
      * Register a binding with the container based on the given Closure's return types.
@@ -464,29 +461,29 @@ export default class Container implements ContainerContract {
 
     /**
      * "Extend" an abstract type in the container.
-     *
-     * @param  string  $abstract
-     * @param  \Closure  $closure
-     * @return void
-     *
-     * @throws \InvalidArgumentException
      */
-    // public extend($abstract, Closure $closure)
-    // {
-    //     $abstract = $this->getAlias($abstract);
+    public extend(
+        abstract: string | Class | symbol,
+        closure: (instance: unknown, container: Container) => unknown,
+    ): void {
+        abstract = this.getAlias(abstract);
 
-    //     if (isset($this->instances[$abstract])) {
-    //         $this->instances[$abstract] = $closure($this->instances[$abstract], $this);
+        if (this.instances.has(abstract)) {
+            this.instances.set(abstract, closure(this.instances.get(abstract), this));
 
-    //         $this->rebound($abstract);
-    //     } else {
-    //         $this->extenders[$abstract][] = $closure;
+            this.rebound(abstract);
+        } else {
+            if (!this.extenders.has(abstract)) {
+                this.extenders.set(abstract, []);
+            }
 
-    //         if ($this->resolved($abstract)) {
-    //             $this->rebound($abstract);
-    //         }
-    //     }
-    // }
+            this.extenders.get(abstract)?.push(closure);
+
+            if (this.resolved(abstract)) {
+                this.rebound(abstract);
+            }
+        }
+    }
 
     /**
      * Register an existing instance as shared in the container.
@@ -529,44 +526,37 @@ export default class Container implements ContainerContract {
 
     /**
      * Assign a set of tags to a given binding.
-     *
-     * @param  array|string  $abstracts
-     * @param  mixed  ...$tags
-     * @return void
      */
-    // public tag($abstracts, $tags)
-    // {
-    //     $tags = is_array($tags) ? $tags : array_slice(func_get_args(), 1);
+    public tag(abstracts: (string | Class | symbol)[] | string | Class | symbol, ...tags: string[]): void {
+        tags = Array.isArray(tags[0]) ? tags[0] : tags;
 
-    //     foreach ($tags as $tag) {
-    //         if (! isset($this->tags[$tag])) {
-    //             $this->tags[$tag] = [];
-    //         }
+        for (const tag of tags) {
+            if (!this.tags.has(tag)) {
+                this.tags.set(tag, []);
+            }
 
-    //         foreach ((array) $abstracts as $abstract) {
-    //             $this->tags[$tag][] = $abstract;
-    //         }
-    //     }
-    // }
+            for (const abstract of Arr.wrap(abstracts)) {
+                this.tags.get(tag)?.push(abstract);
+            }
+        }
+    }
 
     /**
      * Resolve all of the bindings for a given tag.
-     *
-     * @param  string  $tag
-     * @return iterable
      */
-    // public tagged($tag)
-    // {
-    //     if (! isset($this->tags[$tag])) {
-    //         return [];
-    //     }
+    public tagged(tag: string): never[] | RewindableGenerator {
+        if (!this.tags.has(tag)) {
+            return [];
+        }
 
-    //     return new RewindableGenerator(function () use ($tag) {
-    //         foreach ($this->tags[$tag] as $abstract) {
-    //             yield $this->make($abstract);
-    //         }
-    //     }, count($this->tags[$tag]));
-    // }
+        return new RewindableGenerator(this.taggedGenerator, this.tags.get(tag)?.length ?? 0);
+    }
+
+    private *taggedGenerator(tag: string): Generator<unknown, void, unknown> {
+        for (const abstract of this.tags.get(tag) ?? []) {
+            yield this.make(abstract);
+        }
+    }
 
     /**
      * Alias a type to a different name.
@@ -647,64 +637,53 @@ export default class Container implements ContainerContract {
 
     /**
      * Wrap the given closure such that its dependencies will be injected when executed.
-     *
-     * @param  \Closure  $callback
-     * @param  array  $parameters
-     * @return \Closure
      */
-    // public wrap(Closure $callback, array $parameters = [])
-    // {
-    //     return fn () => $this->call($callback, $parameters);
-    // }
+    public wrap(callback: () => unknown, parameters: unknown[] = []): () => unknown {
+        // return () => this.call(callback, parameters);
+    }
 
     /**
-     * Call the given Closure / class@method and inject its dependencies.
-     *
-     * @param  callable|string  $callback
-     * @param  array<string, mixed>  $parameters
-     * @param  string|null  $defaultMethod
-     * @return mixed
-     *
-     * @throws \InvalidArgumentException
+     * Call the given Closure / [class, method] and inject its dependencies.
      */
-    // public call($callback, array $parameters = [], $defaultMethod = null)
-    // {
-    //     $pushedToBuildStack = false;
+    public call(
+        callback: (() => unknown) | [object, string],
+        parameters: Record<string, unknown> = {},
+        defaultMethod?: string,
+    ): unknown {
+        let pushedToBuildStack = false;
 
-    //     if (($className = $this->getClassForCallable($callback)) && ! in_array(
-    //         $className,
-    //         $this->buildStack,
-    //         true
-    //     )) {
-    //         $this->buildStack[] = $className;
+        const className = this.getClassForCallable(callback);
 
-    //         $pushedToBuildStack = true;
-    //     }
+        if (className && !this.buildStack.includes(className)) {
+            this.buildStack.push(className);
 
-    //     $result = BoundMethod::call($this, $callback, $parameters, $defaultMethod);
+            pushedToBuildStack = true;
+        }
 
-    //     if ($pushedToBuildStack) {
-    //         array_pop($this->buildStack);
-    //     }
+        const result = BoundMethod.call(this, callback, parameters, defaultMethod);
 
-    //     return $result;
-    // }
+        if (pushedToBuildStack) {
+            this.buildStack.pop();
+        }
+
+        return result;
+    }
 
     /**
      * Get the class name for the given callback, if one can be determined.
-     *
-     * @param  callable|string  $callback
-     * @return string|false
      */
-    // protected getClassForCallable($callback)
-    // {
-    //     if (is_callable($callback) &&
-    //         ! ($reflector = new ReflectionFunction($callback(...)))->isAnonymous()) {
-    //         return $reflector->getClosureScopeClass()->name ?? false;
-    //     }
+    protected getClassForCallable(callback: (() => unknown) | [object, string]): string | false {
+        // const reflector = new ReflectionFunction(callback(...))
 
-    //     return false;
-    // }
+        // if (!reflector.isAnonymous()) {
+        //     return reflector.getClosureScopeClass().name ?? false;
+        // }
+        if (Array.isArray(callback)) {
+            return callback[0].constructor.name;
+        }
+
+        return false;
+    }
 
     /**
      * Get a closure to resolve the given type from the container.
