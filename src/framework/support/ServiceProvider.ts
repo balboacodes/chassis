@@ -71,12 +71,12 @@ export default abstract class ServiceProvider {
     /**
      * Register any application services.
      */
-    public abstract register(): void;
+    public register(): void {}
 
     /**
      * Boot any application services.
      */
-    public abstract boot(): void;
+    public boot(): void {}
 
     //     /**
     //      * Register a booting callback to be run before the "boot" method is called.

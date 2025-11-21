@@ -1,6 +1,6 @@
-export const KernelSymbol = Symbol('Kernel');
+export const Kernel = Symbol('Kernel');
 
-export interface KernelContract {
+export interface Kernel {
     //     /**
     //      * Bootstrap the application for artisan commands.
     //      *

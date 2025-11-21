@@ -32,6 +32,11 @@ export default class Container {
     protected instances: Map<string | Class | symbol, unknown> = new Map();
 
     /**
+     * The container's scoped instances.
+     */
+    protected scopedInstances: (string | Class | symbol)[] = [];
+
+    /**
      * The registered type aliases.
      */
     protected aliases: Map<string | Class | symbol, string | Class | symbol> = new Map();
@@ -114,7 +119,7 @@ export default class Container {
             return true;
         }
 
-        return this.bindings.get(abstract)?.['shared'] === true;
+        return !!this.bindings.get(abstract)?.['shared'];
     }
 
     /**

@@ -4,9 +4,9 @@ import '@std/dotenv/load';
 import { exists } from '@std/fs';
 import { SEPARATOR } from '@std/path';
 import Container from '../container/Container.ts';
-import { KernelSymbol as ConsoleKernelContract } from '../contracts/console/Kernel.ts';
-import { MaintenanceMode, MaintenanceModeSymbol } from '../contracts/foundation/MaintenanceMode.ts';
-import { KernelSymbol } from '../contracts/http/Kernel.ts';
+import { Kernel as ConsoleKernelContract } from '../contracts/console/Kernel.ts';
+import { MaintenanceMode, MaintenanceMode as MaintenanceModeSymbol } from '../contracts/foundation/MaintenanceMode.ts';
+import { Kernel as KernelSymbol } from '../contracts/http/Kernel.ts';
 import InputInterface from '../contracts/symfony/InputInterface.ts';
 import EventServiceProvider from '../events/EventServiceProvider.ts';
 import { join_paths } from '../filesystem/functions.ts';
@@ -171,7 +171,6 @@ export default class Application extends Container {
 
     /**
      * Begin configuring a new application instance.
-     * @return \Illuminate\Foundation\Configuration\ApplicationBuilder
      */
     public static configure(basePath?: string): ApplicationBuilder {
         if (basePath === undefined) {

@@ -1,4 +1,4 @@
-export const MaintenanceModeSymbol = Symbol('MaintenanceMode');
+export const MaintenanceMode = Symbol('MaintenanceMode');
 
 export interface MaintenanceMode {
     //     /**
