@@ -1,6 +1,9 @@
 import Container from '../container/Container.ts';
+import { default as DispatcherContract } from '../contracts/events/Dispatcher.ts';
 
-export default class Dispatcher {
+export default class Dispatcher implements DispatcherContract {
+    // use Macroable, ReflectsClosures;
+
     /**
      * The IoC container instance.
      */

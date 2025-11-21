@@ -1,8 +1,9 @@
 import { isClass } from '@balboacodes/chassis';
 import { array_merge, array_pop, count, unset } from '@balboacodes/php-utils';
+import { default as ContainerContract } from '../contracts/container/Container.ts';
 import { Class } from '../types.ts';
 
-export default class Container {
+export default class Container implements ContainerContract {
     /**
      * The current globally available container (if any).
      */

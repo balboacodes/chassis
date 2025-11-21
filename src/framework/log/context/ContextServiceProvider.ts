@@ -1,3 +1,4 @@
+import { ContextLogProcessor as ContextLogProcessorContract } from '../../contracts/log/ContextLogProcessor.ts';
 import JobProcessing from '../../queue/events/JobProcessing.ts';
 import Queue from '../../queue/Queue.ts';
 import Context from '../../support/facades/Context.ts';
@@ -9,7 +10,9 @@ export default class ContextServiceProvider extends ServiceProvider {
      * Register the service provider.
      */
     public override register(): void {
-        this.app.bind(ContextLogProcessor, () => new ContextLogProcessor());
+        // $this->app->scoped(Repository::class);
+
+        this.app.bind(ContextLogProcessorContract, () => new ContextLogProcessor());
     }
 
     /**

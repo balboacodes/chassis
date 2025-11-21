@@ -5,8 +5,12 @@ import { exists } from '@std/fs';
 import { SEPARATOR } from '@std/path';
 import Container from '../container/Container.ts';
 import { Kernel as ConsoleKernelContract } from '../contracts/console/Kernel.ts';
+import { default as ApplicationContract } from '../contracts/foundation/Application.ts';
+import CachesConfiguration from '../contracts/foundation/CachesConfiguration.ts';
+import CachesRoutes from '../contracts/foundation/CachesRoutes.ts';
 import { MaintenanceMode, MaintenanceMode as MaintenanceModeSymbol } from '../contracts/foundation/MaintenanceMode.ts';
 import { Kernel as KernelSymbol } from '../contracts/http/Kernel.ts';
+import HttpKernelInterface from '../contracts/symfony/HttpKernelInterface.ts';
 import InputInterface from '../contracts/symfony/InputInterface.ts';
 import EventServiceProvider from '../events/EventServiceProvider.ts';
 import { join_paths } from '../filesystem/functions.ts';
@@ -33,7 +37,10 @@ import LoadEnvironmentVariables from './bootstrap/LoadEnvironmentVariables.ts';
 import ApplicationBuilder from './configuration/ApplicationBuilder.ts';
 import Filesystem from './filesystem/Filesystem.ts';
 
-export default class Application extends Container {
+export default class Application extends Container
+    implements ApplicationContract, CachesConfiguration, CachesRoutes, HttpKernelInterface {
+    // use Macroable;
+
     /**
      * The framework version.
      */

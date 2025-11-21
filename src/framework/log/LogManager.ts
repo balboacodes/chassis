@@ -1,9 +1,12 @@
 import Container from '../container/Container.ts';
+import LoggerInterface from '../contracts/psr/LoggerInterface.ts';
 
 /**
- * @mixin \Illuminate\Log\Logger
+ * @mixin Logger
  */
-export default class LogManager {
+export default class LogManager implements LoggerInterface {
+    // use ParsesLogConfiguration;
+
     /**
      * The application instance.
      */

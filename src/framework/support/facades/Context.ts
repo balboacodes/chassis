@@ -45,7 +45,7 @@ import Facade from './Facade.ts';
  * @method static void flushMacros()
  * @method static \Illuminate\Database\Eloquent\Model restoreModel(\Illuminate\Contracts\Database\ModelIdentifier $value)
  *
- * @see \Illuminate\Log\Context\Repository
+ * @see Repository
  */
 export default class Context extends Facade {
     //     /**
