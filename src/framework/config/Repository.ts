@@ -170,32 +170,4 @@ export default class Repository {
     public all(): Record<string, unknown> {
         return this.items;
     }
-
-    /**
-     * Determine if the given configuration option exists.
-     */
-    public offsetExists(key: string): boolean {
-        return this.has(key);
-    }
-
-    /**
-     * Get a configuration option.
-     */
-    public offsetGet(key: string): unknown {
-        return this.get(key);
-    }
-
-    /**
-     * Set a configuration option.
-     */
-    public offsetSet(key: string, value: unknown): void {
-        this.set(key, value);
-    }
-
-    /**
-     * Unset a configuration option.
-     */
-    public offsetUnset(key: string): void {
-        this.set(key, null);
-    }
 }

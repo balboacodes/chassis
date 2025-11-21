@@ -1,7 +1,10 @@
 import { isClass } from '@balboacodes/chassis';
-import { array_merge, array_pop, count, unset } from '@balboacodes/php-utils';
+import { array_merge, array_pop, unset } from '@balboacodes/php-utils';
 import { default as ContainerContract } from '../contracts/container/Container.ts';
+import { default as ContextualBindingBuilderContract } from '../contracts/container/ContextualBindingBuilder.ts';
+import Arr from '../support/Arr.ts';
 import { Class } from '../types.ts';
+import ContextualBindingBuilder from './ContextualBindingBuilder.ts';
 
 export default class Container implements ContainerContract {
     /**
@@ -70,12 +73,12 @@ export default class Container implements ContainerContract {
     /**
      * The contextual binding map.
      */
-    public contextual: unknown[] = [];
+    public contextual: Map<Class, Map<string | Class | symbol, (() => unknown)[]>> = new Map();
 
     /**
      * The contextual attribute handlers.
      */
-    public contextualAttributes: unknown[] = [];
+    public contextualAttributes: Map<string | Class | symbol, () => unknown> = new Map();
 
     /**
      * Whether an abstract class has already had its attributes checked for bindings.
@@ -84,8 +87,6 @@ export default class Container implements ContainerContract {
 
     /**
      * Whether a class has already been checked for Singleton or Scoped attributes.
-     *
-     * @var array<class-string, "scoped"|"singleton"|null>
      */
     protected checkedForSingletonOrScopedAttributes: Map<string | Class | symbol, 'scoped' | 'singleton' | null> =
         new Map();
@@ -139,31 +140,23 @@ export default class Container implements ContainerContract {
 
     /**
      * Define a contextual binding.
-     *
-     * @param  array|string  $concrete
-     * @return \Illuminate\Contracts\Container\ContextualBindingBuilder
      */
-    // public when(concrete) {
-    // $aliases = [];
+    public when(concrete: (string | Class | symbol)[] | string | Class | symbol): ContextualBindingBuilderContract {
+        const aliases = [];
 
-    // foreach (Util::arrayWrap($concrete) as $c) {
-    //     $aliases[] = $this->getAlias($c);
-    // }
+        for (const c of Arr.wrap(concrete)) {
+            aliases.push(this.getAlias(c));
+        }
 
-    // return new ContextualBindingBuilder($this, $aliases);
-    // }
+        return new ContextualBindingBuilder(this, aliases);
+    }
 
     /**
      * Define a contextual binding based on an attribute.
-     *
-     * @param  string  $attribute
-     * @param  \Closure  $handler
-     * @return void
      */
-    // public whenHasAttribute(string $attribute, Closure $handler)
-    // {
-    //     $this->contextualAttributes[$attribute] = $handler;
-    // }
+    public whenHasAttribute(attribute: string, handler: () => unknown): void {
+        this.contextualAttributes.set(attribute, handler);
+    }
 
     /**
      * Determine if the given abstract type has been bound.
@@ -174,13 +167,10 @@ export default class Container implements ContainerContract {
 
     /**
      * {@inheritdoc}
-     *
-     * @return bool
      */
-    // public has(string $id): bool
-    // {
-    //     return $this->bound($id);
-    // }
+    public has(id: string | Class | symbol): boolean {
+        return this.bound(id);
+    }
 
     /**
      * Determine if the given abstract type has been resolved.
@@ -201,59 +191,56 @@ export default class Container implements ContainerContract {
             return true;
         }
 
-        return !!this.bindings.get(abstract)?.['shared'];
+        if (this.bindings.get(abstract)?.['shared']) {
+            return true;
+        }
 
-        // if (! class_exists($abstract)) {
-        //     return false;
-        // }
+        const scopedType = this.getScopedTyped(abstract);
 
-        // if (($scopedType = $this->getScopedTyped($abstract)) === null) {
-        //     return false;
-        // }
+        if (scopedType === null) {
+            return false;
+        }
 
-        // if ($scopedType === 'scoped') {
-        //     if (! in_array($abstract, $this->scopedInstances, true)) {
-        //         $this->scopedInstances[] = $abstract;
-        //     }
-        // }
+        if (scopedType === 'scoped') {
+            if (!this.scopedInstances.includes(abstract)) {
+                this.scopedInstances.push(abstract);
+            }
+        }
 
-        // return true;
+        return true;
     }
 
     /**
      * Determine if a ReflectionClass has scoping attributes applied.
      *
-     * @param  ReflectionClass<object>|class-string  $reflection
-     * @return "singleton"|"scoped"|null
+     * @todo
      */
-    // protected getScopedTyped(ReflectionClass|string $reflection): ?string
-    // {
-    //     $className = $reflection instanceof ReflectionClass
-    //         ? $reflection->getName()
-    //         : $reflection;
+    protected getScopedTyped(_reflection: Class | InstanceType<Class>): 'singleton' | 'scoped' | null {
+        // const className = reflection instanceof ReflectionClass ? reflection.getName() : reflection;
 
-    //     if (array_key_exists($className, $this->checkedForSingletonOrScopedAttributes)) {
-    //         return $this->checkedForSingletonOrScopedAttributes[$className];
-    //     }
+        // if (this.checkedForSingletonOrScopedAttributes.has(className)) {
+        //     return this.checkedForSingletonOrScopedAttributes.get(className) as 'singleton' | 'scoped' | null;
+        // }
 
-    //     try {
-    //         $reflection = $reflection instanceof ReflectionClass
-    //             ? $reflection
-    //             : new ReflectionClass($reflection);
-    //     } catch (ReflectionException) {
-    //         return $this->checkedForSingletonOrScopedAttributes[$className] = null;
-    //     }
+        // try {
+        //     reflection = reflection instanceof ReflectionClass ? reflection : new ReflectionClass(reflection);
+        // } catch (ReflectionException) {
+        //     this.checkedForSingletonOrScopedAttributes.set(className, null)
+        //     return null;
+        // }
 
-    //     $type = null;
+        // let type = null;
 
-    //     if (! empty($reflection->getAttributes(Singleton::class))) {
-    //         $type = 'singleton';
-    //     } elseif (! empty($reflection->getAttributes(Scoped::class))) {
-    //         $type = 'scoped';
-    //     }
+        // if (! empty(reflection.getAttributes(Singleton))) {
+        //     type = 'singleton';
+        // } elseif (! empty(reflection.getAttributes(Scoped))) {
+        //     type = 'scoped';
+        // }
 
-    //     return $this->checkedForSingletonOrScopedAttributes[$className] = $type;
-    // }
+        // this.checkedForSingletonOrScopedAttributes.set(className,  type);
+        // return type
+        return null;
+    }
 
     /**
      * Determine if a given string or class is an alias.
@@ -265,7 +252,7 @@ export default class Container implements ContainerContract {
     /**
      * Register a binding with the container.
      *
-     * TODO: abstract can be a closure
+     * @todo: abstract can be a closure
      *
      * @throws {TypeError} if concrete is not a function or string.
      */
@@ -274,11 +261,9 @@ export default class Container implements ContainerContract {
         concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Class,
         shared: boolean = false,
     ): void {
-        // if ($abstract instanceof Closure) {
-        //     return $this->bindBasedOnClosureReturnTypes(
-        //         $abstract, $concrete, $shared
-        //     );
-        // }
+        if (typeof abstract === 'function' && !isClass(abstract)) {
+            return this.bindBasedOnClosureReturnTypes(abstract, shared);
+        }
 
         this.dropStaleInstances(abstract);
 
@@ -345,16 +330,24 @@ export default class Container implements ContainerContract {
 
     /**
      * Add a contextual binding to the container.
-     *
-     * @param  string  $concrete
-     * @param  \Closure|string  $abstract
-     * @param  \Closure|string  $implementation
-     * @return void
      */
-    // public addContextualBinding($concrete, $abstract, $implementation)
-    // {
-    //     $this->contextual[$concrete][$this->getAlias($abstract)] = $implementation;
-    // }
+    public addContextualBinding(
+        concrete: Class,
+        abstract: string | Class | symbol,
+        implementation: () => unknown,
+    ): void {
+        if (!this.contextual.has(concrete)) {
+            this.contextual.set(concrete, new Map());
+        }
+
+        const alias = this.getAlias(abstract);
+
+        if (!this.contextual.get(concrete)?.has(alias)) {
+            this.contextual.get(concrete)?.set(alias, []);
+        }
+
+        this.contextual.get(concrete)?.get(alias)?.push(implementation);
+    }
 
     /**
      * Register a binding if it hasn't already been registered.
@@ -427,51 +420,47 @@ export default class Container implements ContainerContract {
 
     /**
      * Register a binding with the container based on the given Closure's return types.
-     *
-     * @param  \Closure|string  $abstract
-     * @param  \Closure|string|null  $concrete
-     * @param  bool  $shared
-     * @return void
      */
-    // protected bindBasedOnClosureReturnTypes($abstract, $concrete = null, $shared = false)
-    // {
-    //     $abstracts = $this->closureReturnTypes($abstract);
+    protected bindBasedOnClosureReturnTypes(abstract: () => unknown, shared: boolean = false): void {
+        const abstracts = this.closureReturnTypes(abstract);
 
-    //     $concrete = $abstract;
+        const concrete = abstract;
 
-    //     foreach ($abstracts as $abstract) {
-    //         $this->bind($abstract, $concrete, $shared);
-    //     }
-    // }
+        for (const abstract of abstracts) {
+            this.bind(abstract, concrete, shared);
+        }
+    }
 
     /**
      * Get the class names / types of the return type of the given Closure.
      *
-     * @param  \Closure  $closure
-     * @return list<class-string>
-     *
      * @throws \ReflectionException
+     *
+     * @todo
      */
-    // protected closureReturnTypes(Closure $closure)
-    // {
-    //     $reflection = new ReflectionFunction($closure);
+    protected closureReturnTypes(_closure: () => unknown): Class[] {
+        // const reflection = new ReflectionFunction(closure);
 
-    //     if ($reflection->getReturnType() === null ||
-    //         $reflection->getReturnType() instanceof ReflectionIntersectionType) {
-    //         return [];
-    //     }
+        // if (
+        //     reflection.getReturnType() === null ||
+        //     reflection.getReturnType() instanceof ReflectionIntersectionType
+        // ) {
+        //     return [];
+        // }
 
-    //     $types = $reflection->getReturnType() instanceof ReflectionUnionType
-    //         ? $reflection->getReturnType()->getTypes()
-    //         : [$reflection->getReturnType()];
+        // const types = reflection.getReturnType() instanceof ReflectionUnionType
+        //     ? reflection.getReturnType().getTypes()
+        //     : [reflection.getReturnType()];
 
-    //     return (new Collection($types))
-    //         ->reject(fn ($type) => $type->isBuiltin())
-    //         ->reject(fn ($type) => in_array($type->getName(), ['static', 'self']))
-    //         ->map(fn ($type) => $type->getName())
-    //         ->values()
-    //         ->all();
-    // }
+        // return (new Collection(types))
+        //     .reject((type) => type.isBuiltin())
+        //     .reject((type) => type.getName().includes(['static', 'self']))
+        //     .map((type) => type.getName())
+        //     .values()
+        //     .all();
+
+        return [];
+    }
 
     /**
      * "Extend" an abstract type in the container.
