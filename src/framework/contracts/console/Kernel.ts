@@ -1,61 +1,42 @@
+import PendingDispatch from '../../foundation/bus/PendingDispatch.ts';
+import InputInterface from '../symfony/InputInterface.ts';
+import OutputInterface from '../symfony/OutputInterface.ts';
+
 export const Kernel = Symbol('Kernel');
 
 export interface Kernel {
-    //     /**
-    //      * Bootstrap the application for artisan commands.
-    //      *
-    //      * @return void
-    //      */
-    //     public function bootstrap();
+    /**
+     * Bootstrap the application for artisan commands.
+     */
+    bootstrap(): void;
 
-    //     /**
-    //      * Handle an incoming console command.
-    //      *
-    //      * @param  \Symfony\Component\Console\Input\InputInterface  $input
-    //      * @param  \Symfony\Component\Console\Output\OutputInterface|null  $output
-    //      * @return int
-    //      */
-    //     public function handle($input, $output = null);
+    /**
+     * Handle an incoming console command.
+     */
+    handle(input: InputInterface, output?: OutputInterface): number;
 
-    //     /**
-    //      * Run an Artisan console command by name.
-    //      *
-    //      * @param  string  $command
-    //      * @param  array  $parameters
-    //      * @param  \Symfony\Component\Console\Output\OutputInterface|null  $outputBuffer
-    //      * @return int
-    //      */
-    //     public function call($command, array $parameters = [], $outputBuffer = null);
+    /**
+     * Run an Artisan console command by name.
+     */
+    call(command: string, parameters: unknown[], outputBuffer?: OutputInterface): number;
 
-    //     /**
-    //      * Queue an Artisan console command by name.
-    //      *
-    //      * @param  string  $command
-    //      * @param  array  $parameters
-    //      * @return \Illuminate\Foundation\Bus\PendingDispatch
-    //      */
-    //     public function queue($command, array $parameters = []);
+    /**
+     * Queue an Artisan console command by name.
+     */
+    queue(command: string, parameters: unknown[]): PendingDispatch;
 
-    //     /**
-    //      * Get all of the commands registered with the console.
-    //      *
-    //      * @return array
-    //      */
-    //     public function all();
+    /**
+     * Get all of the commands registered with the console.
+     */
+    all(): unknown[];
 
-    //     /**
-    //      * Get the output for the last run command.
-    //      *
-    //      * @return string
-    //      */
-    //     public function output();
+    /**
+     * Get the output for the last run command.
+     */
+    output(): string;
 
-    //     /**
-    //      * Terminate the application.
-    //      *
-    //      * @param  \Symfony\Component\Console\Input\InputInterface  $input
-    //      * @param  int  $status
-    //      * @return void
-    //      */
-    //     public function terminate($input, $status);
+    /**
+     * Terminate the application.
+     */
+    terminate(input: InputInterface, status: number): void;
 }

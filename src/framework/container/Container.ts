@@ -667,7 +667,7 @@ export default class Container implements ContainerContract {
     /**
      * Set the shared instance of the container.
      */
-    public static setInstance(container: Container): Container {
+    public static setInstance(container: ContainerContract): Container {
         return Container.instance = container;
     }
 }

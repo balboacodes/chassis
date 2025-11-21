@@ -1,5 +1,5 @@
 import Container from '../container/Container.ts';
-import Application from '../foundation/Application.ts';
+import Application from '../contracts/foundation/Application.ts';
 import { Class } from '../types.ts';
 
 export default abstract class ServiceProvider {
