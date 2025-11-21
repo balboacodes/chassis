@@ -736,7 +736,7 @@ export default class Container implements ContainerContract {
     public make<TClass>(
         abstract: string | Class<TClass> | symbol,
         parameters: unknown[] = [],
-    ): typeof abstract extends Class ? TClass : unknown {
+    ): typeof abstract extends Class<TClass> ? TClass : unknown {
         return this.resolve(abstract, parameters);
     }
 

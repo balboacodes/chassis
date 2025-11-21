@@ -35,6 +35,7 @@ import EnvironmentDetector from './EnvironmentDetector.ts';
 import ProviderRepository from './ProviderRepository.ts';
 import LoadEnvironmentVariables from './bootstrap/LoadEnvironmentVariables.ts';
 import ApplicationBuilder from './configuration/ApplicationBuilder.ts';
+import LocaleUpdated from './events/LocaleUpdated.ts';
 import Filesystem from './filesystem/Filesystem.ts';
 
 export default class Application extends Container
@@ -220,6 +221,10 @@ export default class Application extends Container
         this.instance('app', this);
 
         this.instance(Container, this);
+
+        // $this->singleton(PackageManifest::class, fn () => new PackageManifest(
+        //     new Filesystem, $this->basePath(), $this->getCachedPackagesPath()
+        // ));
     }
 
     /**
@@ -508,7 +513,7 @@ export default class Application extends Container
      * Get the environment file the application is using.
      */
     public getEnvironmentFile(): string {
-        return this.environmentFile || '.env';
+        return this.environmentFile;
     }
 
     /**
@@ -565,7 +570,7 @@ export default class Application extends Container
                 (Env.get('APP_RUNNING_IN_CONSOLE') ?? Deno.env.get('TERM') !== undefined) as boolean;
         }
 
-        return this.isRunningInConsole as boolean;
+        return !!this.isRunningInConsole;
     }
 
     /**
@@ -606,7 +611,9 @@ export default class Application extends Container
      */
     public registerConfiguredProviders(): void {
         // @ts-expect-error: need better typing
-        const providers = new Collection(this.make('config').get('app.providers'));
+        const providers = new Collection(this.make('config').get('app.providers')).partition(() => true);
+
+        // $providers->splice(1, 0, [$this->make(PackageManifest::class)->providers()]);
 
         (new ProviderRepository(this, new Filesystem(), this.getCachedServicesPath())).load(
             providers.collapse().toArray() as unknown[],
@@ -637,11 +644,11 @@ export default class Application extends Container
         // If there are bindings / singletons set as properties on the provider we
         // will spin through them and register them with the application, which
         // serves as a convenience layer while registering a lot of bindings.
-        for (const [key, value] of provider.bindings?.entries() ?? []) {
+        for (const [key, value] of provider.bindings ?? []) {
             this.bind(key, value);
         }
 
-        for (const [key, value] of provider.singletons?.entries() ?? []) {
+        for (const [key, value] of provider.singletons ?? []) {
             this.singleton(key, value);
         }
 
@@ -697,7 +704,7 @@ export default class Application extends Container
         // We will simply spin through each of the deferred providers and register each
         // one and boot them if the application has booted. This should make each of
         // the remaining services available to this application for immediate use.
-        for (const [service, _provider] of this.deferredServices.entries()) {
+        for (const [service, _provider] of this.deferredServices) {
             this.loadDeferredProvider(service);
         }
 
@@ -718,7 +725,7 @@ export default class Application extends Container
             // If the service provider has not already been loaded and registered we can
             // register it with the application and remove the service from this list
             // of deferred services, since it will already be loaded on subsequent.
-            if (!this.loadedProviders.get(provider.constructor.name)) {
+            if (!this.loadedProviders.has(provider.constructor.name)) {
                 this.registerDeferredProvider(provider, service);
             }
         }
@@ -752,31 +759,31 @@ export default class Application extends Container
     /**
      * Resolve the given type from the container.
      */
-    public override make<TClass extends string | Class<ServiceProvider> | symbol>(
-        abstract: TClass,
+    public override make<TClass>(
+        abstract: string | Class<TClass> | symbol,
         parameters: unknown[] = [],
-    ): TClass extends Class<ServiceProvider> ? InstanceType<TClass> : unknown {
-        abstract = this.getAlias(abstract) as TClass;
+    ): typeof abstract extends Class<TClass> ? TClass : unknown {
+        // @ts-ignore:
+        abstract = this.getAlias(abstract);
 
-        this.loadDeferredProviderIfNeeded(abstract);
+        this.loadDeferredProviderIfNeeded(abstract as string | Class<ServiceProvider> | symbol);
 
-        // @ts-expect-error: need better typing
         return super.make(abstract, parameters);
     }
 
     /**
      * Resolve the given type from the container.
      */
-    protected override resolve<TClass extends string | Class<ServiceProvider> | symbol>(
-        abstract: TClass,
+    protected override resolve<TClass>(
+        abstract: string | Class<TClass> | symbol,
         parameters: unknown[] = [],
         raiseEvents: boolean = true,
-    ): TClass extends Class<ServiceProvider> ? InstanceType<TClass> : unknown {
-        abstract = this.getAlias(abstract) as TClass;
+    ): typeof abstract extends Class<TClass> ? TClass : unknown {
+        // @ts-ignore:
+        abstract = this.getAlias(abstract);
 
-        this.loadDeferredProviderIfNeeded(abstract);
+        this.loadDeferredProviderIfNeeded(abstract as string | Class<ServiceProvider> | symbol);
 
-        // @ts-expect-error: need better typing
         return super.resolve(abstract, parameters, raiseEvents);
     }
 
@@ -816,7 +823,7 @@ export default class Application extends Container
         // finished. This is useful when ordering the boot-up processes we run.
         this.fireAppCallbacks(this.bootingCallbacks);
 
-        for (const p of Object.values(this.serviceProviders)) {
+        for (const [_k, p] of this.serviceProviders) {
             this.bootProvider(p);
         }
 
@@ -1059,6 +1066,7 @@ export default class Application extends Container
         let index = 0;
 
         while (index < this.terminatingCallbacks.length) {
+            // $this->call($this->terminatingCallbacks[$index]);
             this.terminatingCallbacks[index]();
 
             index++;
@@ -1076,7 +1084,7 @@ export default class Application extends Container
      * Determine if the given service provider is loaded.
      */
     public providerIsLoaded(provider: string): boolean {
-        return !!this.loadedProviders.get(provider);
+        return this.loadedProviders.has(provider);
     }
 
     /**
@@ -1104,7 +1112,7 @@ export default class Application extends Container
      * Add a map of services to the application's deferred services.
      */
     public addDeferredServices(services: Map<string | Class<ServiceProvider> | symbol, Class<ServiceProvider>>): void {
-        for (const [service, provider] of services.entries()) {
+        for (const [service, provider] of services) {
             this.deferredServices.set(service, provider);
         }
     }
@@ -1176,7 +1184,7 @@ export default class Application extends Container
      * Determine if the application locale is the given locale.
      */
     public isLocale(locale: string): boolean {
-        return this.getLocale() == locale;
+        return this.getLocale() === locale;
     }
 
     /**
@@ -1238,6 +1246,7 @@ export default class Application extends Container
     public override flush(): void {
         super.flush();
 
+        // $this->buildStack = [];
         this.loadedProviders.clear();
         this.bootedCallbacks = [];
         this.bootingCallbacks = [];
