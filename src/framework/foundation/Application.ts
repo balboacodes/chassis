@@ -1,3 +1,5 @@
+import { Container } from '../container/Container.ts';
+
 export class Application extends Container {
     //     use Macroable;
 

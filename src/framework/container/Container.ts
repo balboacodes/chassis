@@ -10,32 +10,25 @@ export class Container {
     /**
      * An array of the types that have been resolved.
      */
-    protected resolvedTypes: { [key: Abstract]: boolean } = {};
+    protected resolvedTypes: Map<Abstract, boolean> = new Map();
 
     /**
      * The container's bindings.
      */
-    protected bindings: {
-        [key: Abstract]: {
-            concrete: (container: Container, parameters?: unknown[]) => unknown;
-            shared: boolean;
-        };
-    } = {};
+    protected bindings: Map<Abstract, {
+        concrete: (container: Container, parameters?: unknown[]) => unknown;
+        shared: boolean;
+    }> = new Map();
 
     /**
      * The container's shared instances.
      */
-    protected instances: { [key: Abstract]: unknown } = {};
-
-    /**
-     * The parameter override stack.
-     */
-    protected with: unknown[][] = [];
+    protected instances: Map<Abstract, unknown> = new Map();
 
     /**
      * All of the registered rebound callbacks.
      */
-    protected reboundCallbacks: { [key: Abstract]: ((container: Container, instance: object) => unknown)[] } = {};
+    protected reboundCallbacks: Map<Abstract, ((container: Container, instance: object) => unknown)[]> = new Map();
 
     /**
      * All of the global before resolving callbacks.
@@ -55,17 +48,17 @@ export class Container {
     /**
      * All of the before resolving callbacks by class type.
      */
-    protected beforeResolvingCallbacks: { [key: Abstract]: (() => unknown)[] } = {};
+    protected beforeResolvingCallbacks: Map<Abstract, (() => unknown)[]> = new Map();
 
     /**
      * All of the resolving callbacks by class type.
      */
-    protected resolvingCallbacks: { [key: Abstract]: (() => unknown)[] } = {};
+    protected resolvingCallbacks: Map<Abstract, (() => unknown)[]> = new Map();
 
     /**
      * All of the after resolving callbacks by class type.
      */
-    protected afterResolvingCallbacks: { [key: Abstract]: (() => unknown)[] } = {};
+    protected afterResolvingCallbacks: Map<Abstract, (() => unknown)[]> = new Map();
 
     /**
      * The callback used to determine the container's environment.
@@ -76,25 +69,25 @@ export class Container {
      * Determine if the given abstract type has been bound.
      */
     public bound(abstract: Abstract): boolean {
-        return abstract in this.bindings || abstract in this.instances;
+        return this.bindings.has(abstract) || this.instances.has(abstract);
     }
 
     /**
      * Determine if the given abstract type has been resolved.
      */
     public resolved(abstract: Abstract): boolean {
-        return abstract in this.resolvedTypes || abstract in this.instances;
+        return this.resolvedTypes.has(abstract) || this.instances.has(abstract);
     }
 
     /**
      * Determine if a given type is shared.
      */
     public isShared(abstract: Abstract): boolean {
-        if (abstract in this.instances) {
+        if (this.instances.has(abstract)) {
             return true;
         }
 
-        if ('shared' in this.bindings[abstract] && this.bindings[abstract]['shared'] === true) {
+        if (this.bindings.get(abstract)?.shared === true) {
             return true;
         }
 
@@ -106,7 +99,7 @@ export class Container {
      */
     public bind(
         abstract: Abstract,
-        concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Class,
+        concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Abstract,
         shared: boolean = false,
     ): void {
         this.dropStaleInstances(abstract);
@@ -115,7 +108,6 @@ export class Container {
         // abstract type. After that, the concrete type to be registered as shared
         // without being forced to state their classes in both of the parameters.
         if (concrete === undefined) {
-            // @ts-ignore:
             concrete = abstract;
         }
 
@@ -123,10 +115,10 @@ export class Container {
         // bound into this container to the abstract type and we will just wrap it
         // up inside its own Closure to give us more convenience when extending.
         if (typeof concrete !== 'function' || isClass(concrete)) {
-            concrete = this.getClosure(abstract, concrete as Abstract | Class);
+            concrete = this.getClosure(abstract, concrete);
         }
 
-        this.bindings[abstract] = { concrete, shared };
+        this.bindings.set(abstract, { concrete, shared });
 
         // If the abstract type was already resolved in this container we'll fire the
         // rebound listener so that any objects which have already gotten resolved
@@ -141,14 +133,15 @@ export class Container {
      */
     protected getClosure(
         abstract: Abstract,
-        concrete: Abstract | Class,
+        concrete: Abstract,
     ): (container: Container, parameters?: unknown[]) => unknown {
         return (container, parameters = []) => {
-            if (typeof concrete === 'string' || typeof concrete === 'symbol') {
-                return container.resolve(abstract, parameters, false);
+            if (abstract === concrete) {
+                // @ts-ignore:
+                return container.build(concrete);
             }
 
-            return container.build(concrete);
+            return container.resolve(abstract, parameters, false);
         };
     }
 
@@ -157,7 +150,7 @@ export class Container {
      */
     public bindIf(
         abstract: Abstract,
-        concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Class,
+        concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Abstract,
         shared: boolean = false,
     ): void {
         if (!this.bound(abstract)) {
@@ -170,7 +163,7 @@ export class Container {
      */
     public singleton(
         abstract: Abstract,
-        concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Class,
+        concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Abstract,
     ): void {
         this.bind(abstract, concrete, true);
     }
@@ -180,7 +173,7 @@ export class Container {
      */
     public singletonIf(
         abstract: Abstract,
-        concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Class,
+        concrete?: ((container: Container, parameters?: unknown[]) => unknown) | Abstract,
     ): void {
         if (!this.bound(abstract)) {
             this.singleton(abstract, concrete);
@@ -196,7 +189,7 @@ export class Container {
         // We'll check to determine if this type has been bound before, and if it has
         // we will fire the rebound callbacks registered with the container and it
         // can be updated with consuming classes that have gotten resolved here.
-        this.instances[abstract] = instance;
+        this.instances.set(abstract, instance);
 
         if (isBound) {
             this.rebound(abstract);
@@ -209,7 +202,7 @@ export class Container {
      * Bind a new callback to an abstract's rebind event.
      */
     public rebinding(abstract: Abstract, callback: () => unknown): unknown {
-        this.reboundCallbacks[abstract].push(callback);
+        this.reboundCallbacks.get(abstract)?.push(callback);
 
         if (this.bound(abstract)) {
             return this.make(abstract);
@@ -233,7 +226,7 @@ export class Container {
     protected rebound(abstract: Abstract): void {
         const callbacks = this.getReboundCallbacks(abstract);
 
-        if (!callbacks) {
+        if (callbacks.length === 0) {
             return;
         }
 
@@ -248,7 +241,7 @@ export class Container {
      * Get the rebound callbacks for a given type.
      */
     protected getReboundCallbacks(abstract: Abstract): ((container: Container, instance: object) => unknown)[] {
-        return this.reboundCallbacks[abstract] ?? [];
+        return this.reboundCallbacks.get(abstract) ?? [];
     }
 
     /**
@@ -269,22 +262,14 @@ export class Container {
             this.fireBeforeResolvingCallbacks(abstract, parameters);
         }
 
-        let concrete = null;
-
-        const needsContextualBuild = parameters.length > 0;
-
         // If an instance of the type is currently being managed as a singleton we'll
         // just return an existing instance instead of instantiating new instances
         // so the developer can keep using the same objects instance every time.
-        if (abstract in this.instances && !needsContextualBuild) {
-            return this.instances[abstract];
+        if (this.instances.has(abstract)) {
+            return this.instances.get(abstract);
         }
 
-        this.with.push(parameters);
-
-        if (concrete === null) {
-            concrete = this.getConcrete(abstract);
-        }
+        const concrete = this.getConcrete(abstract);
 
         // We're ready to instantiate an instance of the concrete type registered for
         // the binding. This will instantiate the types, as well as resolve any of
@@ -296,8 +281,8 @@ export class Container {
         // If the requested type is registered as a singleton we'll want to cache off
         // the instances in "memory" so we can return it later without creating an
         // entirely new instance of an object on each subsequent request for it.
-        if (this.isShared(abstract) && !needsContextualBuild) {
-            this.instances[abstract] = object;
+        if (this.isShared(abstract)) {
+            this.instances.set(abstract, object);
         }
 
         if (raiseEvents) {
@@ -307,11 +292,7 @@ export class Container {
         // Before returning, we will also set the resolved flag to "true" and pop off
         // the parameter overrides for this build. After those two things are done
         // we will be ready to return back the fully constructed class instance.
-        if (!needsContextualBuild) {
-            this.resolvedTypes[abstract] = true;
-        }
-
-        this.with.pop();
+        this.resolvedTypes.set(abstract, true);
 
         return object;
     }
@@ -323,8 +304,8 @@ export class Container {
         // If we don't have a registered resolver or concrete for the type, we'll just
         // assume each type is a concrete name and will attempt to resolve it as is
         // since the container should be able to resolve concretes automatically.
-        if (abstract in this.bindings) {
-            return this.bindings[abstract]['concrete'];
+        if (this.bindings.has(abstract)) {
+            return this.bindings.get(abstract)?.['concrete'];
         }
 
         return abstract;
@@ -357,10 +338,10 @@ export class Container {
      * Register a new before resolving callback for all types.
      */
     public beforeResolving(abstract: (() => unknown) | Abstract, callback?: () => unknown): void {
-        if (typeof abstract === 'function' && !callback) {
+        if (typeof abstract === 'function' && !isClass(abstract) && !callback) {
             this.globalBeforeResolvingCallbacks.push(abstract);
         } else {
-            this.beforeResolvingCallbacks[abstract as Abstract].push(callback!);
+            this.beforeResolvingCallbacks.get(abstract as Abstract)?.push(callback!);
         }
     }
 
@@ -368,10 +349,10 @@ export class Container {
      * Register a new resolving callback.
      */
     public resolving(abstract: (() => unknown) | Abstract, callback?: () => unknown): void {
-        if (typeof abstract === 'function' && !callback) {
+        if (typeof abstract === 'function' && !isClass(abstract) && !callback) {
             this.globalResolvingCallbacks.push(abstract);
         } else {
-            this.resolvingCallbacks[abstract as Abstract].push(callback!);
+            this.resolvingCallbacks.get(abstract as Abstract)?.push(callback!);
         }
     }
 
@@ -379,10 +360,10 @@ export class Container {
      * Register a new after resolving callback for all types.
      */
     public afterResolving(abstract: (() => unknown) | Abstract, callback?: () => unknown): void {
-        if (typeof abstract === 'function' && !callback) {
+        if (typeof abstract === 'function' && !isClass(abstract) && !callback) {
             this.globalAfterResolvingCallbacks.push(abstract);
         } else {
-            this.afterResolvingCallbacks[abstract as Abstract].push(callback!);
+            this.afterResolvingCallbacks.get(abstract as Abstract)?.push(callback!);
         }
     }
 
@@ -392,9 +373,9 @@ export class Container {
     protected fireBeforeResolvingCallbacks(abstract: Abstract, parameters: unknown[] = []): void {
         this.fireBeforeCallbackArray(abstract, parameters, this.globalBeforeResolvingCallbacks);
 
-        for (const type of Reflect.ownKeys(this.beforeResolvingCallbacks)) {
+        for (const [type, callbacks] of this.beforeResolvingCallbacks) {
             if (type === abstract) {
-                this.fireBeforeCallbackArray(abstract, parameters, this.beforeResolvingCallbacks[type]);
+                this.fireBeforeCallbackArray(abstract, parameters, callbacks);
             }
         }
     }
@@ -418,7 +399,7 @@ export class Container {
     protected fireResolvingCallbacks(abstract: Abstract, object: unknown): void {
         this.fireCallbackArray(object, this.globalResolvingCallbacks);
 
-        this.fireCallbackArray(object, this.getCallbacksForType(abstract, this.resolvingCallbacks));
+        this.fireCallbackArray(object, this.getCallbacksForType(abstract, object, this.resolvingCallbacks));
 
         this.fireAfterResolvingCallbacks(abstract, object);
     }
@@ -429,7 +410,7 @@ export class Container {
     protected fireAfterResolvingCallbacks(abstract: Abstract, object: unknown): void {
         this.fireCallbackArray(object, this.globalAfterResolvingCallbacks);
 
-        this.fireCallbackArray(object, this.getCallbacksForType(abstract, this.afterResolvingCallbacks));
+        this.fireCallbackArray(object, this.getCallbacksForType(abstract, object, this.afterResolvingCallbacks));
     }
 
     /**
@@ -437,13 +418,14 @@ export class Container {
      */
     protected getCallbacksForType(
         abstract: Abstract,
-        callbacksPerType: { [key: Abstract]: (() => unknown)[] },
+        object: unknown,
+        callbacksPerType: Map<Abstract, (() => unknown)[]>,
     ): (() => unknown)[] {
         const results = [];
 
-        for (const type of Reflect.ownKeys(callbacksPerType)) {
-            if (type === abstract) {
-                results.push(...callbacksPerType[type]);
+        for (const [type, callbacks] of callbacksPerType) {
+            if (type === abstract || (isClass(type) && object instanceof type)) {
+                results.push(...callbacks);
             }
         }
 
@@ -473,21 +455,21 @@ export class Container {
      * Drop all of the stale instances.
      */
     protected dropStaleInstances(abstract: Abstract): void {
-        delete this.instances[abstract];
+        this.instances.delete(abstract);
     }
 
     /**
      * Remove a resolved instance from the instance cache.
      */
     public forgetInstance(abstract: Abstract): void {
-        delete this.instances[abstract];
+        this.instances.delete(abstract);
     }
 
     /**
      * Clear all of the instances from the container.
      */
     public forgetInstances(): void {
-        this.instances = {};
+        this.instances.clear();
     }
 
     /**
@@ -508,9 +490,9 @@ export class Container {
      * Flush the container of all bindings and resolved instances.
      */
     public flush(): void {
-        this.resolvedTypes = {};
-        this.bindings = {};
-        this.instances = {};
+        this.resolvedTypes.clear();
+        this.bindings.clear();
+        this.instances.clear();
     }
 
     /**
