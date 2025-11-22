@@ -76,7 +76,8 @@ export default class Container implements ContainerContract {
     /**
      * The contextual binding map.
      */
-    public contextual: Map<Class, Map<string | Class | symbol, (() => unknown)[]>> = new Map();
+    public contextual: Map<Class, Map<string | Class | symbol, ((() => unknown) | string | Class | symbol)[]>> =
+        new Map();
 
     /**
      * The contextual attribute handlers.
@@ -648,51 +649,46 @@ export default class Container implements ContainerContract {
     /**
      * Call the given Closure / class@method and inject its dependencies.
      *
-     * @param  callable|string  $callback
      * @param  array<string, mixed>  $parameters
-     * @param  string|null  $defaultMethod
-     * @return mixed
-     *
-     * @throws \InvalidArgumentException
-     *
      * @todo
      */
-    // @ts-ignore:
-    public call(_$callback, _$parameters = [], _$defaultMethod = null) {
-        // $pushedToBuildStack = false;
+    public call(
+        _callback: ((...parameters: unknown[]) => unknown) | [object, string],
+        _parameters: unknown[] = [],
+        _defaultMethod?: string,
+        // @ts-ignore:
+    ): unknown {
+        // let pushedToBuildStack = false;
 
-        // if (($className = $this->getClassForCallable($callback)) && ! in_array(
-        //     $className,
-        //     $this->buildStack,
-        //     true
-        // )) {
-        //     $this->buildStack[] = $className;
+        // const className = this.getClassForCallable(callback)
+        //
+        // if (className && !this.buildStack.includes(className)) {
+        //     this.buildStack.push(className);
 
-        //     $pushedToBuildStack = true;
+        //     pushedToBuildStack = true;
         // }
 
-        // $result = BoundMethod::call($this, $callback, $parameters, $defaultMethod);
+        // const result = BoundMethod.call(this, callback, parameters, defaultMethod);
 
-        // if ($pushedToBuildStack) {
-        //     array_pop($this->buildStack);
+        // if (pushedToBuildStack) {
+        //     this.buildStack.pop();
         // }
 
-        // return $result;
+        // return result;
     }
 
     /**
      * Get the class name for the given callback, if one can be determined.
      *
      * @param  callable|string  $callback
-     * @return string|false
-     *
      * @todo
      */
     // @ts-ignore:
-    protected getClassForCallable(_$callback) {
-        // if (is_callable($callback) &&
-        //     ! ($reflector = new ReflectionFunction($callback(...)))->isAnonymous()) {
-        //     return $reflector->getClosureScopeClass()->name ?? false;
+    protected getClassForCallable(_callback): string | false {
+        // const reflector = new ReflectionFunction(callback(...))
+
+        // if (is_callable(callback) && !reflector.isAnonymous()) {
+        //     return reflector.getClosureScopeClass().name ?? false;
         // }
 
         // return false;
@@ -700,16 +696,12 @@ export default class Container implements ContainerContract {
 
     /**
      * Get a closure to resolve the given type from the container.
-     *
-     * @template TClass of object
-     *
-     * @param  string|class-string<TClass>  $abstract
-     * @return ($abstract is class-string<TClass> ? \Closure(): TClass : \Closure(): mixed)
      */
-    // public factory($abstract)
-    // {
-    //     return fn () => $this->make($abstract);
-    // }
+    public factory<TClass>(
+        abstract: string | Class<TClass> | symbol,
+    ): typeof abstract extends Class<TClass> ? () => TClass : unknown {
+        return () => this.make(abstract);
+    }
 
     /**
      * Resolve the given type from the container.
@@ -723,24 +715,14 @@ export default class Container implements ContainerContract {
 
     /**
      * {@inheritdoc}
-     *
-     * @template TClass of object
-     *
-     * @param  string|class-string<TClass>  $id
-     * @return ($id is class-string<TClass> ? TClass : mixed)
      */
-    // public get(string $id)
-    // {
-    //     try {
-    //         return $this->resolve($id);
-    //     } catch (Exception $e) {
-    //         if ($this->has($id) || $e instanceof CircularDependencyException) {
-    //             throw $e;
-    //         }
-
-    //         throw new EntryNotFoundException($id, is_int($e->getCode()) ? $e->getCode() : 0, $e);
-    //     }
-    // }
+    public get<TClass>(id: string | Class<TClass> | symbol): typeof id extends Class<TClass> ? TClass : unknown {
+        try {
+            return this.resolve(id);
+        } catch (e: unknown) {
+            throw e;
+        }
+    }
 
     /**
      * Resolve the given type from the container.
@@ -760,7 +742,7 @@ export default class Container implements ContainerContract {
             this.fireBeforeResolvingCallbacks(abstract, parameters);
         }
 
-        // $concrete = $this->getContextualConcrete($abstract);
+        concrete = this.getContextualConcrete(abstract);
 
         const needsContextualBuild = parameters.length; // || ! is_null($concrete);
 
@@ -891,40 +873,39 @@ export default class Container implements ContainerContract {
 
     /**
      * Get the contextual concrete binding for the given abstract.
-     *
-     * @param  string|callable  $abstract
-     * @return \Closure|string|array|null
      */
-    // protected getContextualConcrete($abstract)
-    // {
-    //     if (! is_null($binding = $this->findInContextualBindings($abstract))) {
-    //         return $binding;
-    //     }
+    protected getContextualConcrete(abstract: string | Class | symbol): (() => unknown) | string | unknown[] | null {
+        const binding = this.findInContextualBindings(abstract);
 
-    //     // Next we need to see if a contextual binding might be bound under an alias of the
-    //     // given abstract type. So, we will need to check if any aliases exist with this
-    //     // type and then spin through them and check for contextual bindings on these.
-    //     if (empty($this->abstractAliases[$abstract])) {
-    //         return;
-    //     }
+        if (binding !== null) {
+            return binding;
+        }
 
-    //     foreach ($this->abstractAliases[$abstract] as $alias) {
-    //         if (! is_null($binding = $this->findInContextualBindings($alias))) {
-    //             return $binding;
-    //         }
-    //     }
-    // }
+        // Next we need to see if a contextual binding might be bound under an alias of the
+        // given abstract type. So, we will need to check if any aliases exist with this
+        // type and then spin through them and check for contextual bindings on these.
+        if (this.abstractAliases.get(abstract)?.length === 0) {
+            return null;
+        }
+
+        for (const alias of this.abstractAliases.get(abstract)!) {
+            const binding = this.findInContextualBindings(alias);
+
+            if (binding !== null) {
+                return binding;
+            }
+        }
+    }
 
     /**
      * Find the concrete binding for the given abstract in the contextual binding array.
-     *
-     * @param  string|callable  $abstract
-     * @return \Closure|string|null
      */
-    // protected findInContextualBindings($abstract)
-    // {
-    //     return $this->contextual[end($this->buildStack)][$abstract] ?? null;
-    // }
+    protected findInContextualBindings(
+        abstract: string | Class | symbol,
+    ): (string | symbol | Class | (() => unknown))[] | null {
+        // @ts-ignore:
+        return this.contextual.get(this.buildStack[this.buildStack.length - 1])?.get(abstract) ?? null;
+    }
 
     /**
      * Determine if the given concrete is buildable.
