@@ -1,1344 +1,1001 @@
 import { Container } from '../container/Container.ts';
+import { Abstract, Class } from '../types.ts';
+import { dirname, SEPARATOR} from '@std/path'
+import {rtrim} from '@balboacodes/php-utils'
+import {isClass, value} from '../support/helpers.ts'
+import { join_paths } from '../filesystem/functions.ts';
+import { exists } from '@std/fs';
+import { Str } from '../support/Str.ts';
+import { Arr } from '../support/Arr.ts';
+import { Collection } from '../support/Collection.ts';
 
 export class Application extends Container {
-    //     /**
-    //      * The base path for the Laravel installation.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $basePath;
-
-    //     /**
-    //      * The array of registered callbacks.
-    //      *
-    //      * @var callable[]
-    //      */
-    //     protected $registeredCallbacks = [];
-
-    //     /**
-    //      * Indicates if the application has been bootstrapped before.
-    //      *
-    //      * @var bool
-    //      */
-    //     protected $hasBeenBootstrapped = false;
-
-    //     /**
-    //      * Indicates if the application has "booted".
-    //      *
-    //      * @var bool
-    //      */
-    //     protected $booted = false;
-
-    //     /**
-    //      * The array of booting callbacks.
-    //      *
-    //      * @var callable[]
-    //      */
-    //     protected $bootingCallbacks = [];
-
-    //     /**
-    //      * The array of booted callbacks.
-    //      *
-    //      * @var callable[]
-    //      */
-    //     protected $bootedCallbacks = [];
-
-    //     /**
-    //      * The array of terminating callbacks.
-    //      *
-    //      * @var callable[]
-    //      */
-    //     protected $terminatingCallbacks = [];
-
-    //     /**
-    //      * All of the registered service providers.
-    //      *
-    //      * @var array<string, \Illuminate\Support\ServiceProvider>
-    //      */
-    //     protected $serviceProviders = [];
-
-    //     /**
-    //      * The names of the loaded service providers.
-    //      *
-    //      * @var array
-    //      */
-    //     protected $loadedProviders = [];
-
-    //     /**
-    //      * The custom bootstrap path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $bootstrapPath;
-
-    //     /**
-    //      * The custom application path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $appPath;
-
-    //     /**
-    //      * The custom configuration path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $configPath;
-
-    //     /**
-    //      * The custom database path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $databasePath;
-
-    //     /**
-    //      * The custom public / web path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $publicPath;
-
-    //     /**
-    //      * The custom storage path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $storagePath;
-
-    //     /**
-    //      * The custom environment path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $environmentPath;
-
-    //     /**
-    //      * The environment file to load during bootstrapping.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $environmentFile = '.env';
-
-    //     /**
-    //      * Indicates if the application is running in the console.
-    //      *
-    //      * @var bool|null
-    //      */
-    //     protected $isRunningInConsole;
-
-    //     /**
-    //      * Indicates if the framework's base configuration should be merged.
-    //      *
-    //      * @var bool
-    //      */
-    //     protected $mergeFrameworkConfiguration = true;
-
-    //     /**
-    //      * The prefixes of absolute cache paths for use during normalization.
-    //      *
-    //      * @var string[]
-    //      */
-    //     protected $absoluteCachePathPrefixes = ['/', '\\'];
-
-    //     /**
-    //      * Create a new Illuminate application instance.
-    //      *
-    //      * @param  string|null  $basePath
-    //      */
-    //     public function __construct($basePath = null)
-    //     {
-    //         if ($basePath) {
-    //             $this->setBasePath($basePath);
-    //         }
-
-    //         $this->registerBaseBindings();
-    //         $this->registerBaseServiceProviders();
-    //         $this->registerCoreContainerAliases();
-    //     }
-
-    //     /**
-    //      * Begin configuring a new Laravel application instance.
-    //      *
-    //      * @param  string|null  $basePath
-    //      * @return \Illuminate\Foundation\Configuration\ApplicationBuilder
-    //      */
-    //     public static function configure(?string $basePath = null)
-    //     {
-    //         $basePath = match (true) {
-    //             is_string($basePath) => $basePath,
-    //             default => static::inferBasePath(),
-    //         };
-
-    //         return (new Configuration\ApplicationBuilder(new static($basePath)))
-    //             ->withKernels()
-    //             ->withEvents()
-    //             ->withCommands()
-    //             ->withProviders();
-    //     }
-
-    //     /**
-    //      * Infer the application's base directory from the environment.
-    //      *
-    //      * @return string
-    //      */
-    //     public static function inferBasePath()
-    //     {
-    //         return match (true) {
-    //             isset($_ENV['APP_BASE_PATH']) => $_ENV['APP_BASE_PATH'],
-    //             isset($_SERVER['APP_BASE_PATH']) => $_SERVER['APP_BASE_PATH'],
-    //             default => dirname(array_values(array_filter(
-    //                 array_keys(ClassLoader::getRegisteredLoaders()),
-    //                 fn ($path) => ! str_starts_with($path, 'phar://'),
-    //             ))[0]),
-    //         };
-    //     }
-
-    //     /**
-    //      * Register the basic bindings into the container.
-    //      *
-    //      * @return void
-    //      */
-    //     protected function registerBaseBindings()
-    //     {
-    //         static::setInstance($this);
-
-    //         $this->instance('app', $this);
-
-    //         $this->instance(Container::class, $this);
-    //     }
-
-    //     /**
-    //      * Register all of the base service providers.
-    //      *
-    //      * @return void
-    //      */
-    //     protected function registerBaseServiceProviders()
-    //     {
-    //         $this->register(new EventServiceProvider($this));
-    //         $this->register(new LogServiceProvider($this));
-    //         $this->register(new RoutingServiceProvider($this));
-    //     }
-
-    //     /**
-    //      * Run the given array of bootstrap classes.
-    //      *
-    //      * @param  string[]  $bootstrappers
-    //      * @return void
-    //      */
-    //     public function bootstrapWith(array $bootstrappers)
-    //     {
-    //         $this->hasBeenBootstrapped = true;
-
-    //         foreach ($bootstrappers as $bootstrapper) {
-    //             $this['events']->dispatch('bootstrapping: '.$bootstrapper, [$this]);
-
-    //             $this->make($bootstrapper)->bootstrap($this);
-
-    //             $this['events']->dispatch('bootstrapped: '.$bootstrapper, [$this]);
-    //         }
-    //     }
-
-    //     /**
-    //      * Register a callback to run after loading the environment.
-    //      *
-    //      * @param  \Closure  $callback
-    //      * @return void
-    //      */
-    //     public function afterLoadingEnvironment(Closure $callback)
-    //     {
-    //         $this->afterBootstrapping(
-    //             LoadEnvironmentVariables::class, $callback
-    //         );
-    //     }
-
-    //     /**
-    //      * Register a callback to run before a bootstrapper.
-    //      *
-    //      * @param  string  $bootstrapper
-    //      * @param  \Closure  $callback
-    //      * @return void
-    //      */
-    //     public function beforeBootstrapping($bootstrapper, Closure $callback)
-    //     {
-    //         $this['events']->listen('bootstrapping: '.$bootstrapper, $callback);
-    //     }
-
-    //     /**
-    //      * Register a callback to run after a bootstrapper.
-    //      *
-    //      * @param  string  $bootstrapper
-    //      * @param  \Closure  $callback
-    //      * @return void
-    //      */
-    //     public function afterBootstrapping($bootstrapper, Closure $callback)
-    //     {
-    //         $this['events']->listen('bootstrapped: '.$bootstrapper, $callback);
-    //     }
-
-    //     /**
-    //      * Determine if the application has been bootstrapped before.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function hasBeenBootstrapped()
-    //     {
-    //         return $this->hasBeenBootstrapped;
-    //     }
-
-    //     /**
-    //      * Set the base path for the application.
-    //      *
-    //      * @param  string  $basePath
-    //      * @return $this
-    //      */
-    //     public function setBasePath($basePath)
-    //     {
-    //         $this->basePath = rtrim($basePath, '\/');
-
-    //         $this->bindPathsInContainer();
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Bind all of the application paths in the container.
-    //      *
-    //      * @return void
-    //      */
-    //     protected function bindPathsInContainer()
-    //     {
-    //         $this->instance('path', $this->path());
-    //         $this->instance('path.base', $this->basePath());
-    //         $this->instance('path.config', $this->configPath());
-    //         $this->instance('path.database', $this->databasePath());
-    //         $this->instance('path.public', $this->publicPath());
-    //         $this->instance('path.resources', $this->resourcePath());
-    //         $this->instance('path.storage', $this->storagePath());
-
-    //         $this->useBootstrapPath(value(function () {
-    //             return is_dir($directory = $this->basePath('.laravel'))
-    //                 ? $directory
-    //                 : $this->basePath('bootstrap');
-    //         }));
-
-    //     }
-
-    //     /**
-    //      * Get the path to the application "app" directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function path($path = '')
-    //     {
-    //         return $this->joinPaths($this->appPath ?: $this->basePath('app'), $path);
-    //     }
-
-    //     /**
-    //      * Set the application directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useAppPath($path)
-    //     {
-    //         $this->appPath = $path;
-
-    //         $this->instance('path', $path);
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Get the base path of the Laravel installation.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function basePath($path = '')
-    //     {
-    //         return $this->joinPaths($this->basePath, $path);
-    //     }
-
-    //     /**
-    //      * Get the path to the bootstrap directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function bootstrapPath($path = '')
-    //     {
-    //         return $this->joinPaths($this->bootstrapPath, $path);
-    //     }
-
-    //     /**
-    //      * Get the path to the service provider list in the bootstrap directory.
-    //      *
-    //      * @return string
-    //      */
-    //     public function getBootstrapProvidersPath()
-    //     {
-    //         return $this->bootstrapPath('providers.php');
-    //     }
-
-    //     /**
-    //      * Set the bootstrap file directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useBootstrapPath($path)
-    //     {
-    //         $this->bootstrapPath = $path;
-
-    //         $this->instance('path.bootstrap', $path);
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Get the path to the application configuration files.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function configPath($path = '')
-    //     {
-    //         return $this->joinPaths($this->configPath ?: $this->basePath('config'), $path);
-    //     }
-
-    //     /**
-    //      * Set the configuration directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useConfigPath($path)
-    //     {
-    //         $this->configPath = $path;
-
-    //         $this->instance('path.config', $path);
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Get the path to the database directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function databasePath($path = '')
-    //     {
-    //         return $this->joinPaths($this->databasePath ?: $this->basePath('database'), $path);
-    //     }
-
-    //     /**
-    //      * Set the database directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useDatabasePath($path)
-    //     {
-    //         $this->databasePath = $path;
-
-    //         $this->instance('path.database', $path);
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Get the path to the public / web directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function publicPath($path = '')
-    //     {
-    //         return $this->joinPaths($this->publicPath ?: $this->basePath('public'), $path);
-    //     }
-
-    //     /**
-    //      * Set the public / web directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function usePublicPath($path)
-    //     {
-    //         $this->publicPath = $path;
-
-    //         $this->instance('path.public', $path);
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Get the path to the storage directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function storagePath($path = '')
-    //     {
-    //         if (isset($_ENV['LARAVEL_STORAGE_PATH'])) {
-    //             return $this->joinPaths($this->storagePath ?: $_ENV['LARAVEL_STORAGE_PATH'], $path);
-    //         }
-
-    //         if (isset($_SERVER['LARAVEL_STORAGE_PATH'])) {
-    //             return $this->joinPaths($this->storagePath ?: $_SERVER['LARAVEL_STORAGE_PATH'], $path);
-    //         }
-
-    //         return $this->joinPaths($this->storagePath ?: $this->basePath('storage'), $path);
-    //     }
-
-    //     /**
-    //      * Set the storage directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useStoragePath($path)
-    //     {
-    //         $this->storagePath = $path;
-
-    //         $this->instance('path.storage', $path);
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Get the path to the resources directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function resourcePath($path = '')
-    //     {
-    //         return $this->joinPaths($this->basePath('resources'), $path);
-    //     }
-
-    //     /**
-    //      * Get the path to the views directory.
-    //      *
-    //      * This method returns the first configured path in the array of view paths.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function viewPath($path = '')
-    //     {
-    //         $viewPath = rtrim($this['config']->get('view.paths')[0], DIRECTORY_SEPARATOR);
-
-    //         return $this->joinPaths($viewPath, $path);
-    //     }
-
-    //     /**
-    //      * Join the given paths together.
-    //      *
-    //      * @param  string  $basePath
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function joinPaths($basePath, $path = '')
-    //     {
-    //         return join_paths($basePath, $path);
-    //     }
-
-    //     /**
-    //      * Get the path to the environment file directory.
-    //      *
-    //      * @return string
-    //      */
-    //     public function environmentPath()
-    //     {
-    //         return $this->environmentPath ?: $this->basePath;
-    //     }
-
-    //     /**
-    //      * Set the directory for the environment file.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useEnvironmentPath($path)
-    //     {
-    //         $this->environmentPath = $path;
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Set the environment file to be loaded during bootstrapping.
-    //      *
-    //      * @param  string  $file
-    //      * @return $this
-    //      */
-    //     public function loadEnvironmentFrom($file)
-    //     {
-    //         $this->environmentFile = $file;
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Get the environment file the application is using.
-    //      *
-    //      * @return string
-    //      */
-    //     public function environmentFile()
-    //     {
-    //         return $this->environmentFile ?: '.env';
-    //     }
-
-    //     /**
-    //      * Get the fully qualified path to the environment file.
-    //      *
-    //      * @return string
-    //      */
-    //     public function environmentFilePath()
-    //     {
-    //         return $this->environmentPath().DIRECTORY_SEPARATOR.$this->environmentFile();
-    //     }
-
-    //     /**
-    //      * Get or check the current application environment.
-    //      *
-    //      * @param  string|array  ...$environments
-    //      * @return string|bool
-    //      */
-    //     public function environment(...$environments)
-    //     {
-    //         if (count($environments) > 0) {
-    //             $patterns = is_array($environments[0]) ? $environments[0] : $environments;
-
-    //             return Str::is($patterns, $this['env']);
-    //         }
-
-    //         return $this['env'];
-    //     }
-
-    //     /**
-    //      * Determine if the application is in the local environment.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function isLocal()
-    //     {
-    //         return $this['env'] === 'local';
-    //     }
-
-    //     /**
-    //      * Determine if the application is in the production environment.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function isProduction()
-    //     {
-    //         return $this['env'] === 'production';
-    //     }
-
-    //     /**
-    //      * Detect the application's current environment.
-    //      *
-    //      * @param  \Closure  $callback
-    //      * @return string
-    //      */
-    //     public function detectEnvironment(Closure $callback)
-    //     {
-    //         $args = $this->runningInConsole() && isset($_SERVER['argv'])
-    //             ? $_SERVER['argv']
-    //             : null;
-
-    //         return $this['env'] = (new EnvironmentDetector)->detect($callback, $args);
-    //     }
-
-    //     /**
-    //      * Determine if the application is running in the console.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function runningInConsole()
-    //     {
-    //         if ($this->isRunningInConsole === null) {
-    //             $this->isRunningInConsole = Env::get('APP_RUNNING_IN_CONSOLE') ?? (\PHP_SAPI === 'cli' || \PHP_SAPI === 'phpdbg');
-    //         }
-
-    //         return $this->isRunningInConsole;
-    //     }
-
-    //     /**
-    //      * Determine if the application is running any of the given console commands.
-    //      *
-    //      * @param  string|array  ...$commands
-    //      * @return bool
-    //      */
-    //     public function runningConsoleCommand(...$commands)
-    //     {
-    //         if (! $this->runningInConsole()) {
-    //             return false;
-    //         }
-
-    //         return in_array(
-    //             $_SERVER['argv'][1] ?? null,
-    //             is_array($commands[0]) ? $commands[0] : $commands
-    //         );
-    //     }
-
-    //     /**
-    //      * Determine if the application is running unit tests.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function runningUnitTests()
-    //     {
-    //         return $this->bound('env') && $this['env'] === 'testing';
-    //     }
-
-    //     /**
-    //      * Determine if the application is running with debug mode enabled.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function hasDebugModeEnabled()
-    //     {
-    //         return (bool) $this['config']->get('app.debug');
-    //     }
-
-    //     /**
-    //      * Register a new registered listener.
-    //      *
-    //      * @param  callable  $callback
-    //      * @return void
-    //      */
-    //     public function registered($callback)
-    //     {
-    //         $this->registeredCallbacks[] = $callback;
-    //     }
-
-    //     /**
-    //      * Register all of the configured providers.
-    //      *
-    //      * @return void
-    //      */
-    //     public function registerConfiguredProviders()
-    //     {
-    //         $providers = (new Collection($this->make('config')->get('app.providers')));
-
-    //         (new ProviderRepository($this, new Filesystem, $this->getCachedServicesPath()))
-    //             ->load($providers->collapse()->toArray());
-
-    //         $this->fireAppCallbacks($this->registeredCallbacks);
-    //     }
-
-    //     /**
-    //      * Register a service provider with the application.
-    //      *
-    //      * @param  \Illuminate\Support\ServiceProvider|string  $provider
-    //      * @param  bool  $force
-    //      * @return \Illuminate\Support\ServiceProvider
-    //      */
-    //     public function register($provider, $force = false)
-    //     {
-    //         if (($registered = $this->getProvider($provider)) && ! $force) {
-    //             return $registered;
-    //         }
-
-    //         // If the given "provider" is a string, we will resolve it, passing in the
-    //         // application instance automatically for the developer. This is simply
-    //         // a more convenient way of specifying your service provider classes.
-    //         if (is_string($provider)) {
-    //             $provider = $this->resolveProvider($provider);
-    //         }
-
-    //         $provider->register();
-
-    //         // If there are bindings / singletons set as properties on the provider we
-    //         // will spin through them and register them with the application, which
-    //         // serves as a convenience layer while registering a lot of bindings.
-    //         if (property_exists($provider, 'bindings')) {
-    //             foreach ($provider->bindings as $key => $value) {
-    //                 $this->bind($key, $value);
-    //             }
-    //         }
-
-    //         if (property_exists($provider, 'singletons')) {
-    //             foreach ($provider->singletons as $key => $value) {
-    //                 $key = is_int($key) ? $value : $key;
-
-    //                 $this->singleton($key, $value);
-    //             }
-    //         }
-
-    //         $this->markAsRegistered($provider);
-
-    //         // If the application has already booted, we will call this boot method on
-    //         // the provider class so it has an opportunity to do its boot logic and
-    //         // will be ready for any usage by this developer's application logic.
-    //         if ($this->isBooted()) {
-    //             $this->bootProvider($provider);
-    //         }
-
-    //         return $provider;
-    //     }
-
-    //     /**
-    //      * Get the registered service provider instance if it exists.
-    //      *
-    //      * @param  \Illuminate\Support\ServiceProvider|string  $provider
-    //      * @return \Illuminate\Support\ServiceProvider|null
-    //      */
-    //     public function getProvider($provider)
-    //     {
-    //         $name = is_string($provider) ? $provider : get_class($provider);
-
-    //         return $this->serviceProviders[$name] ?? null;
-    //     }
-
-    //     /**
-    //      * Get the registered service provider instances if any exist.
-    //      *
-    //      * @param  \Illuminate\Support\ServiceProvider|string  $provider
-    //      * @return array
-    //      */
-    //     public function getProviders($provider)
-    //     {
-    //         $name = is_string($provider) ? $provider : get_class($provider);
-
-    //         return Arr::where($this->serviceProviders, fn ($value) => $value instanceof $name);
-    //     }
-
-    //     /**
-    //      * Resolve a service provider instance from the class name.
-    //      *
-    //      * @param  string  $provider
-    //      * @return \Illuminate\Support\ServiceProvider
-    //      */
-    //     public function resolveProvider($provider)
-    //     {
-    //         return new $provider($this);
-    //     }
-
-    //     /**
-    //      * Mark the given provider as registered.
-    //      *
-    //      * @param  \Illuminate\Support\ServiceProvider  $provider
-    //      * @return void
-    //      */
-    //     protected function markAsRegistered($provider)
-    //     {
-    //         $class = get_class($provider);
-
-    //         $this->serviceProviders[$class] = $provider;
-
-    //         $this->loadedProviders[$class] = true;
-    //     }
-
-    //     /**
-    //      * Resolve the given type from the container.
-    //      *
-    //      * @template TClass of object
-    //      *
-    //      * @param  string|class-string<TClass>  $abstract
-    //      * @param  array  $parameters
-    //      * @return ($abstract is class-string<TClass> ? TClass : mixed)
-    //      *
-    //      * @throws \Illuminate\Contracts\Container\BindingResolutionException
-    //      */
-    //     public function make($abstract, array $parameters = [])
-    //     {
-    //         $this->loadDeferredProviderIfNeeded($abstract = $this->getAlias($abstract));
-
-    //         return parent::make($abstract, $parameters);
-    //     }
-
-    //     /**
-    //      * Resolve the given type from the container.
-    //      *
-    //      * @template TClass of object
-    //      *
-    //      * @param  string|class-string<TClass>|callable  $abstract
-    //      * @param  array  $parameters
-    //      * @param  bool  $raiseEvents
-    //      * @return ($abstract is class-string<TClass> ? TClass : mixed)
-    //      *
-    //      * @throws \Illuminate\Contracts\Container\BindingResolutionException
-    //      * @throws \Illuminate\Contracts\Container\CircularDependencyException
-    //      */
-    //     protected function resolve($abstract, $parameters = [], $raiseEvents = true)
-    //     {
-    //         $this->loadDeferredProviderIfNeeded($abstract = $this->getAlias($abstract));
-
-    //         return parent::resolve($abstract, $parameters, $raiseEvents);
-    //     }
-
-    //     /**
-    //      * Determine if the given abstract type has been bound.
-    //      *
-    //      * @param  string  $abstract
-    //      * @return bool
-    //      */
-    //     public function bound($abstract)
-    //     {
-    //         return $this->isDeferredService($abstract) || parent::bound($abstract);
-    //     }
-
-    //     /**
-    //      * Determine if the application has booted.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function isBooted()
-    //     {
-    //         return $this->booted;
-    //     }
-
-    //     /**
-    //      * Boot the application's service providers.
-    //      *
-    //      * @return void
-    //      */
-    //     public function boot()
-    //     {
-    //         if ($this->isBooted()) {
-    //             return;
-    //         }
-
-    //         // Once the application has booted we will also fire some "booted" callbacks
-    //         // for any listeners that need to do work after this initial booting gets
-    //         // finished. This is useful when ordering the boot-up processes we run.
-    //         $this->fireAppCallbacks($this->bootingCallbacks);
-
-    //         array_walk($this->serviceProviders, function ($p) {
-    //             $this->bootProvider($p);
-    //         });
-
-    //         $this->booted = true;
-
-    //         $this->fireAppCallbacks($this->bootedCallbacks);
-    //     }
-
-    //     /**
-    //      * Boot the given service provider.
-    //      *
-    //      * @param  \Illuminate\Support\ServiceProvider  $provider
-    //      * @return void
-    //      */
-    //     protected function bootProvider(ServiceProvider $provider)
-    //     {
-    //         $provider->callBootingCallbacks();
-
-    //         if (method_exists($provider, 'boot')) {
-    //             $this->call([$provider, 'boot']);
-    //         }
-
-    //         $provider->callBootedCallbacks();
-    //     }
-
-    //     /**
-    //      * Register a new boot listener.
-    //      *
-    //      * @param  callable  $callback
-    //      * @return void
-    //      */
-    //     public function booting($callback)
-    //     {
-    //         $this->bootingCallbacks[] = $callback;
-    //     }
-
-    //     /**
-    //      * Register a new "booted" listener.
-    //      *
-    //      * @param  callable  $callback
-    //      * @return void
-    //      */
-    //     public function booted($callback)
-    //     {
-    //         $this->bootedCallbacks[] = $callback;
-
-    //         if ($this->isBooted()) {
-    //             $callback($this);
-    //         }
-    //     }
-
-    //     /**
-    //      * Call the booting callbacks for the application.
-    //      *
-    //      * @param  callable[]  $callbacks
-    //      * @return void
-    //      */
-    //     protected function fireAppCallbacks(array &$callbacks)
-    //     {
-    //         $index = 0;
-
-    //         while ($index < count($callbacks)) {
-    //             $callbacks[$index]($this);
-
-    //             $index++;
-    //         }
-    //     }
-
-    //     /**
-    //      * Handle the incoming HTTP request and send the response to the browser.
-    //      *
-    //      * @param  \Illuminate\Http\Request  $request
-    //      * @return void
-    //      */
-    //     public function handleRequest(Request $request)
-    //     {
-    //         $kernel = $this->make(HttpKernelContract::class);
-
-    //         $response = $kernel->handle($request)->send();
-
-    //         $kernel->terminate($request, $response);
-    //     }
-
-    //     /**
-    //      * Handle the incoming Artisan command.
-    //      *
-    //      * @param  \Symfony\Component\Console\Input\InputInterface  $input
-    //      * @return int
-    //      */
-    //     public function handleCommand(InputInterface $input)
-    //     {
-    //         $kernel = $this->make(ConsoleKernelContract::class);
-
-    //         $status = $kernel->handle(
-    //             $input,
-    //             new ConsoleOutput
-    //         );
-
-    //         $kernel->terminate($input, $status);
-
-    //         return $status;
-    //     }
-
-    //     /**
-    //      * Determine if the framework's base configuration should be merged.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function shouldMergeFrameworkConfiguration()
-    //     {
-    //         return $this->mergeFrameworkConfiguration;
-    //     }
-
-    //     /**
-    //      * Indicate that the framework's base configuration should not be merged.
-    //      *
-    //      * @return $this
-    //      */
-    //     public function dontMergeFrameworkConfiguration()
-    //     {
-    //         $this->mergeFrameworkConfiguration = false;
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Determine if middleware has been disabled for the application.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function shouldSkipMiddleware()
-    //     {
-    //         return $this->bound('middleware.disable') &&
-    //                $this->make('middleware.disable') === true;
-    //     }
-
-    //     /**
-    //      * Get the path to the cached services.php file.
-    //      *
-    //      * @return string
-    //      */
-    //     public function getCachedServicesPath()
-    //     {
-    //         return $this->normalizeCachePath('APP_SERVICES_CACHE', 'cache/services.php');
-    //     }
-
-    //     /**
-    //      * Get the path to the cached packages.php file.
-    //      *
-    //      * @return string
-    //      */
-    //     public function getCachedPackagesPath()
-    //     {
-    //         return $this->normalizeCachePath('APP_PACKAGES_CACHE', 'cache/packages.php');
-    //     }
-
-    //     /**
-    //      * Determine if the application configuration is cached.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function configurationIsCached()
-    //     {
-    //         if ($this->bound('config_loaded_from_cache')) {
-    //             return (bool) $this->make('config_loaded_from_cache');
-    //         }
-
-    //         return $this->instance('config_loaded_from_cache', is_file($this->getCachedConfigPath()));
-    //     }
-
-    //     /**
-    //      * Get the path to the configuration cache file.
-    //      *
-    //      * @return string
-    //      */
-    //     public function getCachedConfigPath()
-    //     {
-    //         return $this->normalizeCachePath('APP_CONFIG_CACHE', 'cache/config.php');
-    //     }
-
-    //     /**
-    //      * Determine if the application routes are cached.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function routesAreCached()
-    //     {
-    //         if ($this->bound('routes.cached')) {
-    //             return (bool) $this->make('routes.cached');
-    //         }
-
-    //         return $this->instance('routes.cached', $this['files']->exists($this->getCachedRoutesPath()));
-    //     }
-
-    //     /**
-    //      * Get the path to the routes cache file.
-    //      *
-    //      * @return string
-    //      */
-    //     public function getCachedRoutesPath()
-    //     {
-    //         return $this->normalizeCachePath('APP_ROUTES_CACHE', 'cache/routes-v7.php');
-    //     }
-
-    //     /**
-    //      * Determine if the application events are cached.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function eventsAreCached()
-    //     {
-    //         if ($this->bound('events.cached')) {
-    //             return (bool) $this->make('events.cached');
-    //         }
-
-    //         return $this->instance(
-    //             'events.cached', $this['files']->exists($this->getCachedEventsPath())
-    //         );
-    //     }
-
-    //     /**
-    //      * Get the path to the events cache file.
-    //      *
-    //      * @return string
-    //      */
-    //     public function getCachedEventsPath()
-    //     {
-    //         return $this->normalizeCachePath('APP_EVENTS_CACHE', 'cache/events.php');
-    //     }
-
-    //     /**
-    //      * Normalize a relative or absolute path to a cache file.
-    //      *
-    //      * @param  string  $key
-    //      * @param  string  $default
-    //      * @return string
-    //      */
-    //     protected function normalizeCachePath($key, $default)
-    //     {
-    //         if (is_null($env = Env::get($key))) {
-    //             return $this->bootstrapPath($default);
-    //         }
-
-    //         return Str::startsWith($env, $this->absoluteCachePathPrefixes)
-    //             ? $env
-    //             : $this->basePath($env);
-    //     }
-
-    //     /**
-    //      * Add new prefix to list of absolute path prefixes.
-    //      *
-    //      * @param  string  $prefix
-    //      * @return $this
-    //      */
-    //     public function addAbsoluteCachePathPrefix($prefix)
-    //     {
-    //         $this->absoluteCachePathPrefixes[] = $prefix;
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Get an instance of the maintenance mode manager implementation.
-    //      *
-    //      * @return \Illuminate\Contracts\Foundation\MaintenanceMode
-    //      */
-    //     public function maintenanceMode()
-    //     {
-    //         return $this->make(MaintenanceModeContract::class);
-    //     }
-
-    //     /**
-    //      * Determine if the application is currently down for maintenance.
-    //      *
-    //      * @return bool
-    //      */
-    //     public function isDownForMaintenance()
-    //     {
-    //         return $this->maintenanceMode()->active();
-    //     }
-
-    //     /**
-    //      * Throw an HttpException with the given data.
-    //      *
-    //      * @param  int  $code
-    //      * @param  string  $message
-    //      * @param  array  $headers
-    //      * @return never
-    //      *
-    //      * @throws \Symfony\Component\HttpKernel\Exception\HttpException
-    //      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-    //      */
-    //     public function abort($code, $message = '', array $headers = [])
-    //     {
-    //         if ($code == 404) {
-    //             throw new NotFoundHttpException($message, null, 0, $headers);
-    //         }
-
-    //         throw new HttpException($code, $message, null, $headers);
-    //     }
-
-    //     /**
-    //      * Register a terminating callback with the application.
-    //      *
-    //      * @param  callable|string  $callback
-    //      * @return $this
-    //      */
-    //     public function terminating($callback)
-    //     {
-    //         $this->terminatingCallbacks[] = $callback;
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Terminate the application.
-    //      *
-    //      * @return void
-    //      */
-    //     public function terminate()
-    //     {
-    //         $index = 0;
-
-    //         while ($index < count($this->terminatingCallbacks)) {
-    //             $this->call($this->terminatingCallbacks[$index]);
-
-    //             $index++;
-    //         }
-    //     }
-
-    //     /**
-    //      * Get the service providers that have been loaded.
-    //      *
-    //      * @return array<string, bool>
-    //      */
-    //     public function getLoadedProviders()
-    //     {
-    //         return $this->loadedProviders;
-    //     }
-
-    //     /**
-    //      * Determine if the given service provider is loaded.
-    //      *
-    //      * @param  string  $provider
-    //      * @return bool
-    //      */
-    //     public function providerIsLoaded(string $provider)
-    //     {
-    //         return isset($this->loadedProviders[$provider]);
-    //     }
-
-    //     /**
-    //      * Register the core class aliases in the container.
-    //      *
-    //      * @return void
-    //      */
-    //     public function registerCoreContainerAliases()
-    //     {
-    //         foreach ([
-    //             'app' => [self::class, \Illuminate\Contracts\Container\Container::class, \Illuminate\Contracts\Foundation\Application::class, \Psr\Container\ContainerInterface::class],
-    //             'auth' => [\Illuminate\Auth\AuthManager::class, \Illuminate\Contracts\Auth\Factory::class],
-    //             'auth.driver' => [\Illuminate\Contracts\Auth\Guard::class],
-    //             'auth.password' => [\Illuminate\Auth\Passwords\PasswordBrokerManager::class, \Illuminate\Contracts\Auth\PasswordBrokerFactory::class],
-    //             'auth.password.broker' => [\Illuminate\Auth\Passwords\PasswordBroker::class, \Illuminate\Contracts\Auth\PasswordBroker::class],
-    //             'blade.compiler' => [\Illuminate\View\Compilers\BladeCompiler::class],
-    //             'cache' => [\Illuminate\Cache\CacheManager::class, \Illuminate\Contracts\Cache\Factory::class],
-    //             'cache.store' => [\Illuminate\Cache\Repository::class, \Illuminate\Contracts\Cache\Repository::class, \Psr\SimpleCache\CacheInterface::class],
-    //             'cache.psr6' => [\Symfony\Component\Cache\Adapter\Psr16Adapter::class, \Symfony\Component\Cache\Adapter\AdapterInterface::class, \Psr\Cache\CacheItemPoolInterface::class],
-    //             'config' => [\Illuminate\Config\Repository::class, \Illuminate\Contracts\Config\Repository::class],
-    //             'cookie' => [\Illuminate\Cookie\CookieJar::class, \Illuminate\Contracts\Cookie\Factory::class, \Illuminate\Contracts\Cookie\QueueingFactory::class],
-    //             'db' => [\Illuminate\Database\DatabaseManager::class, \Illuminate\Database\ConnectionResolverInterface::class],
-    //             'db.connection' => [\Illuminate\Database\Connection::class, \Illuminate\Database\ConnectionInterface::class],
-    //             'db.schema' => [\Illuminate\Database\Schema\Builder::class],
-    //             'encrypter' => [\Illuminate\Encryption\Encrypter::class, \Illuminate\Contracts\Encryption\Encrypter::class, \Illuminate\Contracts\Encryption\StringEncrypter::class],
-    //             'events' => [\Illuminate\Events\Dispatcher::class, \Illuminate\Contracts\Events\Dispatcher::class],
-    //             'files' => [\Illuminate\Filesystem\Filesystem::class],
-    //             'filesystem' => [\Illuminate\Filesystem\FilesystemManager::class, \Illuminate\Contracts\Filesystem\Factory::class],
-    //             'filesystem.disk' => [\Illuminate\Contracts\Filesystem\Filesystem::class],
-    //             'filesystem.cloud' => [\Illuminate\Contracts\Filesystem\Cloud::class],
-    //             'hash' => [\Illuminate\Hashing\HashManager::class],
-    //             'hash.driver' => [\Illuminate\Contracts\Hashing\Hasher::class],
-    //             'log' => [\Illuminate\Log\LogManager::class, \Psr\Log\LoggerInterface::class],
-    //             'mail.manager' => [\Illuminate\Mail\MailManager::class, \Illuminate\Contracts\Mail\Factory::class],
-    //             'mailer' => [\Illuminate\Mail\Mailer::class, \Illuminate\Contracts\Mail\Mailer::class, \Illuminate\Contracts\Mail\MailQueue::class],
-    //             'queue' => [\Illuminate\Queue\QueueManager::class, \Illuminate\Contracts\Queue\Factory::class, \Illuminate\Contracts\Queue\Monitor::class],
-    //             'queue.connection' => [\Illuminate\Contracts\Queue\Queue::class],
-    //             'queue.failer' => [\Illuminate\Queue\Failed\FailedJobProviderInterface::class],
-    //             'redirect' => [\Illuminate\Routing\Redirector::class],
-    //             'redis' => [\Illuminate\Redis\RedisManager::class, \Illuminate\Contracts\Redis\Factory::class],
-    //             'redis.connection' => [\Illuminate\Redis\Connections\Connection::class, \Illuminate\Contracts\Redis\Connection::class],
-    //             'request' => [\Illuminate\Http\Request::class, \Symfony\Component\HttpFoundation\Request::class],
-    //             'router' => [\Illuminate\Routing\Router::class, \Illuminate\Contracts\Routing\Registrar::class, \Illuminate\Contracts\Routing\BindingRegistrar::class],
-    //             'session' => [\Illuminate\Session\SessionManager::class],
-    //             'session.store' => [\Illuminate\Session\Store::class, \Illuminate\Contracts\Session\Session::class],
-    //             'translator' => [\Illuminate\Translation\Translator::class, \Illuminate\Contracts\Translation\Translator::class],
-    //             'url' => [\Illuminate\Routing\UrlGenerator::class, \Illuminate\Contracts\Routing\UrlGenerator::class],
-    //             'validator' => [\Illuminate\Validation\Factory::class, \Illuminate\Contracts\Validation\Factory::class],
-    //             'view' => [\Illuminate\View\Factory::class, \Illuminate\Contracts\View\Factory::class],
-    //         ] as $key => $aliases) {
-    //             foreach ($aliases as $alias) {
-    //                 $this->alias($key, $alias);
-    //             }
-    //         }
-    //     }
-
-    //     /**
-    //      * Flush the container of all bindings and resolved instances.
-    //      *
-    //      * @return void
-    //      */
-    //     public function flush()
-    //     {
-    //         parent::flush();
-
-    //         $this->buildStack = [];
-    //         $this->loadedProviders = [];
-    //         $this->bootedCallbacks = [];
-    //         $this->bootingCallbacks = [];
-    //         $this->deferredServices = [];
-    //         $this->reboundCallbacks = [];
-    //         $this->serviceProviders = [];
-    //         $this->resolvingCallbacks = [];
-    //         $this->terminatingCallbacks = [];
-    //         $this->beforeResolvingCallbacks = [];
-    //         $this->afterResolvingCallbacks = [];
-    //         $this->globalBeforeResolvingCallbacks = [];
-    //         $this->globalResolvingCallbacks = [];
-    //         $this->globalAfterResolvingCallbacks = [];
-    //     }
+    /**
+     * The base path for the installation.
+     */
+    protected basePath?: string;
+
+    /**
+     * The array of registered callbacks.
+     */
+    protected registeredCallbacks: (() => unknown)[] = [];
+
+    /**
+     * Indicates if the application has been bootstrapped before.
+     */
+    protected beenBootstrapped: boolean = false;
+
+    /**
+     * Indicates if the application has "booted".
+     */
+    protected hasBooted: boolean = false;
+
+    /**
+     * The array of booting callbacks.
+     */
+    protected bootingCallbacks: (() => unknown)[] = [];
+
+    /**
+     * The array of booted callbacks.
+     */
+    protected bootedCallbacks: ((application: Application) => unknown)[] = [];
+
+    /**
+     * The array of terminating callbacks.
+     */
+    protected terminatingCallbacks: (() => unknown)[] = [];
+
+    /**
+     * All of the registered service providers.
+     */
+    protected serviceProviders: Map<Class<ServiceProvider>, ServiceProvider> = new Map();
+
+    /**
+     * The names of the loaded service providers.
+     */
+    protected loadedProviders: Map<Class<ServiceProvider>, boolean> = new Map();
+
+    /**
+     * The custom bootstrap path defined by the developer.
+     */
+    protected bootstrapPath?: string;
+
+    /**
+     * The custom application path defined by the developer.
+     */
+    protected appPath?: string;
+
+    /**
+     * The custom configuration path defined by the developer.
+     */
+    protected configPath?: string;
+
+    /**
+     * The custom database path defined by the developer.
+     */
+    protected databasePath?: string;
+
+    /**
+     * The custom public / web path defined by the developer.
+     */
+    protected publicPath?: string;
+
+    /**
+     * The custom storage path defined by the developer.
+     */
+    protected storagePath?: string;
+
+    /**
+     * The custom environment path defined by the developer.
+     */
+    protected environmentPath?: string;
+
+    /**
+     * The environment file to load during bootstrapping.
+     */
+    protected environmentFile: string = '.env';
+
+    /**
+     * Indicates if the application is running in the console.
+     */
+    protected isRunningInConsole?: boolean;
+
+    /**
+     * Indicates if the framework's base configuration should be merged.
+     */
+    protected mergeFrameworkConfiguration: boolean = true;
+
+    /**
+     * The prefixes of absolute cache paths for use during normalization.
+     */
+    protected absoluteCachePathPrefixes: string[] = ['/', '\\'];
+
+        /**
+         * Create a new Illuminate application instance.
+         */
+        public constructor(basePath?:string)
+        {
+          super()
+
+            if (basePath) {
+                this.setBasePath(basePath);
+            }
+
+            this.registerBaseBindings();
+            this.registerBaseServiceProviders();
+        }
+
+        /**
+         * Begin configuring a new Laravel application instance.
+         */
+        public static configure(basePath?:string):ApplicationBuilder
+        {
+            if (!basePath) {
+              basePath = Application.inferBasePath()
+            }
+
+            return (new ApplicationBuilder(new Application(basePath)))
+              .withKernels()
+              .withEvents()
+              .withCommands()
+              .withProviders();
+        }
+
+        /**
+         * Infer the application's base directory from the environment.
+         */
+        public static inferBasePath():string
+        {
+          if (Deno.env.has('APP_BASE_PATH')) {
+            return Deno.env.get('APP_BASE_PATH')!
+          }
+
+          return dirname(Deno.cwd())
+        }
+
+        /**
+         * Register the basic bindings into the container.
+         */
+        protected registerBaseBindings():void
+        {
+            Application.setInstance(this);
+
+            this.instance('app', this);
+
+            this.instance(Container, this);
+        }
+
+        /**
+         * Register all of the base service providers.
+         */
+        protected registerBaseServiceProviders():void
+        {
+            this.register(new EventServiceProvider(this));
+            this.register(new LogServiceProvider(this));
+            this.register(new RoutingServiceProvider(this));
+        }
+
+        /**
+         * Run the given array of bootstrap classes.
+         */
+        public bootstrapWith( bootstrappers:string[]):void
+        {
+            this.beenBootstrapped = true;
+
+            for (const bootstrapper of bootstrappers) {
+              this.make('events').dispatch(`bootstrapping: ${bootstrapper}`, [this]);
+
+                this.make(bootstrapper).bootstrap(this);
+
+                this.make('events').dispatch(`bootstrapped: ${bootstrapper}`, [this]);
+            }
+        }
+
+        /**
+         * Register a callback to run after loading the environment.
+         */
+        public afterLoadingEnvironment( callback:()=>unknown):void
+        {
+            this.afterBootstrapping(LoadEnvironmentVariables, callback);
+        }
+
+        /**
+         * Register a callback to run before a bootstrapper.
+         */
+        public beforeBootstrapping(bootstrapper:string,  callback:()=>unknown):void
+        {
+            this.make('events').listen(`bootstrapping: ${bootstrapper}`, callback);
+        }
+
+        /**
+         * Register a callback to run after a bootstrapper.
+         */
+        public afterBootstrapping(bootstrapper:string,  callback:()=>unknown):void
+        {
+            this.make('events').listen(`bootstrapped: ${bootstrapper}`, callback);
+        }
+
+        /**
+         * Determine if the application has been bootstrapped before.
+         */
+        public hasBeenBootstrapped():boolean
+        {
+            return this.beenBootstrapped;
+        }
+
+        /**
+         * Set the base path for the application.
+         */
+        public setBasePath(basePath:string):this
+        {
+            this.basePath = rtrim(basePath, '\/');
+
+            this.bindPathsInContainer();
+
+            return this;
+        }
+
+        /**
+         * Bind all of the application paths in the container.
+         */
+        protected bindPathsInContainer():void
+        {
+            this.instance('path', this.path());
+            this.instance('path.base', this.getBasePath());
+            this.instance('path.config', this.getConfigPath());
+            this.instance('path.database', this.getDatabasePath());
+            this.instance('path.public', this.getPublicPath());
+            this.instance('path.resources', this.resourcePath());
+            this.instance('path.storage', this.getStoragePath());
+
+            this.useBootstrapPath(value( ()=> this.getBasePath('bootstrap')
+            ));
+
+        }
+
+        /**
+         * Get the path to the application "app" directory.
+         */
+        public path(path:string = ''):string
+        {
+            return this.joinPaths(this.appPath ?? this.getBasePath('app'), path);
+        }
+
+        /**
+         * Set the application directory.
+         */
+        public useAppPath(path:string):this
+        {
+            this.appPath = path;
+
+            this.instance('path', path);
+
+            return this;
+        }
+
+        /**
+         * Get the base path of the Laravel installation.
+         */
+        public getBasePath(path:string = ''):string
+        {
+            return this.joinPaths(this.basePath??'', path);
+        }
+
+        /**
+         * Get the path to the bootstrap directory.
+         */
+        public getBootstrapPath(path:string = ''):string
+        {
+            return this.joinPaths(this.bootstrapPath??'', path);
+        }
+
+        /**
+         * Get the path to the service provider list in the bootstrap directory.
+         */
+        public getBootstrapProvidersPath():string
+        {
+            return this.getBootstrapPath('providers.ts');
+        }
+
+        /**
+         * Set the bootstrap file directory.
+         */
+        public useBootstrapPath(path:string):this
+        {
+            this.bootstrapPath = path;
+
+            this.instance('path.bootstrap', path);
+
+            return this;
+        }
+
+        /**
+         * Get the path to the application configuration files.
+         */
+        public getConfigPath(path:string = ''):string
+        {
+            return this.joinPaths(this.configPath ?? this.getBasePath('config'), path);
+        }
+
+        /**
+         * Set the configuration directory.
+         */
+        public useConfigPath(path:string):this
+        {
+            this.configPath = path;
+
+            this.instance('path.config', path);
+
+            return this;
+        }
+
+        /**
+         * Get the path to the database directory.
+         */
+        public getDatabasePath(path:string = ''):string
+        {
+            return this.joinPaths(this.databasePath ?? this.getBasePath('database'), path);
+        }
+
+        /**
+         * Set the database directory.
+         */
+        public useDatabasePath(path:string):this
+        {
+            this.databasePath = path;
+
+            this.instance('path.database', path);
+
+            return this;
+        }
+
+        /**
+         * Get the path to the public / web directory.
+         */
+        public getPublicPath(path:string = ''):string
+        {
+            return this.joinPaths(this.publicPath ?? this.getBasePath('public'), path);
+        }
+
+        /**
+         * Set the public / web directory.
+         */
+        public usePublicPath(path:string):this
+        {
+            this.publicPath = path;
+
+            this.instance('path.public', path);
+
+            return this;
+        }
+
+        /**
+         * Get the path to the storage directory.
+         */
+        public getStoragePath(path:string = ''):string
+        {
+            return this.joinPaths(this.storagePath ?? Deno.env.get('LARAVEL_STORAGE_PATH') ?? this.getBasePath('storage'), path);
+        }
+
+        /**
+         * Set the storage directory.
+         */
+        public useStoragePath(path:string):this
+        {
+            this.storagePath = path;
+
+            this.instance('path.storage', path);
+
+            return this;
+        }
+
+        /**
+         * Get the path to the resources directory.
+         */
+        public resourcePath(path:string = ''):string
+        {
+            return this.joinPaths(this.getBasePath('resources'), path);
+        }
+
+        /**
+         * Get the path to the views directory.
+         *
+         * This method returns the first configured path in the array of view paths.
+         */
+        public viewPath(path:string = ''):string
+        {
+            const viewPath = rtrim(this.make('config').get('view.paths')[0], SEPARATOR);
+
+            return this.joinPaths(viewPath, path);
+        }
+
+        /**
+         * Join the given paths together.
+         */
+        public joinPaths(basePath:string, path:string = ''):string
+        {
+            return join_paths(basePath, path);
+        }
+
+        /**
+         * Get the path to the environment file directory.
+         */
+        public getEnvironmentPath():string|undefined
+        {
+            return this.environmentPath ?? this.basePath;
+        }
+
+        /**
+         * Set the directory for the environment file.
+         */
+        public useEnvironmentPath(path:string):this
+        {
+            this.environmentPath = path;
+
+            return this;
+        }
+
+        /**
+         * Set the environment file to be loaded during bootstrapping.
+         */
+        public loadEnvironmentFrom(file:string):this
+        {
+            this.environmentFile = file;
+
+            return this;
+        }
+
+        /**
+         * Get the environment file the application is using.
+         */
+        public getEnvironmentFile():string
+        {
+            return this.environmentFile;
+        }
+
+        /**
+         * Get the fully qualified path to the environment file.
+         */
+        public environmentFilePath():string
+        {
+            return this.getEnvironmentPath()+SEPARATOR+this.getEnvironmentFile();
+        }
+
+        /**
+         * Get or check the current application environment.
+         */
+        public environment(...environments:string[]):string|boolean
+        {
+            if (environments.length > 0) {
+                const patterns = Array.isArray(environments[0]) ? environments[0] : environments;
+
+                return Str.is(patterns, this.make('env'));
+            }
+
+            return this.make('env');
+        }
+
+        /**
+         * Determine if the application is in the local environment.
+         */
+        public isLocal():boolean
+        {
+            return this.make('env') === 'local';
+        }
+
+        /**
+         * Determine if the application is in the production environment.
+         */
+        public isProduction():boolean
+        {
+            return this.make('env') === 'production';
+        }
+
+        /**
+         * Detect the application's current environment.
+         */
+        public detectEnvironment( callback:()=>unknown):string
+        {
+            const args = this.runningInConsole() && Deno.args.length > 0 ? Deno.args : undefined;
+
+            this.bind('env', () => new EnvironmentDetector().detect(callback, args));
+
+            return this.make('env')
+        }
+
+        /**
+         * Determine if the application is running in the console.
+         */
+        public runningInConsole():boolean
+        {
+            if (this.isRunningInConsole === undefined) {
+                this.isRunningInConsole = Env.get('APP_RUNNING_IN_CONSOLE') ?? Deno.env.get('TERM') !== undefined;
+            }
+
+            return this.isRunningInConsole;
+        }
+
+        /**
+         * Determine if the application is running any of the given console commands.
+         */
+        public runningConsoleCommand(...commands:string[]):boolean
+        {
+            if (! this.runningInConsole()) {
+                return false;
+            }
+
+
+            return (Array.isArray(commands[0]) ? commands[0] : commands).includes(Deno.args[0] ?? null);
+        }
+
+        /**
+         * Determine if the application is running unit tests.
+         */
+        public runningUnitTests():boolean
+        {
+            return this.bound('env') && this.make('env') === 'testing';
+        }
+
+        /**
+         * Determine if the application is running with debug mode enabled.
+         */
+        public hasDebugModeEnabled():boolean
+        {
+            return !!this.make('config').get('app.debug');
+        }
+
+        /**
+         * Register a new registered listener.
+         */
+        public registered(callback:()=>unknown):void
+        {
+          this.registeredCallbacks.push(callback);
+        }
+
+        /**
+         * Register all of the configured providers.
+         */
+        public registerConfiguredProviders():void
+        {
+            const providers = (new Collection(this.make('config').get('app.providers')));
+
+            (new ProviderRepository(this, new Filesystem, this.getCachedServicesPath()))
+                .load(providers.collapse().toArray());
+
+            this.fireAppCallbacks(this.registeredCallbacks);
+        }
+
+        /**
+         * Register a service provider with the application.
+         */
+         public register(provider: ServiceProvider | Class<ServiceProvider>, force: boolean = false): ServiceProvider {
+           const registered = this.getProvider(provider);
+
+            if (registered && ! force) {
+                return registered;
+            }
+
+            // If the given "provider" is a class, we will resolve it, passing in the
+            // application instance automatically for the developer. This is simply
+            // a more convenient way of specifying your service provider classes.
+            if (isClass(provider)) {
+                provider = this.resolveProvider(provider);
+            }
+
+            provider.register();
+
+            // If there are bindings / singletons set as properties on the provider we
+            // will spin through them and register them with the application, which
+            // serves as a convenience layer while registering a lot of bindings.
+            for (const [key, value] of provider.bindings ?? new Map) {
+                this.bind(key, value);
+            }
+
+            for (const [key, value] of provider.singletons ?? new Map) {
+                this.singleton(key, value);
+            }
+
+            this.markAsRegistered(provider);
+
+            // If the application has already booted, we will call this boot method on
+            // the provider class so it has an opportunity to do its boot logic and
+            // will be ready for any usage by this developer's application logic.
+            if (this.isBooted()) {
+                this.bootProvider(provider);
+            }
+
+            return provider;
+        }
+
+        /**
+         * Get the registered service provider instance if it exists.
+         */
+         public getProvider(provider: ServiceProvider | Class<ServiceProvider>): ServiceProvider | undefined {
+        {
+          const name = isClass(provider) ? provider : provider.constructor.name;
+
+          return this.serviceProviders.get(name);
+        }
+
+        /**
+         * Get the registered service provider instances if any exist.
+         */
+        public getProviders(provider: ServiceProvider | Class<ServiceProvider>): ServiceProvider[] {
+          const name = isClass(provider) ? provider : provider.constructor.name;
+
+            return Arr.where(this.serviceProviders.values(), (value:ServiceProvider) => {
+              if (isClass(name)) {
+              return value instanceof name
+              }
+
+              return value.constructor.name === name
+
+            });
+        }
+
+        /**
+         * Resolve a service provider instance from the class name.
+         */
+        public resolveProvider(provider:Class<ServiceProvider>):ServiceProvider
+        {
+            return new provider(this);
+        }
+
+        /**
+         * Mark the given provider as registered.
+         */
+        protected markAsRegistered(provider: ServiceProvider):void
+        {
+          const className = provider.constructor.name;
+
+          this.serviceProviders.set(className, provider);
+          this.loadedProviders.set(className, true);
+        }
+
+        /**
+         * Resolve the given type from the container.
+         */
+        public override make<TClass>(abstract:Abstract, parameters:unknown[] = []):typeof abstract extends Class ? TClass : unknown
+        {
+            return super.make(abstract, parameters);
+        }
+
+        /**
+         * Resolve the given type from the container.
+         */
+        protected override resolve<TClass>(abstract:Abstract, parameters:unknown[] = [], raiseEvents:boolean = true):typeof abstract extends Class ? TClass : unknown
+        {
+            return super.resolve(abstract, parameters, raiseEvents);
+        }
+
+        /**
+         * Determine if the given abstract type has been bound.
+         */
+        public override bound(abstract:Abstract):boolean
+        {
+            return super.bound(abstract);
+        }
+
+        /**
+         * Determine if the application has booted.
+         */
+        public isBooted():boolean
+        {
+            return this.hasBooted;
+        }
+
+        /**
+         * Boot the application's service providers.
+         */
+        public boot():void
+        {
+            if (this.isBooted()) {
+                return;
+            }
+
+            // Once the application has booted we will also fire some "booted" callbacks
+            // for any listeners that need to do work after this initial booting gets
+            // finished. This is useful when ordering the boot-up processes we run.
+            this.fireAppCallbacks(this.bootingCallbacks);
+
+            for (const p of this.serviceProviders.values()) {
+                this.bootProvider(p);
+            }
+
+            this.hasBooted = true;
+
+            this.fireAppCallbacks(this.bootedCallbacks);
+        }
+
+        /**
+         * Boot the given service provider.
+         */
+        protected bootProvider( provider:ServiceProvider):void
+        {
+            provider.callBootingCallbacks();
+
+            if (Object.hasOwn(provider.constructor.prototype, 'boot')) {
+                provider.boot()
+            }
+
+            provider.callBootedCallbacks();
+        }
+
+        /**
+         * Register a new boot listener.
+         */
+        public booting(callback:()=>unknown):void
+        {
+            this.bootingCallbacks.push(callback);
+        }
+
+        /**
+         * Register a new "booted" listener.
+         */
+        public booted(callback:(application: Application) => unknown):void
+        {
+          this.bootedCallbacks.push(callback);
+
+            if (this.isBooted()) {
+                callback(this);
+            }
+        }
+
+        /**
+         * Call the booting callbacks for the application.
+         */
+        protected fireAppCallbacks(callbacks:((application: Application)=>unknown)[]):void
+        {
+          let index = 0;
+
+            while (index < callbacks.length) {
+                callbacks[index](this);
+
+                index++;
+            }
+        }
+
+        /**
+         * Handle the incoming HTTP request and send the response to the browser.
+         */
+        public handleRequest( request:Request):void
+        {
+            const kernel = this.make(HttpKernelContract);
+
+            const response = kernel.handle(request).send();
+
+            kernel.terminate(request, response);
+        }
+
+        /**
+         * Handle the incoming Artisan command.
+         */
+        public handleCommand( input:InputInterface):number
+        {
+            const kernel = this.make(ConsoleKernelContract);
+
+            const status = kernel.handle(input, new ConsoleOutput);
+
+            kernel.terminate(input, status);
+
+            return status;
+        }
+
+        /**
+         * Determine if the framework's base configuration should be merged.
+         */
+        public shouldMergeFrameworkConfiguration():boolean
+        {
+            return this.mergeFrameworkConfiguration;
+        }
+
+        /**
+         * Indicate that the framework's base configuration should not be merged.
+         */
+        public dontMergeFrameworkConfiguration():this
+        {
+            this.mergeFrameworkConfiguration = false;
+
+            return this;
+        }
+
+        /**
+         * Determine if middleware has been disabled for the application.
+         */
+        public shouldSkipMiddleware():boolean
+        {
+            return this.bound('middleware.disable') && this.make('middleware.disable') === true;
+        }
+
+        /**
+         * Get the path to the cached services.ts file.
+         */
+        public getCachedServicesPath():string
+        {
+            return this.normalizeCachePath('APP_SERVICES_CACHE', 'cache/services.ts');
+        }
+
+        /**
+         * Get the path to the cached packages.ts file.
+         */
+        public getCachedPackagesPath():Str
+        {
+            return this.normalizeCachePath('APP_PACKAGES_CACHE', 'cache/packages.ts');
+        }
+
+        /**
+         * Determine if the application configuration is cached.
+         */
+        public async configurationIsCached():Promise<boolean>
+        {
+            if (this.bound('config_loaded_from_cache')) {
+                return !!this.make('config_loaded_from_cache');
+            }
+
+            return this.instance('config_loaded_from_cache', await exists(this.getCachedConfigPath(), { isFile: true }));
+        }
+
+        /**
+         * Get the path to the configuration cache file.
+         */
+        public getCachedConfigPath():string
+        {
+            return this.normalizeCachePath('APP_CONFIG_CACHE', 'cache/config.ts');
+        }
+
+        /**
+         * Determine if the application routes are cached.
+         */
+        public routesAreCached():boolean
+        {
+            if (this.bound('routes.cached')) {
+                return !! this.make('routes.cached');
+            }
+
+            return this.instance('routes.cached', this.make('files').exists(this.getCachedRoutesPath()));
+        }
+
+        /**
+         * Get the path to the routes cache file.
+         */
+        public getCachedRoutesPath():string
+        {
+            return this.normalizeCachePath('APP_ROUTES_CACHE', 'cache/routes-v7.ts');
+        }
+
+        /**
+         * Determine if the application events are cached.
+         */
+        public eventsAreCached():boolean
+        {
+            if (this.bound('events.cached')) {
+                return !! this.make('events.cached');
+            }
+
+            return this.instance(
+                'events.cached', this.make('files').exists(this.getCachedEventsPath())
+            );
+        }
+
+        /**
+         * Get the path to the events cache file.
+         */
+        public getCachedEventsPath():string
+        {
+            return this.normalizeCachePath('APP_EVENTS_CACHE', 'cache/events.ts');
+        }
+
+        /**
+         * Normalize a relative or absolute path to a cache file.
+         */
+        protected normalizeCachePath(key:string, defaultValue:string):string
+        {
+          const env = Env.get(key)
+
+          if (env === null) {
+                return this.getBootstrapPath(defaultValue);
+            }
+
+            return Str.startsWith(env, this.absoluteCachePathPrefixes) ? env : this.getBasePath(env);
+        }
+
+        /**
+         * Add new prefix to list of absolute path prefixes.
+         */
+         public addAbsoluteCachePathPrefix(prefix: string): this {
+             this.absoluteCachePathPrefixes.push(prefix);
+
+             return this;
+         }
+
+        /**
+         * Get an instance of the maintenance mode manager implementation.
+         */
+        public maintenanceMode():MaintenanceMode
+        {
+            return this.make(MaintenanceModeContract);
+        }
+
+        /**
+         * Determine if the application is currently down for maintenance.
+         */
+        public isDownForMaintenance():boolean
+        {
+            return this.maintenanceMode().active();
+        }
+
+        /**
+         * Throw an HttpException with the given data.
+         *
+         * @throws {HttpException} if code is anything other than a 404
+         * @throws {NotFoundHttpException} if code is a 404
+         */
+         public abort(code: number, message: string = '', headers: unknown[] = []): never {
+            if (code == 404) {
+                throw new NotFoundHttpException(message, null, 0, headers);
+            }
+
+            throw new HttpException(code, message, null, headers);
+        }
+
+        /**
+         * Register a terminating callback with the application.
+         */
+         public terminating(callback: () => unknown): this {
+        {
+          this.terminatingCallbacks.push(callback);
+
+            return this;
+        }
+
+        /**
+         * Terminate the application.
+         */
+        public terminate():void
+        {
+        let index = 0;
+
+        while (index < this.terminatingCallbacks.length) {
+          this.terminatingCallbacks[index]();
+
+                index++;
+            }
+        }
+
+        /**
+         * Get the service providers that have been loaded.
+         */
+        public getLoadedProviders():  Map<Class<ServiceProvider>, boolean>
+        {
+            return this.loadedProviders;
+        }
+
+        /**
+         * Determine if the given service provider is loaded.
+         */
+        public providerIsLoaded( provider:Class<ServiceProvider>):boolean
+        {
+            return this.loadedProviders.has(provider);
+        }
+
+        /**
+         * Flush the container of all bindings and resolved instances.
+         */
+        public override flush():void
+        {
+            super.flush();
+
+            this.loadedProviders.clear()
+            this.bootedCallbacks = [];
+            this.bootingCallbacks = [];
+            this.reboundCallbacks.clear()
+            this.serviceProviders.clear()
+            this.resolvingCallbacks.clear()
+            this.terminatingCallbacks = [];
+            this.beforeResolvingCallbacks.clear()
+            this.afterResolvingCallbacks.clear()
+            this.globalBeforeResolvingCallbacks = [];
+            this.globalResolvingCallbacks = [];
+            this.globalAfterResolvingCallbacks = [];
+        }
 }
