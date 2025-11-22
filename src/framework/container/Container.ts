@@ -637,52 +637,65 @@ export default class Container implements ContainerContract {
 
     /**
      * Wrap the given closure such that its dependencies will be injected when executed.
+     *
+     * @todo
      */
-    public wrap(callback: () => unknown, parameters: unknown[] = []): () => unknown {
+    // @ts-ignore:
+    public wrap(_callback: () => unknown, _parameters: unknown[] = []): () => unknown {
         // return () => this.call(callback, parameters);
     }
 
     /**
-     * Call the given Closure / [class, method] and inject its dependencies.
+     * Call the given Closure / class@method and inject its dependencies.
+     *
+     * @param  callable|string  $callback
+     * @param  array<string, mixed>  $parameters
+     * @param  string|null  $defaultMethod
+     * @return mixed
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @todo
      */
-    public call(
-        callback: (() => unknown) | [object, string],
-        parameters: Record<string, unknown> = {},
-        defaultMethod?: string,
-    ): unknown {
-        let pushedToBuildStack = false;
+    // @ts-ignore:
+    public call(_$callback, _$parameters = [], _$defaultMethod = null) {
+        // $pushedToBuildStack = false;
 
-        const className = this.getClassForCallable(callback);
+        // if (($className = $this->getClassForCallable($callback)) && ! in_array(
+        //     $className,
+        //     $this->buildStack,
+        //     true
+        // )) {
+        //     $this->buildStack[] = $className;
 
-        if (className && !this.buildStack.includes(className)) {
-            this.buildStack.push(className);
+        //     $pushedToBuildStack = true;
+        // }
 
-            pushedToBuildStack = true;
-        }
+        // $result = BoundMethod::call($this, $callback, $parameters, $defaultMethod);
 
-        const result = BoundMethod.call(this, callback, parameters, defaultMethod);
+        // if ($pushedToBuildStack) {
+        //     array_pop($this->buildStack);
+        // }
 
-        if (pushedToBuildStack) {
-            this.buildStack.pop();
-        }
-
-        return result;
+        // return $result;
     }
 
     /**
      * Get the class name for the given callback, if one can be determined.
+     *
+     * @param  callable|string  $callback
+     * @return string|false
+     *
+     * @todo
      */
-    protected getClassForCallable(callback: (() => unknown) | [object, string]): string | false {
-        // const reflector = new ReflectionFunction(callback(...))
-
-        // if (!reflector.isAnonymous()) {
-        //     return reflector.getClosureScopeClass().name ?? false;
+    // @ts-ignore:
+    protected getClassForCallable(_$callback) {
+        // if (is_callable($callback) &&
+        //     ! ($reflector = new ReflectionFunction($callback(...)))->isAnonymous()) {
+        //     return $reflector->getClosureScopeClass()->name ?? false;
         // }
-        if (Array.isArray(callback)) {
-            return callback[0].constructor.name;
-        }
 
-        return false;
+        // return false;
     }
 
     /**
