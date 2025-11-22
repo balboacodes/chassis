@@ -1,15 +1,6 @@
 import { Container } from '../container/Container.ts';
 
 export class Application extends Container {
-    //     use Macroable;
-
-    //     /**
-    //      * The Laravel framework version.
-    //      *
-    //      * @var string
-    //      */
-    //     const VERSION = '12.38.1';
-
     //     /**
     //      * The base path for the Laravel installation.
     //      *
@@ -74,13 +65,6 @@ export class Application extends Container {
     //     protected $loadedProviders = [];
 
     //     /**
-    //      * The deferred services and their providers.
-    //      *
-    //      * @var array
-    //      */
-    //     protected $deferredServices = [];
-
-    //     /**
     //      * The custom bootstrap path defined by the developer.
     //      *
     //      * @var string
@@ -107,13 +91,6 @@ export class Application extends Container {
     //      * @var string
     //      */
     //     protected $databasePath;
-
-    //     /**
-    //      * The custom language file path defined by the developer.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $langPath;
 
     //     /**
     //      * The custom public / web path defined by the developer.
@@ -151,13 +128,6 @@ export class Application extends Container {
     //     protected $isRunningInConsole;
 
     //     /**
-    //      * The application namespace.
-    //      *
-    //      * @var string
-    //      */
-    //     protected $namespace;
-
-    //     /**
     //      * Indicates if the framework's base configuration should be merged.
     //      *
     //      * @var bool
@@ -185,7 +155,6 @@ export class Application extends Container {
     //         $this->registerBaseBindings();
     //         $this->registerBaseServiceProviders();
     //         $this->registerCoreContainerAliases();
-    //         $this->registerLaravelCloudServices();
     //     }
 
     //     /**
@@ -226,16 +195,6 @@ export class Application extends Container {
     //     }
 
     //     /**
-    //      * Get the version number of the application.
-    //      *
-    //      * @return string
-    //      */
-    //     public function version()
-    //     {
-    //         return static::VERSION;
-    //     }
-
-    //     /**
     //      * Register the basic bindings into the container.
     //      *
     //      * @return void
@@ -247,11 +206,6 @@ export class Application extends Container {
     //         $this->instance('app', $this);
 
     //         $this->instance(Container::class, $this);
-    //         $this->singleton(Mix::class);
-
-    //         $this->singleton(PackageManifest::class, fn () => new PackageManifest(
-    //             new Filesystem, $this->basePath(), $this->getCachedPackagesPath()
-    //         ));
     //     }
 
     //     /**
@@ -263,30 +217,7 @@ export class Application extends Container {
     //     {
     //         $this->register(new EventServiceProvider($this));
     //         $this->register(new LogServiceProvider($this));
-    //         $this->register(new ContextServiceProvider($this));
     //         $this->register(new RoutingServiceProvider($this));
-    //     }
-
-    //     /**
-    //      * Register any services needed for Laravel Cloud.
-    //      *
-    //      * @return void
-    //      */
-    //     protected function registerLaravelCloudServices()
-    //     {
-    //         if (! laravel_cloud()) {
-    //             return;
-    //         }
-
-    //         $this['events']->listen(
-    //             'bootstrapping: *',
-    //             fn ($bootstrapper) => Cloud::bootstrapperBootstrapping($this, Str::after($bootstrapper, 'bootstrapping: '))
-    //         );
-
-    //         $this['events']->listen(
-    //             'bootstrapped: *',
-    //             fn ($bootstrapper) => Cloud::bootstrapperBootstrapped($this, Str::after($bootstrapper, 'bootstrapped: '))
-    //         );
     //     }
 
     //     /**
@@ -391,11 +322,6 @@ export class Application extends Container {
     //                 : $this->basePath('bootstrap');
     //         }));
 
-    //         $this->useLangPath(value(function () {
-    //             return is_dir($directory = $this->resourcePath('lang'))
-    //                 ? $directory
-    //                 : $this->basePath('lang');
-    //         }));
     //     }
 
     //     /**
@@ -519,32 +445,6 @@ export class Application extends Container {
     //         $this->databasePath = $path;
 
     //         $this->instance('path.database', $path);
-
-    //         return $this;
-    //     }
-
-    //     /**
-    //      * Get the path to the language files.
-    //      *
-    //      * @param  string  $path
-    //      * @return string
-    //      */
-    //     public function langPath($path = '')
-    //     {
-    //         return $this->joinPaths($this->langPath, $path);
-    //     }
-
-    //     /**
-    //      * Set the language file directory.
-    //      *
-    //      * @param  string  $path
-    //      * @return $this
-    //      */
-    //     public function useLangPath($path)
-    //     {
-    //         $this->langPath = $path;
-
-    //         $this->instance('path.lang', $path);
 
     //         return $this;
     //     }
@@ -825,10 +725,7 @@ export class Application extends Container {
     //      */
     //     public function registerConfiguredProviders()
     //     {
-    //         $providers = (new Collection($this->make('config')->get('app.providers')))
-    //             ->partition(fn ($provider) => str_starts_with($provider, 'Illuminate\\'));
-
-    //         $providers->splice(1, 0, [$this->make(PackageManifest::class)->providers()]);
+    //         $providers = (new Collection($this->make('config')->get('app.providers')));
 
     //         (new ProviderRepository($this, new Filesystem, $this->getCachedServicesPath()))
     //             ->load($providers->collapse()->toArray());
@@ -940,70 +837,6 @@ export class Application extends Container {
     //     }
 
     //     /**
-    //      * Load and boot all of the remaining deferred providers.
-    //      *
-    //      * @return void
-    //      */
-    //     public function loadDeferredProviders()
-    //     {
-    //         // We will simply spin through each of the deferred providers and register each
-    //         // one and boot them if the application has booted. This should make each of
-    //         // the remaining services available to this application for immediate use.
-    //         foreach ($this->deferredServices as $service => $provider) {
-    //             $this->loadDeferredProvider($service);
-    //         }
-
-    //         $this->deferredServices = [];
-    //     }
-
-    //     /**
-    //      * Load the provider for a deferred service.
-    //      *
-    //      * @param  string  $service
-    //      * @return void
-    //      */
-    //     public function loadDeferredProvider($service)
-    //     {
-    //         if (! $this->isDeferredService($service)) {
-    //             return;
-    //         }
-
-    //         $provider = $this->deferredServices[$service];
-
-    //         // If the service provider has not already been loaded and registered we can
-    //         // register it with the application and remove the service from this list
-    //         // of deferred services, since it will already be loaded on subsequent.
-    //         if (! isset($this->loadedProviders[$provider])) {
-    //             $this->registerDeferredProvider($provider, $service);
-    //         }
-    //     }
-
-    //     /**
-    //      * Register a deferred provider and service.
-    //      *
-    //      * @param  string  $provider
-    //      * @param  string|null  $service
-    //      * @return void
-    //      */
-    //     public function registerDeferredProvider($provider, $service = null)
-    //     {
-    //         // Once the provider that provides the deferred service has been registered we
-    //         // will remove it from our local list of the deferred services with related
-    //         // providers so that this container does not try to resolve it out again.
-    //         if ($service) {
-    //             unset($this->deferredServices[$service]);
-    //         }
-
-    //         $this->register($instance = new $provider($this));
-
-    //         if (! $this->isBooted()) {
-    //             $this->booting(function () use ($instance) {
-    //                 $this->bootProvider($instance);
-    //             });
-    //         }
-    //     }
-
-    //     /**
     //      * Resolve the given type from the container.
     //      *
     //      * @template TClass of object
@@ -1039,19 +872,6 @@ export class Application extends Container {
     //         $this->loadDeferredProviderIfNeeded($abstract = $this->getAlias($abstract));
 
     //         return parent::resolve($abstract, $parameters, $raiseEvents);
-    //     }
-
-    //     /**
-    //      * Load the deferred provider if the given type is a deferred service and the instance has not been loaded.
-    //      *
-    //      * @param  string  $abstract
-    //      * @return void
-    //      */
-    //     protected function loadDeferredProviderIfNeeded($abstract)
-    //     {
-    //         if ($this->isDeferredService($abstract) && ! isset($this->instances[$abstract])) {
-    //             $this->loadDeferredProvider($abstract);
-    //         }
     //     }
 
     //     /**
@@ -1158,16 +978,6 @@ export class Application extends Container {
 
     //             $index++;
     //         }
-    //     }
-
-    //     /**
-    //      * {@inheritdoc}
-    //      *
-    //      * @return \Symfony\Component\HttpFoundation\Response
-    //      */
-    //     public function handle(SymfonyRequest $request, int $type = self::MAIN_REQUEST, bool $catch = true): SymfonyResponse
-    //     {
-    //         return $this[HttpKernelContract::class]->handle(Request::createFromBase($request));
     //     }
 
     //     /**
@@ -1454,142 +1264,6 @@ export class Application extends Container {
     //     }
 
     //     /**
-    //      * Get the application's deferred services.
-    //      *
-    //      * @return array
-    //      */
-    //     public function getDeferredServices()
-    //     {
-    //         return $this->deferredServices;
-    //     }
-
-    //     /**
-    //      * Set the application's deferred services.
-    //      *
-    //      * @param  array  $services
-    //      * @return void
-    //      */
-    //     public function setDeferredServices(array $services)
-    //     {
-    //         $this->deferredServices = $services;
-    //     }
-
-    //     /**
-    //      * Determine if the given service is a deferred service.
-    //      *
-    //      * @param  string  $service
-    //      * @return bool
-    //      */
-    //     public function isDeferredService($service)
-    //     {
-    //         return isset($this->deferredServices[$service]);
-    //     }
-
-    //     /**
-    //      * Add an array of services to the application's deferred services.
-    //      *
-    //      * @param  array  $services
-    //      * @return void
-    //      */
-    //     public function addDeferredServices(array $services)
-    //     {
-    //         $this->deferredServices = array_merge($this->deferredServices, $services);
-    //     }
-
-    //     /**
-    //      * Remove an array of services from the application's deferred services.
-    //      *
-    //      * @param  array  $services
-    //      * @return void
-    //      */
-    //     public function removeDeferredServices(array $services)
-    //     {
-    //         foreach ($services as $service) {
-    //             unset($this->deferredServices[$service]);
-    //         }
-    //     }
-
-    //     /**
-    //      * Configure the real-time facade namespace.
-    //      *
-    //      * @param  string  $namespace
-    //      * @return void
-    //      */
-    //     public function provideFacades($namespace)
-    //     {
-    //         AliasLoader::setFacadeNamespace($namespace);
-    //     }
-
-    //     /**
-    //      * Get the current application locale.
-    //      *
-    //      * @return string
-    //      */
-    //     public function getLocale()
-    //     {
-    //         return $this['config']->get('app.locale');
-    //     }
-
-    //     /**
-    //      * Get the current application locale.
-    //      *
-    //      * @return string
-    //      */
-    //     public function currentLocale()
-    //     {
-    //         return $this->getLocale();
-    //     }
-
-    //     /**
-    //      * Get the current application fallback locale.
-    //      *
-    //      * @return string
-    //      */
-    //     public function getFallbackLocale()
-    //     {
-    //         return $this['config']->get('app.fallback_locale');
-    //     }
-
-    //     /**
-    //      * Set the current application locale.
-    //      *
-    //      * @param  string  $locale
-    //      * @return void
-    //      */
-    //     public function setLocale($locale)
-    //     {
-    //         $this['config']->set('app.locale', $locale);
-
-    //         $this['translator']->setLocale($locale);
-
-    //         $this['events']->dispatch(new LocaleUpdated($locale));
-    //     }
-
-    //     /**
-    //      * Set the current application fallback locale.
-    //      *
-    //      * @param  string  $fallbackLocale
-    //      * @return void
-    //      */
-    //     public function setFallbackLocale($fallbackLocale)
-    //     {
-    //         $this['config']->set('app.fallback_locale', $fallbackLocale);
-
-    //         $this['translator']->setFallback($fallbackLocale);
-    //     }
-
-    //     /**
-    //      * Determine if the application locale is the given locale.
-    //      *
-    //      * @param  string  $locale
-    //      * @return bool
-    //      */
-    //     public function isLocale($locale)
-    //     {
-    //         return $this->getLocale() == $locale;
-    //     }
-
-    //     /**
     //      * Register the core class aliases in the container.
     //      *
     //      * @return void
@@ -1666,31 +1340,5 @@ export class Application extends Container {
     //         $this->globalBeforeResolvingCallbacks = [];
     //         $this->globalResolvingCallbacks = [];
     //         $this->globalAfterResolvingCallbacks = [];
-    //     }
-
-    //     /**
-    //      * Get the application namespace.
-    //      *
-    //      * @return string
-    //      *
-    //      * @throws \RuntimeException
-    //      */
-    //     public function getNamespace()
-    //     {
-    //         if (! is_null($this->namespace)) {
-    //             return $this->namespace;
-    //         }
-
-    //         $composer = json_decode(file_get_contents($this->basePath('composer.json')), true);
-
-    //         foreach ((array) data_get($composer, 'autoload.psr-4') as $namespace => $path) {
-    //             foreach ((array) $path as $pathChoice) {
-    //                 if (realpath($this->path()) === realpath($this->basePath($pathChoice))) {
-    //                     return $this->namespace = $namespace;
-    //                 }
-    //             }
-    //         }
-
-    //         throw new RuntimeException('Unable to detect application namespace.');
     //     }
 }
