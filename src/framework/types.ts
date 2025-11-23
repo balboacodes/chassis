@@ -1,5 +1,6 @@
 export type Abstract = string | symbol | Class;
 
 export type Class<TInstance = unknown> = {
-    new (...args: unknown[]): TInstance;
+    // deno-lint-ignore no-explicit-any
+    new (...args: any[]): TInstance;
 } & object;

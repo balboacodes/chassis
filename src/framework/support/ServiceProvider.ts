@@ -1,14 +1,23 @@
+import { Container } from '../container/Container.ts';
 import { Application } from '../foundation/Application.ts';
+import { Abstract } from '../types.ts';
 
-/**
- * @member {Map<Abstract, ((container: Container, parameters?: unknown[]) => unknown) | Abstract>} bindings All of the container bindings that should be registered.
- * @member {Map<Abstract, ((container: Container, parameters?: unknown[]) => unknown) | Abstract>} singletons All of the singletons that should be registered.
- */
 export abstract class ServiceProvider {
     /**
      * The application instance.
      */
     protected app: Application;
+
+    /**
+     * All of the container bindings that should be registered.
+     */
+    public bindings: Map<Abstract, ((container: Container, parameters?: unknown[]) => unknown) | Abstract> = new Map();
+
+    /**
+     * All of the singletons that should be registered.
+     */
+    public singletons: Map<Abstract, ((container: Container, parameters?: unknown[]) => unknown) | Abstract> =
+        new Map();
 
     //     /**
     //      * All of the registered booting callbacks.
@@ -70,6 +79,11 @@ export abstract class ServiceProvider {
      * Register any application services.
      */
     public register(): void {}
+
+    /**
+     * Boot any application services.
+     */
+    public boot(): void {}
 
     //     /**
     //      * Register a booting callback to be run before the "boot" method is called.

@@ -1,6 +1,6 @@
 import { rtrim } from '@balboacodes/php-utils';
 import { exists } from '@std/fs';
-import { dirname, SEPARATOR } from '@std/path';
+import { SEPARATOR } from '@std/path';
 import { Repository } from '../config/Repository.ts';
 import { Container } from '../container/Container.ts';
 import { InputInterface } from '../contracts/symfony/InputInterface.ts';
@@ -167,7 +167,7 @@ export class Application extends Container {
             return Deno.env.get('APP_BASE_PATH')!;
         }
 
-        return dirname(Deno.cwd());
+        return Deno.cwd();
     }
 
     /**
@@ -567,18 +567,12 @@ export class Application extends Container {
         // If there are bindings / singletons set as properties on the provider we
         // will spin through them and register them with the application, which
         // serves as a convenience layer while registering a lot of bindings.
-        if (Object.hasOwn(provider.constructor.prototype, 'bindings')) {
-            // @ts-ignore: we already checked for existence
-            for (const [key, value] of provider.bindings) {
-                this.bind(key, value);
-            }
+        for (const [key, value] of provider.bindings) {
+            this.bind(key, value);
         }
 
-        if (Object.hasOwn(provider.constructor.prototype, 'singletons')) {
-            // @ts-ignore: we already checked for existence
-            for (const [key, value] of provider.singletons) {
-                this.singleton(key, value);
-            }
+        for (const [key, value] of provider.singletons) {
+            this.singleton(key, value);
         }
 
         this.markAsRegistered(provider);
@@ -697,10 +691,7 @@ export class Application extends Container {
     protected bootProvider(provider: ServiceProvider): void {
         provider.callBootingCallbacks();
 
-        if (Object.hasOwn(provider.constructor.prototype, 'boot')) {
-            // @ts-ignore: we already checked for existence
-            provider.boot();
-        }
+        provider.boot();
 
         provider.callBootedCallbacks();
     }

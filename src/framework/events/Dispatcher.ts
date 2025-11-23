@@ -1,14 +1,13 @@
+import { Container } from '../container/Container.ts';
 import { Class } from '../types.ts';
 
 export class Dispatcher {
     //     use Macroable, ReflectsClosures;
 
-    //     /**
-    //      * The IoC container instance.
-    //      *
-    //      * @var \Illuminate\Contracts\Container\Container
-    //      */
-    //     protected container;
+    /**
+     * The IoC container instance.
+     */
+    protected container: Container;
 
     //     /**
     //      * The registered event listeners.
@@ -31,19 +30,10 @@ export class Dispatcher {
     //      */
     //     protected wildcardsCache = [];
 
-    //     /**
-    //      * The queue resolver instance.
-    //      *
-    //      * @var callable
-    //      */
-    //     protected queueResolver;
-
-    //     /**
-    //      * The database transaction manager resolver instance.
-    //      *
-    //      * @var callable
-    //      */
-    //     protected transactionManagerResolver;
+    /**
+     * The database transaction manager resolver instance.
+     */
+    protected transactionManagerResolver?: () => unknown;
 
     //     /**
     //      * The currently deferred events.
@@ -66,15 +56,12 @@ export class Dispatcher {
     //      */
     //     protected eventsToDefer = null;
 
-    //     /**
-    //      * Create a new event dispatcher instance.
-    //      *
-    //      * @param  \Illuminate\Contracts\Container\Container|null  container
-    //      */
-    //     public __construct(?ContainerContract container = null)
-    //     {
-    //         this.container = container ?: new Container;
-    //     }
+    /**
+     * Create a new event dispatcher instance.
+     */
+    public constructor(container?: Container) {
+        this.container = container ?? new Container();
+    }
 
     /**
      * Register an event listener with the dispatcher.
@@ -733,19 +720,6 @@ export class Dispatcher {
     //     }
 
     //     /**
-    //      * Set the queue resolver implementation.
-    //      *
-    //      * @param  callable  resolver
-    //      * @return this
-    //      */
-    //     public setQueueResolver(callable resolver)
-    //     {
-    //         this.queueResolver = resolver;
-
-    //         return this;
-    //     }
-
-    //     /**
     //      * Get the database transaction manager implementation from the resolver.
     //      *
     //      * @return \Illuminate\Database\DatabaseTransactionsManager|null
@@ -755,18 +729,14 @@ export class Dispatcher {
     //         return call_user_func(this.transactionManagerResolver);
     //     }
 
-    //     /**
-    //      * Set the database transaction manager resolver implementation.
-    //      *
-    //      * @param  callable  resolver
-    //      * @return this
-    //      */
-    //     public setTransactionManagerResolver(callable resolver)
-    //     {
-    //         this.transactionManagerResolver = resolver;
+    /**
+     * Set the database transaction manager resolver implementation.
+     */
+    public setTransactionManagerResolver(resolver: () => unknown): this {
+        this.transactionManagerResolver = resolver;
 
-    //         return this;
-    //     }
+        return this;
+    }
 
     //     /**
     //      * Execute the given callback while deferring events, then dispatch all deferred events.

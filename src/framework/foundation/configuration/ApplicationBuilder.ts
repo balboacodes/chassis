@@ -1,12 +1,12 @@
 import { existsSync } from '@std/fs';
-import { ConsoleKernelContract } from '../../contracts/console/Kernel.ts';
-import { HttpKernelContract } from '../../contracts/http/Kernel.ts';
 import { Collection } from '../../support/Collection.ts';
 import { isClass } from '../../support/helpers.ts';
 import { Class } from '../../types.ts';
 import { Application } from '../Application.ts';
+import { RegisterProviders } from '../bootstrap/RegisterProviders.ts';
 import { Kernel as ConsoleKernel } from '../console/Kernel.ts';
 import { Kernel as HttpKernel } from '../http/Kernel.ts';
+import { EventServiceProvider } from '../support/providers/EventServiceProvider.ts';
 
 export class ApplicationBuilder {
     /**
@@ -37,9 +37,9 @@ export class ApplicationBuilder {
      * Register the standard kernel classes for the application.
      */
     public withKernels(): this {
-        this.app.singleton(HttpKernelContract, HttpKernel);
+        this.app.singleton(HttpKernel, HttpKernel);
 
-        this.app.singleton(ConsoleKernelContract, ConsoleKernel);
+        this.app.singleton(ConsoleKernel, ConsoleKernel);
 
         return this;
     }
@@ -48,7 +48,7 @@ export class ApplicationBuilder {
      * Register additional service providers.
      */
     public withProviders(providers: unknown[] = [], withBootstrapProviders: boolean = true): this {
-        RegisterProviders.merge(providers, withBootstrapProviders ? this.app.getBootstrapProvidersPath() : null);
+        RegisterProviders.merge(providers, withBootstrapProviders ? this.app.getBootstrapProvidersPath() : undefined);
 
         return this;
     }
@@ -58,20 +58,20 @@ export class ApplicationBuilder {
      */
     public withEvents(discover: string[] | boolean = true): this {
         if (Array.isArray(discover)) {
-            AppEventServiceProvider.setEventDiscoveryPaths(discover);
+            EventServiceProvider.setEventDiscoveryPaths(discover);
         }
 
         if (discover === false) {
-            AppEventServiceProvider.disableEventDiscovery();
+            EventServiceProvider.disableEventDiscovery();
         }
 
-        if (!this.pendingProviders.has(AppEventServiceProvider)) {
+        if (!this.pendingProviders.has(EventServiceProvider)) {
             this.app.booting(() => {
-                this.app.register(AppEventServiceProvider);
+                this.app.register(EventServiceProvider);
             });
         }
 
-        this.pendingProviders.set(AppEventServiceProvider, true);
+        this.pendingProviders.set(EventServiceProvider, true);
 
         return this;
     }
@@ -274,7 +274,8 @@ export class ApplicationBuilder {
             commands = [this.app.path('console/commands')];
         }
 
-        this.app.afterResolving(ConsoleKernelContract, (kernel: ConsoleKernel) => {
+        // @ts-ignore:
+        this.app.afterResolving(ConsoleKernel, (kernel: ConsoleKernel) => {
             const partionedCommands = (new Collection(commands)).partition((command) => isClass(command));
             const classCommands = partionedCommands.get(0) as Collection<number, Class>;
             let paths = partionedCommands.get(1) as Collection<number, string>;
@@ -284,9 +285,9 @@ export class ApplicationBuilder {
             paths = partionedPaths.get(1);
 
             this.app.booted(() => {
-                kernel.addCommands(classCommands.all());
-                kernel.addCommandPaths(paths.all());
-                kernel.addCommandRoutePaths(routes.all());
+                kernel.addCommands(classCommands.all() as Class[]);
+                kernel.addCommandPaths(paths.all() as string[]);
+                kernel.addCommandRoutePaths(routes.all() as string[]);
             });
         });
 

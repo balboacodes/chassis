@@ -1,5 +1,7 @@
+import { array_merge, array_unique } from '@balboacodes/php-utils';
 import { InputInterface } from '../../contracts/symfony/InputInterface.ts';
 import { ConsoleOutput } from '../../symfony/ConsoleOutput.ts';
+import { Class } from '../../types.ts';
 
 export class Kernel {
     //     use InteractsWithTime;
@@ -26,32 +28,26 @@ export class Kernel {
     //     protected $symfonyDispatcher;
 
     //     /**
-    //      * The Artisan application instance.
+    //      * The application instance.
     //      *
     //      * @var \Illuminate\Console\Application|null
     //      */
     //     protected $artisan;
 
-    //     /**
-    //      * The Artisan commands provided by the application.
-    //      *
-    //      * @var array
-    //      */
-    //     protected $commands = [];
+    /**
+     * The commands provided by the application.
+     */
+    protected commands: Class[] = [];
 
-    //     /**
-    //      * The paths where Artisan commands should be automatically discovered.
-    //      *
-    //      * @var array
-    //      */
-    //     protected $commandPaths = [];
+    /**
+     * The paths where commands should be automatically discovered.
+     */
+    protected commandPaths: string[] = [];
 
-    //     /**
-    //      * The paths where Artisan "routes" should be automatically discovered.
-    //      *
-    //      * @var array
-    //      */
-    //     protected $commandRoutePaths = [];
+    /**
+     * The paths where "routes" should be automatically discovered.
+     */
+    protected commandRoutePaths: string[] = [];
 
     //     /**
     //      * Indicates if the Closure commands have been loaded.
@@ -520,44 +516,32 @@ export class Kernel {
     //         $this->artisan = $artisan;
     //     }
 
-    //     /**
-    //      * Set the Artisan commands provided by the application.
-    //      *
-    //      * @param  array  $commands
-    //      * @return $this
-    //      */
-    //     public function addCommands(array $commands)
-    //     {
-    //         $this->commands = array_values(array_unique(array_merge($this->commands, $commands)));
+    /**
+     * Set the Artisan commands provided by the application.
+     */
+    public addCommands(commands: Class[]): this {
+        this.commands = Object.values(array_unique(array_merge(this.commands, commands)));
 
-    //         return $this;
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Set the paths that should have their Artisan commands automatically discovered.
-    //      *
-    //      * @param  array  $paths
-    //      * @return $this
-    //      */
-    //     public function addCommandPaths(array $paths)
-    //     {
-    //         $this->commandPaths = array_values(array_unique(array_merge($this->commandPaths, $paths)));
+    /**
+     * Set the paths that should have their Artisan commands automatically discovered.
+     */
+    public addCommandPaths(paths: string[]): this {
+        this.commandPaths = Object.values(array_unique(array_merge(this.commandPaths, paths)));
 
-    //         return $this;
-    //     }
+        return this;
+    }
 
-    //     /**
-    //      * Set the paths that should have their Artisan "routes" automatically discovered.
-    //      *
-    //      * @param  array  $paths
-    //      * @return $this
-    //      */
-    //     public function addCommandRoutePaths(array $paths)
-    //     {
-    //         $this->commandRoutePaths = array_values(array_unique(array_merge($this->commandRoutePaths, $paths)));
+    /**
+     * Set the paths that should have their Artisan "routes" automatically discovered.
+     */
+    public addCommandRoutePaths(paths: string[]): this {
+        this.commandRoutePaths = Object.values(array_unique(array_merge(this.commandRoutePaths, paths)));
 
-    //         return $this;
-    //     }
+        return this;
+    }
 
     //     /**
     //      * Get the bootstrap classes for the application.

@@ -1,13 +1,11 @@
 import { ServiceProvider } from '../support/ServiceProvider.ts';
+import { LogManager } from './LogManager.ts';
 
 export class LogServiceProvider extends ServiceProvider {
-    //     /**
-    //      * Register the service provider.
-    //      *
-    //      * @return void
-    //      */
-    //     public function register()
-    //     {
-    //         $this->app->singleton('log', fn ($app) => new LogManager($app));
-    //     }
+    /**
+     * Register the service provider.
+     */
+    public override register(): void {
+        this.app.singleton('log', (app) => new LogManager(app));
+    }
 }

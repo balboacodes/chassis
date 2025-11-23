@@ -62,7 +62,8 @@ export class Container {
     /**
      * All of the after resolving callbacks by class type.
      */
-    protected afterResolvingCallbacks: Map<Abstract, ((object: object, container: Container) => unknown)[]> = new Map();
+    protected afterResolvingCallbacks: Map<Abstract, ((object: object, container?: Container) => unknown)[]> =
+        new Map();
 
     /**
      * The callback used to determine the container's environment.
@@ -205,7 +206,7 @@ export class Container {
     /**
      * Bind a new callback to an abstract's rebind event.
      */
-    public rebinding(abstract: Abstract, callback: () => unknown): unknown {
+    public rebinding(abstract: Abstract, callback: (container: Container, instance: object) => unknown): unknown {
         this.reboundCallbacks.get(abstract)?.push(callback);
 
         if (this.bound(abstract)) {
@@ -365,7 +366,7 @@ export class Container {
      */
     public afterResolving(
         abstract: (() => unknown) | Abstract,
-        callback?: (object: object, container: Container) => unknown,
+        callback?: (object: object, container?: Container) => unknown,
     ): void {
         if (typeof abstract === 'function' && !isClass(abstract) && !callback) {
             this.globalAfterResolvingCallbacks.push(abstract);

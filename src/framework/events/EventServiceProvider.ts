@@ -1,21 +1,17 @@
 import { ServiceProvider } from '../support/ServiceProvider.ts';
+import { Dispatcher } from './Dispatcher.ts';
 
 export class EventServiceProvider extends ServiceProvider {
-    //     /**
-    //      * Register the service provider.
-    //      *
-    //      * @return void
-    //      */
-    //     public function register()
-    //     {
-    //         $this->app->singleton('events', function ($app) {
-    //             return (new Dispatcher($app))->setQueueResolver(function () use ($app) {
-    //                 return $app->make(QueueFactoryContract::class);
-    //             })->setTransactionManagerResolver(function () use ($app) {
-    //                 return $app->bound('db.transactions')
-    //                     ? $app->make('db.transactions')
-    //                     : null;
-    //             });
-    //         });
-    //     }
+    /**
+     * Register the service provider.
+     */
+    public override register(): void {
+        this.app.singleton(
+            'events',
+            (app) =>
+                (new Dispatcher(app)).setTransactionManagerResolver(() =>
+                    app.bound('db.transactions') ? app.make('db.transactions') : undefined
+                ),
+        );
+    }
 }
