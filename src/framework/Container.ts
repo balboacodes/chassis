@@ -2,22 +2,28 @@ import { isClass } from './helpers.ts';
 import { Abstract } from './types.ts';
 
 export class Container {
+    /**
+     * The registered container bindings.
+     */
     public bindings: Map<Abstract, unknown> = new Map();
 
+    /**
+     * The registered singleton container bindings.
+     */
     public singletons: Map<Abstract, unknown> = new Map();
 
     /**
      * Register a container binding.
      */
-    public bind(abstract: Abstract, concrete: unknown): void {
-        this.bindings.set(abstract, concrete);
+    public bind(abstract: Abstract, concrete?: unknown): void {
+        this.bindings.set(abstract, concrete ?? abstract);
     }
 
     /**
      * Register a singleton container binding.
      */
-    public singleton(abstract: Abstract, concrete: unknown): void {
-        this.bindings.set(abstract, concrete);
+    public singleton(abstract: Abstract, concrete?: unknown): void {
+        this.bindings.set(abstract, concrete ?? abstract);
         this.singletons.set(abstract, undefined);
     }
 
@@ -38,9 +44,9 @@ export class Container {
         }
 
         if (isClass(concrete)) {
-            concrete = parameters ? new concrete(parameters) : new concrete();
+            concrete = parameters ? new concrete(...parameters) : new concrete();
         } else if (typeof concrete === 'function') {
-            concrete = parameters ? concrete(parameters) : concrete();
+            concrete = parameters ? concrete(...parameters) : concrete();
         }
 
         if (singleton) {
