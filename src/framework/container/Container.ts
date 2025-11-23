@@ -33,32 +33,36 @@ export class Container {
     /**
      * All of the global before resolving callbacks.
      */
-    protected globalBeforeResolvingCallbacks: (() => unknown)[] = [];
+    protected globalBeforeResolvingCallbacks:
+        ((abstract: Abstract, parameters: unknown[], container: Container) => unknown)[] = [];
 
     /**
      * All of the global resolving callbacks.
      */
-    protected globalResolvingCallbacks: (() => unknown)[] = [];
+    protected globalResolvingCallbacks: ((object: object, container: Container) => unknown)[] = [];
 
     /**
      * All of the global after resolving callbacks.
      */
-    protected globalAfterResolvingCallbacks: (() => unknown)[] = [];
+    protected globalAfterResolvingCallbacks: ((object: object, container: Container) => unknown)[] = [];
 
     /**
      * All of the before resolving callbacks by class type.
      */
-    protected beforeResolvingCallbacks: Map<Abstract, (() => unknown)[]> = new Map();
+    protected beforeResolvingCallbacks: Map<
+        Abstract,
+        ((abstract: Abstract, parameters: unknown[], container: Container) => unknown)[]
+    > = new Map();
 
     /**
      * All of the resolving callbacks by class type.
      */
-    protected resolvingCallbacks: Map<Abstract, (() => unknown)[]> = new Map();
+    protected resolvingCallbacks: Map<Abstract, ((object: object, container: Container) => unknown)[]> = new Map();
 
     /**
      * All of the after resolving callbacks by class type.
      */
-    protected afterResolvingCallbacks: Map<Abstract, (() => unknown)[]> = new Map();
+    protected afterResolvingCallbacks: Map<Abstract, ((object: object, container: Container) => unknown)[]> = new Map();
 
     /**
      * The callback used to determine the container's environment.
@@ -286,7 +290,7 @@ export class Container {
         }
 
         if (raiseEvents) {
-            this.fireResolvingCallbacks(abstract, object);
+            this.fireResolvingCallbacks(abstract, object as object);
         }
 
         // Before returning, we will also set the resolved flag to "true" and pop off
@@ -359,7 +363,10 @@ export class Container {
     /**
      * Register a new after resolving callback for all types.
      */
-    public afterResolving(abstract: (() => unknown) | Abstract, callback?: () => unknown): void {
+    public afterResolving(
+        abstract: (() => unknown) | Abstract,
+        callback?: (object: object, container: Container) => unknown,
+    ): void {
         if (typeof abstract === 'function' && !isClass(abstract) && !callback) {
             this.globalAfterResolvingCallbacks.push(abstract);
         } else {
@@ -396,7 +403,7 @@ export class Container {
     /**
      * Fire all of the resolving callbacks.
      */
-    protected fireResolvingCallbacks(abstract: Abstract, object: unknown): void {
+    protected fireResolvingCallbacks(abstract: Abstract, object: object): void {
         this.fireCallbackArray(object, this.globalResolvingCallbacks);
 
         this.fireCallbackArray(object, this.getCallbacksForType(abstract, object, this.resolvingCallbacks));
@@ -407,7 +414,7 @@ export class Container {
     /**
      * Fire all of the after resolving callbacks.
      */
-    protected fireAfterResolvingCallbacks(abstract: Abstract, object: unknown): void {
+    protected fireAfterResolvingCallbacks(abstract: Abstract, object: object): void {
         this.fireCallbackArray(object, this.globalAfterResolvingCallbacks);
 
         this.fireCallbackArray(object, this.getCallbacksForType(abstract, object, this.afterResolvingCallbacks));
@@ -419,8 +426,8 @@ export class Container {
     protected getCallbacksForType(
         abstract: Abstract,
         object: unknown,
-        callbacksPerType: Map<Abstract, (() => unknown)[]>,
-    ): (() => unknown)[] {
+        callbacksPerType: Map<Abstract, ((object: object, container: Container) => unknown)[]>,
+    ): ((object: object, container: Container) => unknown)[] {
         const results = [];
 
         for (const [type, callbacks] of callbacksPerType) {
@@ -436,8 +443,8 @@ export class Container {
      * Fire an array of callbacks with an object.
      */
     protected fireCallbackArray(
-        object: unknown,
-        callbacks: ((object: unknown, container: Container) => unknown)[],
+        object: object,
+        callbacks: ((object: object, container: Container) => unknown)[],
     ): void {
         for (const callback of callbacks) {
             callback(object, this);

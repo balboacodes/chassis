@@ -80,17 +80,12 @@ export class Env {
     //         return static::$repository;
     //     }
 
-    //     /**
-    //      * Get the value of an environment variable.
-    //      *
-    //      * @param  string  $key
-    //      * @param  mixed  $default
-    //      * @return mixed
-    //      */
-    //     public static function get($key, $default = null)
-    //     {
-    //         return self::getOption($key)->getOrCall(fn () => value($default));
-    //     }
+    /**
+     * Get the value of an environment variable.
+     */
+    public static get(key: string, defaultValue?: unknown): unknown {
+        //         return self::getOption($key)->getOrCall(fn () => value($default));
+    }
 
     //     /**
     //      * Get the value of a required environment variable.

@@ -1,3 +1,8 @@
+import { Filesystem } from '../filesystem/Filesystem.ts';
+import { ServiceProvider } from '../support/ServiceProvider.ts';
+import { Class } from '../types.ts';
+import { Application } from './Application.ts';
+
 export class ProviderRepository {
     //     /**
     //      * The application implementation.
@@ -20,53 +25,44 @@ export class ProviderRepository {
     //      */
     //     protected $manifestPath;
 
-    //     /**
-    //      * Create a new service repository instance.
-    //      *
-    //      * @param  \Illuminate\Contracts\Foundation\Application  $app
-    //      * @param  \Illuminate\Filesystem\Filesystem  $files
-    //      * @param  string  $manifestPath
-    //      */
-    //     public function __construct(ApplicationContract $app, Filesystem $files, $manifestPath)
-    //     {
-    //         $this->app = $app;
-    //         $this->files = $files;
-    //         $this->manifestPath = $manifestPath;
-    //     }
+    /**
+     * Create a new service repository instance.
+     */
+    public constructor(app: Application, files: Filesystem, manifestPath: string) {
+        //         $this->app = $app;
+        //         $this->files = $files;
+        //         $this->manifestPath = $manifestPath;
+    }
 
-    //     /**
-    //      * Register the application service providers.
-    //      *
-    //      * @param  array  $providers
-    //      * @return void
-    //      */
-    //     public function load(array $providers)
-    //     {
-    //         $manifest = $this->loadManifest();
+    /**
+     * Register the application service providers.
+     */
+    public load(providers: Class<ServiceProvider>[]): void {
+        //         $manifest = $this->loadManifest();
 
-    //         // First we will load the service manifest, which contains information on all
-    //         // service providers registered with the application and which services it
-    //         // provides. This is used to know which services are "deferred" loaders.
-    //         if ($this->shouldRecompile($manifest, $providers)) {
-    //             $manifest = $this->compileManifest($providers);
-    //         }
+        //         // First we will load the service manifest, which contains information on all
+        //         // service providers registered with the application and which services it
+        //         // provides. This is used to know which services are "deferred" loaders.
+        //         if ($this->shouldRecompile($manifest, $providers)) {
+        //             $manifest = $this->compileManifest($providers);
+        //         }
 
-    //         // Next, we will register events to load the providers for each of the events
-    //         // that it has requested. This allows the service provider to defer itself
-    //         // while still getting automatically loaded when a certain event occurs.
-    //         foreach ($manifest['when'] as $provider => $events) {
-    //             $this->registerLoadEvents($provider, $events);
-    //         }
+        //         // Next, we will register events to load the providers for each of the events
+        //         // that it has requested. This allows the service provider to defer itself
+        //         // while still getting automatically loaded when a certain event occurs.
+        //         foreach ($manifest['when'] as $provider => $events) {
+        //             $this->registerLoadEvents($provider, $events);
+        //         }
 
-    //         // We will go ahead and register all of the eagerly loaded providers with the
-    //         // application so their services can be registered with the application as
-    //         // a provided service. Then we will set the deferred service list on it.
-    //         foreach ($manifest['eager'] as $provider) {
-    //             $this->app->register($provider);
-    //         }
+        //         // We will go ahead and register all of the eagerly loaded providers with the
+        //         // application so their services can be registered with the application as
+        //         // a provided service. Then we will set the deferred service list on it.
+        //         foreach ($manifest['eager'] as $provider) {
+        //             $this->app->register($provider);
+        //         }
 
-    //         $this->app->addDeferredServices($manifest['deferred']);
-    //     }
+        //         $this->app->addDeferredServices($manifest['deferred']);
+    }
 
     //     /**
     //      * Load the service provider manifest JSON file.

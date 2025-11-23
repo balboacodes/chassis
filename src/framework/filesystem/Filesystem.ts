@@ -1,16 +1,12 @@
 export class Filesystem {
     //     use Conditionable, Macroable;
 
-    //     /**
-    //      * Determine if a file or directory exists.
-    //      *
-    //      * @param  string  $path
-    //      * @return bool
-    //      */
-    //     public function exists($path)
-    //     {
-    //         return file_exists($path);
-    //     }
+    /**
+     * Determine if a file or directory exists.
+     */
+    public exists(path: string): boolean {
+        //         return file_exists($path);
+    }
 
     //     /**
     //      * Determine if a file or directory is missing.

@@ -1,19 +1,14 @@
 export class EnvironmentDetector {
-    //     /**
-    //      * Detect the application's current environment.
-    //      *
-    //      * @param  \Closure  $callback
-    //      * @param  array|null  $consoleArgs
-    //      * @return string
-    //      */
-    //     public function detect(Closure $callback, $consoleArgs = null)
-    //     {
-    //         if ($consoleArgs) {
-    //             return $this->detectConsoleEnvironment($callback, $consoleArgs);
-    //         }
+    /**
+     * Detect the application's current environment.
+     */
+    public detect(callback: () => unknown, consoleArgs?: string[]): string {
+        //         if ($consoleArgs) {
+        //             return $this->detectConsoleEnvironment($callback, $consoleArgs);
+        //         }
 
-    //         return $this->detectWebEnvironment($callback);
-    //     }
+        //         return $this->detectWebEnvironment($callback);
+    }
 
     //     /**
     //      * Set the application environment for a web request.

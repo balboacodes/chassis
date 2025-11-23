@@ -1,17 +1,32 @@
 import { rtrim } from '@balboacodes/php-utils';
 import { exists } from '@std/fs';
 import { dirname, SEPARATOR } from '@std/path';
+import { Repository } from '../config/Repository.ts';
 import { Container } from '../container/Container.ts';
+import { InputInterface } from '../contracts/symfony/InputInterface.ts';
+import { Dispatcher } from '../events/Dispatcher.ts';
+import { EventServiceProvider } from '../events/EventServiceProvider.ts';
 import { Filesystem } from '../filesystem/Filesystem.ts';
 import { join_paths } from '../filesystem/functions.ts';
+import { LogServiceProvider } from '../log/LogServiceProvider.ts';
+import { RoutingServiceProvider } from '../routing/RoutingServiceProvider.ts';
 import { Arr } from '../support/Arr.ts';
 import { Collection } from '../support/Collection.ts';
 import { Env } from '../support/Env.ts';
-import { isClass } from '../support/helpers.ts';
+import { isClass, value } from '../support/helpers.ts';
 import { ServiceProvider } from '../support/ServiceProvider.ts';
 import { Str } from '../support/Str.ts';
+import { ConsoleOutput } from '../symfony/ConsoleOutput.ts';
+import { HttpException } from '../symfony/HttpException.ts';
+import { NotFoundHttpException } from '../symfony/NotFoundHttpException.ts';
 import { Abstract, Class } from '../types.ts';
+import { LoadEnvironmentVariables } from './bootstrap/LoadEnvironmentVariables.ts';
+import { ApplicationBuilder } from './configuration/ApplicationBuilder.ts';
+import { Kernel as ConsoleKernel } from './console/Kernel.ts';
 import { EnvironmentDetector } from './EnvironmentDetector.ts';
+import { FileBasedMaintenanceMode } from './FileBasedMaintenanceMode.ts';
+import { Kernel as HttpKernel } from './http/Kernel.ts';
+import { MaintenanceModeManager } from './MaintenanceModeManager.ts';
 import { ProviderRepository } from './ProviderRepository.ts';
 
 export class Application extends Container {
@@ -182,11 +197,12 @@ export class Application extends Container {
         this.beenBootstrapped = true;
 
         for (const bootstrapper of bootstrappers) {
-            this.make('events').dispatch(`bootstrapping: ${bootstrapper}`, [this]);
+            (this.make('events') as Dispatcher).dispatch(`bootstrapping: ${bootstrapper}`, [this]);
 
+            // @ts-expect-error: bootstrapper is unknown
             this.make(bootstrapper).bootstrap(this);
 
-            this.make('events').dispatch(`bootstrapped: ${bootstrapper}`, [this]);
+            (this.make('events') as Dispatcher).dispatch(`bootstrapped: ${bootstrapper}`, [this]);
         }
     }
 
@@ -201,14 +217,14 @@ export class Application extends Container {
      * Register a callback to run before a bootstrapper.
      */
     public beforeBootstrapping(bootstrapper: string, callback: () => unknown): void {
-        this.make('events').listen(`bootstrapping: ${bootstrapper}`, callback);
+        (this.make('events') as Dispatcher).listen(`bootstrapping: ${bootstrapper}`, callback);
     }
 
     /**
      * Register a callback to run after a bootstrapper.
      */
     public afterBootstrapping(bootstrapper: string, callback: () => unknown): void {
-        this.make('events').listen(`bootstrapped: ${bootstrapper}`, callback);
+        (this.make('events') as Dispatcher).listen(`bootstrapped: ${bootstrapper}`, callback);
     }
 
     /**
@@ -382,7 +398,7 @@ export class Application extends Container {
      * This method returns the first configured path in the array of view paths.
      */
     public viewPath(path: string = ''): string {
-        const viewPath = rtrim(this.make('config').get('view.paths')[0], SEPARATOR);
+        const viewPath = rtrim(((this.make('config') as Repository).get('view.paths') as string[])[0], SEPARATOR);
 
         return this.joinPaths(viewPath, path);
     }
@@ -440,7 +456,7 @@ export class Application extends Container {
         if (environments.length > 0) {
             const patterns = Array.isArray(environments[0]) ? environments[0] : environments;
 
-            return Str.is(patterns, this.make('env'));
+            return Str.is(patterns, this.make('env') as string);
         }
 
         return this.make('env') as string;
@@ -476,7 +492,8 @@ export class Application extends Container {
      */
     public runningInConsole(): boolean {
         if (this.isRunningInConsole === undefined) {
-            this.isRunningInConsole = Env.get('APP_RUNNING_IN_CONSOLE') ?? Deno.env.get('TERM') !== undefined;
+            this.isRunningInConsole = (Env.get('APP_RUNNING_IN_CONSOLE') as boolean | undefined) ??
+                Deno.env.get('TERM') !== undefined;
         }
 
         return this.isRunningInConsole as boolean;
@@ -504,7 +521,7 @@ export class Application extends Container {
      * Determine if the application is running with debug mode enabled.
      */
     public hasDebugModeEnabled(): boolean {
-        return !!this.make('config').get('app.debug');
+        return !!(this.make('config') as Repository).get('app.debug');
     }
 
     /**
@@ -518,10 +535,12 @@ export class Application extends Container {
      * Register all of the configured providers.
      */
     public registerConfiguredProviders(): void {
-        const providers = new Collection(this.make('config').get('app.providers'));
+        const providers = new Collection(
+            (this.make('config') as Repository).get('app.providers') as Class<ServiceProvider>[],
+        );
 
         (new ProviderRepository(this, new Filesystem(), this.getCachedServicesPath()))
-            .load(providers.collapse().toArray());
+            .load(providers.collapse().toArray() as Class<ServiceProvider>[]);
 
         this.fireAppCallbacks(this.registeredCallbacks);
     }
@@ -548,12 +567,18 @@ export class Application extends Container {
         // If there are bindings / singletons set as properties on the provider we
         // will spin through them and register them with the application, which
         // serves as a convenience layer while registering a lot of bindings.
-        for (const [key, value] of provider.bindings ?? new Map()) {
-            this.bind(key, value);
+        if (Object.hasOwn(provider.constructor.prototype, 'bindings')) {
+            // @ts-ignore: we already checked for existence
+            for (const [key, value] of provider.bindings) {
+                this.bind(key, value);
+            }
         }
 
-        for (const [key, value] of provider.singletons ?? new Map()) {
-            this.singleton(key, value);
+        if (Object.hasOwn(provider.constructor.prototype, 'singletons')) {
+            // @ts-ignore: we already checked for existence
+            for (const [key, value] of provider.singletons) {
+                this.singleton(key, value);
+            }
         }
 
         this.markAsRegistered(provider);
@@ -673,6 +698,7 @@ export class Application extends Container {
         provider.callBootingCallbacks();
 
         if (Object.hasOwn(provider.constructor.prototype, 'boot')) {
+            // @ts-ignore: we already checked for existence
             provider.boot();
         }
 
@@ -714,7 +740,7 @@ export class Application extends Container {
      * Handle the incoming HTTP request and send the response to the browser.
      */
     public handleRequest(request: Request): void {
-        const kernel = this.make(HttpKernelContract);
+        const kernel = this.make(HttpKernel) as HttpKernel;
 
         const response = kernel.handle(request).send();
 
@@ -725,7 +751,7 @@ export class Application extends Container {
      * Handle the incoming Artisan command.
      */
     public handleCommand(input: InputInterface): number {
-        const kernel = this.make(ConsoleKernelContract);
+        const kernel = this.make(ConsoleKernel) as ConsoleKernel;
 
         const status = kernel.handle(input, new ConsoleOutput());
 
@@ -797,7 +823,7 @@ export class Application extends Container {
             return !!this.make('routes.cached');
         }
 
-        return this.instance('routes.cached', this.make('files').exists(this.getCachedRoutesPath()));
+        return this.instance('routes.cached', (this.make('files') as Filesystem).exists(this.getCachedRoutesPath()));
     }
 
     /**
@@ -817,7 +843,7 @@ export class Application extends Container {
 
         return this.instance(
             'events.cached',
-            this.make('files').exists(this.getCachedEventsPath()),
+            (this.make('files') as Filesystem).exists(this.getCachedEventsPath()),
         );
     }
 
@@ -832,9 +858,9 @@ export class Application extends Container {
      * Normalize a relative or absolute path to a cache file.
      */
     protected normalizeCachePath(key: string, defaultValue: string): string {
-        const env = Env.get(key);
+        const env = Env.get(key) as string | undefined;
 
-        if (env === null) {
+        if (env === undefined) {
             return this.getBootstrapPath(defaultValue);
         }
 
@@ -853,8 +879,8 @@ export class Application extends Container {
     /**
      * Get an instance of the maintenance mode manager implementation.
      */
-    public maintenanceMode(): MaintenanceMode {
-        return this.make(MaintenanceModeContract);
+    public maintenanceMode(): FileBasedMaintenanceMode {
+        return (this.make(MaintenanceModeManager) as FileBasedMaintenanceMode);
     }
 
     /**
@@ -872,10 +898,10 @@ export class Application extends Container {
      */
     public abort(code: number, message: string = '', headers: unknown[] = []): never {
         if (code == 404) {
-            throw new NotFoundHttpException(message, null, 0, headers);
+            throw new NotFoundHttpException(message, undefined, 0, headers);
         }
 
-        throw new HttpException(code, message, null, headers);
+        throw new HttpException(code, message, undefined, headers);
     }
 
     /**
