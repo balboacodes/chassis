@@ -1,6 +1,0 @@
-{
-  "modules": {
-    "https://jsr.io/@std/cli/1.0.24/unstable_progress_bar_stream.ts": {},
-    "https://jsr.io/@std/cli/1.0.24/unstable_prompt_multiple_select.ts": {}
-  }
-}
