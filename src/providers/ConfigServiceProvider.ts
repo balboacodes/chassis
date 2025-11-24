@@ -1,4 +1,5 @@
 import { expandGlob } from '@std/fs';
+import { join } from '@std/path';
 import { Config } from '../Config.ts';
 import { ServiceProvider } from './ServiceProvider.ts';
 
@@ -7,7 +8,7 @@ export class ConfigServiceProvider extends ServiceProvider {
      * Register service provider.
      */
     public override async register(): Promise<void> {
-        const files = await Array.fromAsync(expandGlob('config/*.ts'));
+        const files = await Array.fromAsync(expandGlob(join(Deno.cwd(), 'config/*.ts')));
         const items: Record<string, unknown> = {};
 
         for (const file of files) {

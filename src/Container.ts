@@ -30,18 +30,14 @@ export class Container {
     /**
      * Resolve a container binding.
      */
-    public resolve(abstract: Abstract, parameters?: unknown[]): unknown {
+    public resolve<T = unknown>(abstract: Abstract, parameters?: unknown[]): T {
         const singleton = this.singletons.get(abstract);
 
         if (singleton !== undefined) {
-            return singleton;
+            return singleton as T;
         }
 
         let concrete = this.bindings.get(abstract);
-
-        if (concrete === undefined) {
-            throw new Error('Abstract has not been bound');
-        }
 
         if (isClass(concrete)) {
             concrete = parameters ? new concrete(...parameters) : new concrete();
@@ -53,7 +49,7 @@ export class Container {
             this.singletons.set(abstract, concrete);
         }
 
-        return concrete;
+        return concrete as T;
     }
 
     /**
