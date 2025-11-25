@@ -5,8 +5,14 @@ import { Class } from './types.ts';
 export type RouteHandler = [Class, string] | ((request: Request) => Response | Promise<Response>);
 
 export class Route {
+    /**
+     * Routes that have been registered.
+     */
     public static routes: RouteType[] = [];
 
+    /**
+     * Register a GET route.
+     */
     public static get(path: string, handler: RouteHandler): void {
         Route.routes.push({
             method: 'GET',
