@@ -105,7 +105,7 @@ export class Application extends Container {
                 port: this.resolve<Config>(Config).get<number>('app.port'),
             },
             route(
-                this.resolve<RouteRegistrar>(RouteRegistrar).getRoutes(),
+                this.resolve<RouteRegistrar>(RouteRegistrar).getRoutesValues(),
                 () => new Response('Not found', { status: 404 }),
             ),
         );

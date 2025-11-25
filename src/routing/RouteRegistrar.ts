@@ -9,20 +9,27 @@ export class RouteRegistrar {
     /**
      * Routes that have been registered.
      */
-    protected routes: RouteType[] = [];
+    protected routes: Map<string | number, RouteType> = new Map();
 
     /**
-     * Get the routes.
+     * Get the routes values.
      */
-    public getRoutes(): RouteType[] {
+    public getRoutes(): Map<string | number, RouteType> {
         return this.routes;
+    }
+
+    /**
+     * Get the routes values.
+     */
+    public getRoutesValues(): RouteType[] {
+        return this.routes.values().toArray();
     }
 
     /**
      * Register a route.
      */
-    public register(method: Method, path: string, handler: RouteHandler): void {
-        this.routes.push({
+    public register(method: Method, path: string, handler: RouteHandler, name?: string): void {
+        this.routes.set(name ?? this.routes.size + 1, {
             method,
             pattern: new URLPattern({ pathname: this.normalizePath(path) }),
             handler: async (req, params, _info) => {

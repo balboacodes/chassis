@@ -1,4 +1,5 @@
 import { Application } from './Application.ts';
+import { RouteRegistrar } from './routing/RouteRegistrar.ts';
 import { Class } from './types.ts';
 
 /**
@@ -13,4 +14,22 @@ export function app(): Application {
  */
 export function isClass(value: unknown): value is Class {
     return typeof value === 'function' && value.toString().startsWith('class ');
+}
+
+/**
+ * Get a named route.
+ */
+export function route(name: string, parameters?: Record<string, number | string>) {
+    const routes = app().resolve<RouteRegistrar>(RouteRegistrar).getRoutes();
+
+    let route = routes.get(name)?.pattern.pathname;
+
+    for (const [parameter, value] of Object.entries(parameters ?? {})) {
+        route = route?.replace(`:${parameter}`, String(value));
+    }
+
+    // Remove optional trailing slash and any parameters not replaced
+    route = route?.replace('{/}?', '').replaceAll(/\/:\w+\??|\?/g, '');
+
+    return route;
 }

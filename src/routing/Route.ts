@@ -25,35 +25,35 @@ export class Route {
      * Register a GET route.
      */
     public get(path: string, handler: RouteHandler): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('GET', path, handler);
+        app().resolve<RouteRegistrar>(RouteRegistrar).register('GET', path, handler, this.routeName);
     }
 
     /**
      * Register a POST route.
      */
     public post(path: string, handler: RouteHandler): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('POST', path, handler);
+        app().resolve<RouteRegistrar>(RouteRegistrar).register('POST', path, handler, this.routeName);
     }
 
     /**
      * Register a PUT route.
      */
     public put(path: string, handler: RouteHandler): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('PUT', path, handler);
+        app().resolve<RouteRegistrar>(RouteRegistrar).register('PUT', path, handler, this.routeName);
     }
 
     /**
      * Register a PATCH route.
      */
     public patch(path: string, handler: RouteHandler): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('PATCH', path, handler);
+        app().resolve<RouteRegistrar>(RouteRegistrar).register('PATCH', path, handler, this.routeName);
     }
 
     /**
      * Register a DELETE route.
      */
     public delete(path: string, handler: RouteHandler): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('DELETE', path, handler);
+        app().resolve<RouteRegistrar>(RouteRegistrar).register('DELETE', path, handler, this.routeName);
     }
 
     /**
@@ -63,6 +63,6 @@ export class Route {
         app().resolve<RouteRegistrar>(RouteRegistrar).register('GET', from, (request) => {
             const origin = new URL(request.url).origin;
             return Response.redirect(new URL(to, origin));
-        });
+        }, this.routeName);
     }
 }
