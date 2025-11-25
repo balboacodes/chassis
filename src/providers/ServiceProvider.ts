@@ -23,12 +23,12 @@ export abstract class ServiceProvider {
     ) {}
 
     /**
-     * Register service provider.
+     * Register the service provider.
      */
     public register(): void | Promise<void> {}
 
     /**
-     * Boot service provider.
+     * Boot the service provider.
      */
     public boot(): void | Promise<void> {}
 }

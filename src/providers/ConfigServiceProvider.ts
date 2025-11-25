@@ -5,17 +5,18 @@ import { ServiceProvider } from './ServiceProvider.ts';
 
 export class ConfigServiceProvider extends ServiceProvider {
     /**
-     * Register service provider.
+     * @inheritdoc
      */
     public override async register(): Promise<void> {
-        const files = await Array.fromAsync(expandGlob(join(Deno.cwd(), 'config/*.ts')));
+        const path = join(Deno.cwd(), '/config/*.ts');
+        const files = await Array.fromAsync(expandGlob(path));
         const items: Record<string, unknown> = {};
 
         for (const file of files) {
             const name = file.name.substring(0, file.name.length - 3);
-            const config: Record<string, unknown> = (await import(file.path)).default;
+            const config: Record<string, unknown> = await import(file.path);
 
-            items[name] = config;
+            items[name] = config.default;
         }
 
         this.app.singleton(Config, () => new Config(items));

@@ -1,3 +1,4 @@
+import { type Method } from '@std/http/unstable-method';
 import { ChassisRequest } from '../ChassisRequest.ts';
 import { app } from '../helpers.ts';
 import { Class } from '../types.ts';
@@ -7,62 +8,96 @@ export type RouteHandler = [Class, string] | ((request: ChassisRequest) => Respo
 
 export class Route {
     /**
-     * Route name.
+     * The route's method.
      */
-    protected routeName?: string;
+    public method?: Method;
+
+    /**
+     * The route's path.
+     */
+    public path?: string;
+
+    /**
+     * The route's handler.
+     */
+    public handler?: RouteHandler;
+
+    /**
+     * The route's name.
+     */
+    public routeName?: string;
+
+    /**
+     * Create a new route instance.
+     */
+    public constructor(
+        /**
+         * The application's route registrar.
+         */
+        protected registrar: RouteRegistrar = app().resolve(RouteRegistrar),
+    ) {}
 
     /**
      * Set a route name.
      */
     public name(name: string): Route {
-        const route = new Route();
-        route.routeName = name;
+        this.routeName = name;
 
-        return route;
+        return this;
     }
 
     /**
      * Register a GET route.
      */
     public get(path: string, handler: RouteHandler): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('GET', path, handler, this.routeName);
+        this.register('GET', path, handler);
     }
 
     /**
      * Register a POST route.
      */
     public post(path: string, handler: RouteHandler): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('POST', path, handler, this.routeName);
+        this.register('POST', path, handler);
     }
 
     /**
      * Register a PUT route.
      */
     public put(path: string, handler: RouteHandler): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('PUT', path, handler, this.routeName);
+        this.register('PUT', path, handler);
     }
 
     /**
      * Register a PATCH route.
      */
     public patch(path: string, handler: RouteHandler): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('PATCH', path, handler, this.routeName);
+        this.register('PATCH', path, handler);
     }
 
     /**
      * Register a DELETE route.
      */
     public delete(path: string, handler: RouteHandler): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('DELETE', path, handler, this.routeName);
+        this.register('DELETE', path, handler);
     }
 
     /**
      * Register a redirect route.
      */
     public redirect(from: string, to: string): void {
-        app().resolve<RouteRegistrar>(RouteRegistrar).register('GET', from, (request) => {
+        this.register('GET', from, (request) => {
             const origin = new URL(request.url).origin;
             return Response.redirect(new URL(to, origin));
-        }, this.routeName);
+        });
+    }
+
+    /**
+     * Register a route.
+     */
+    protected register(method: Method, path: string, handler: RouteHandler): void {
+        this.method = method;
+        this.path = path;
+        this.handler = handler;
+        this.registrar.register(this);
     }
 }

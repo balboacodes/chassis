@@ -1,7 +1,7 @@
-import { type Method } from '@std/http/unstable-method';
 import { type Route as RouteType } from '@std/http/unstable-route';
 import { ChassisRequest } from '../ChassisRequest.ts';
 import { Class } from '../types.ts';
+import { Route } from './Route.ts';
 
 export type RouteHandler = [Class, string] | ((request: ChassisRequest) => Response | Promise<Response>);
 
@@ -28,19 +28,21 @@ export class RouteRegistrar {
     /**
      * Register a route.
      */
-    public register(method: Method, path: string, handler: RouteHandler, name?: string): void {
-        this.routes.set(name ?? this.routes.size + 1, {
-            method,
-            pattern: new URLPattern({ pathname: this.normalizePath(path) }),
+    public register(route: Route): void {
+        this.routes.set(route.routeName ?? this.routes.size + 1, {
+            method: route.method,
+            pattern: new URLPattern({ pathname: this.normalizePath(route.path!) }),
             handler: async (req, params, _info) => {
                 const chassisRequest = new ChassisRequest(req, params);
 
-                if (Array.isArray(handler)) {
-                    // @ts-ignore: handler[1] is a method on the controller
-                    return await new handler[0]()[handler[1]](chassisRequest);
+                if (Array.isArray(route.handler!)) {
+                    const controller = new route.handler[0]();
+                    const method = route.handler[1];
+                    // @ts-ignore:
+                    return await controller[method](chassisRequest);
                 }
 
-                return await handler(chassisRequest);
+                return await route.handler!(chassisRequest);
             },
         });
     }
