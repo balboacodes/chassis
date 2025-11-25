@@ -1,4 +1,4 @@
-import { Container } from '../Container.ts';
+import { Application } from '../Application.ts';
 import { Abstract } from '../types.ts';
 
 export abstract class ServiceProvider {
@@ -19,7 +19,7 @@ export abstract class ServiceProvider {
         /**
          * The current application instance.
          */
-        protected app: Container,
+        protected app: Application,
     ) {}
 
     /**

@@ -1,10 +1,7 @@
 import { type Method } from '@std/http/unstable-method';
-import { ChassisRequest } from '../ChassisRequest.ts';
 import { app } from '../helpers.ts';
-import { Class } from '../types.ts';
+import { RouteHandler } from '../types.ts';
 import { RouteRegistrar } from './RouteRegistrar.ts';
-
-export type RouteHandler = [Class, string] | ((request: ChassisRequest) => Response | Promise<Response>);
 
 export class Route {
     /**
