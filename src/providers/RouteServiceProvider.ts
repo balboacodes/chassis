@@ -1,0 +1,20 @@
+import { join } from '@std/path/join';
+import { RouteRegistrar } from '../routing/RouteRegistrar.ts';
+import { Abstract } from '../types.ts';
+import { ServiceProvider } from './ServiceProvider.ts';
+
+export class RouteServiceProvider extends ServiceProvider {
+    /**
+     * @inheritdoc
+     */
+    public override singletons: Map<Abstract, unknown> = new Map([
+        [RouteRegistrar, RouteRegistrar],
+    ]);
+
+    /**
+     * @inheritdoc
+     */
+    public override async register(): Promise<void> {
+        (await import(join(Deno.cwd(), 'routes/web.ts'))).default();
+    }
+}

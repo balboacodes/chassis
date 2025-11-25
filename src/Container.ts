@@ -5,12 +5,12 @@ export class Container {
     /**
      * The registered container bindings.
      */
-    public bindings: Map<Abstract, unknown> = new Map();
+    protected bindings: Map<Abstract, unknown> = new Map();
 
     /**
      * The registered singleton container bindings.
      */
-    public singletons: Map<Abstract, unknown> = new Map();
+    protected singletons: Map<Abstract, unknown> = new Map();
 
     /**
      * Register a container binding.
@@ -30,22 +30,23 @@ export class Container {
     /**
      * Resolve a container binding.
      */
-    public resolve<T = unknown>(abstract: Abstract, parameters?: unknown[]): T {
+    public resolve<T>(abstract: Abstract, parameters: unknown[] = []): T {
+        const hasSingleton = this.singletons.has(abstract);
         const singleton = this.singletons.get(abstract);
 
-        if (singleton !== undefined) {
+        if (hasSingleton && singleton !== undefined) {
             return singleton as T;
         }
 
         let concrete = this.bindings.get(abstract);
 
         if (isClass(concrete)) {
-            concrete = parameters ? new concrete(...parameters) : new concrete();
+            concrete = new concrete(...parameters);
         } else if (typeof concrete === 'function') {
-            concrete = parameters ? concrete(...parameters) : concrete();
+            concrete = concrete(...parameters);
         }
 
-        if (singleton) {
+        if (hasSingleton) {
             this.singletons.set(abstract, concrete);
         }
 

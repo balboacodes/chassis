@@ -1,19 +1,25 @@
 import { load } from '@std/dotenv';
 import { expandGlob } from '@std/fs';
-import { type Route as RouteType, route } from '@std/http/unstable-route';
+import { route } from '@std/http/unstable-route';
 import { join } from '@std/path';
 import { Config } from './Config.ts';
 import { Container } from './Container.ts';
 import { ConfigServiceProvider } from './providers/ConfigServiceProvider.ts';
+import { RouteServiceProvider } from './providers/RouteServiceProvider.ts';
 import { ServiceProvider } from './providers/ServiceProvider.ts';
-import { Route } from './Route.ts';
+import { RouteRegistrar } from './routing/RouteRegistrar.ts';
 import { Class } from './types.ts';
 
 export class Application extends Container {
     /**
+     * The current application instance.
+     */
+    public static instance: Application;
+
+    /**
      * The base service providers to load.
      */
-    protected baseServiceProviders: Class<ServiceProvider>[] = [ConfigServiceProvider];
+    protected baseServiceProviders: Class<ServiceProvider>[] = [ConfigServiceProvider, RouteServiceProvider];
 
     /**
      * The service providers that have been loaded.
@@ -21,9 +27,12 @@ export class Application extends Container {
     protected loadedServiceProviders: ServiceProvider[] = [];
 
     /**
-     * The routes that have been loaded.
+     * Create a new application instance.
      */
-    protected loadedRoutes: RouteType[] = [];
+    public constructor() {
+        super();
+        Application.instance = this;
+    }
 
     /**
      * Start application.
@@ -33,7 +42,6 @@ export class Application extends Container {
         await this.loadProviders();
         await this.registerProviders();
         await this.bootProviders();
-        await this.loadRoutes();
         this.serve();
     }
 
@@ -55,9 +63,9 @@ export class Application extends Container {
         const providerFiles = await Array.fromAsync(expandGlob(join(Deno.cwd(), 'app/providers/*.ts')));
 
         for (const file of providerFiles) {
-            const provider: Class<ServiceProvider> = (await import(file.path)).default;
+            const provider: ServiceProvider = new (await import(file.path)).default(this);
 
-            this.loadedServiceProviders.push(new provider(this));
+            this.loadedServiceProviders.push(provider);
         }
     }
 
@@ -66,8 +74,6 @@ export class Application extends Container {
      */
     protected async registerProviders(): Promise<void> {
         for (const provider of this.loadedServiceProviders) {
-            await provider.register();
-
             for (const [abstract, concrete] of provider.bindings) {
                 this.bind(abstract, concrete);
             }
@@ -75,6 +81,8 @@ export class Application extends Container {
             for (const [abstract, concrete] of provider.singletons) {
                 this.singleton(abstract, concrete);
             }
+
+            await provider.register();
         }
     }
 
@@ -88,16 +96,6 @@ export class Application extends Container {
     }
 
     /**
-     * Load routes.
-     */
-    protected async loadRoutes(): Promise<void> {
-        const routes: () => void = (await import(join(Deno.cwd(), 'routes/web.ts'))).default;
-        routes();
-
-        this.loadedRoutes = Route.routes;
-    }
-
-    /**
      * Start the server.
      */
     protected serve(): void {
@@ -106,7 +104,10 @@ export class Application extends Container {
                 hostname: this.resolve<Config>(Config).get<string>('app.url'),
                 port: this.resolve<Config>(Config).get<number>('app.port'),
             },
-            route(this.loadedRoutes, () => new Response('Not found', { status: 404 })),
+            route(
+                this.resolve<RouteRegistrar>(RouteRegistrar).getRoutes(),
+                () => new Response('Not found', { status: 404 }),
+            ),
         );
     }
 }
