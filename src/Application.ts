@@ -2,8 +2,10 @@ import { load } from '@std/dotenv';
 import { route } from '@std/http/unstable-route';
 import { Config } from './Config.ts';
 import { Container } from './Container.ts';
+import { Middleware } from './middleware/Middleware.ts';
 import { AppServiceProvider } from './providers/AppServiceProvider.ts';
 import { RouteRegistrar } from './routing/RouteRegistrar.ts';
+import { Class } from './types.ts';
 
 export class Application extends Container {
     /**
@@ -12,11 +14,24 @@ export class Application extends Container {
     public static instance: Application;
 
     /**
+     * The global middleware.
+     */
+    public middleware: Class<Middleware>[] = [];
+
+    /**
      * Create a new application instance.
      */
     public constructor() {
         super();
         Application.instance = this;
+    }
+
+    /**
+     * Set the global middleware.
+     */
+    public withMiddleware(middleware: Class<Middleware>[]): this {
+        this.middleware.push(...middleware);
+        return this;
     }
 
     /**

@@ -1,3 +1,3 @@
 import { Application } from '../src/Application.ts';
 
-await new Application().start();
+await new Application().withMiddleware([]).start();

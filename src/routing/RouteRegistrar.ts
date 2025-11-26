@@ -1,5 +1,6 @@
 import { type Route as RouteType } from '@std/http/unstable-route';
 import { ChassisRequest } from '../ChassisRequest.ts';
+import { app } from '../helpers.ts';
 import { Route } from './Route.ts';
 
 export class RouteRegistrar {
@@ -31,15 +32,24 @@ export class RouteRegistrar {
             pattern: new URLPattern({ pathname: this.normalizePath(route.path!) }),
             handler: async (req, params, _info) => {
                 const chassisRequest = new ChassisRequest(req, params);
+                const handler = Array.isArray(route.handler)
+                    ? route.handler[0].prototype[route.handler[1]]
+                    : route.handler;
 
-                if (Array.isArray(route.handler!)) {
-                    const controller = new route.handler[0]();
-                    const method = route.handler[1];
-                    // @ts-ignore:
-                    return await controller[method](chassisRequest);
+                const middleware = [...app().middleware, ...route.routeMiddleware].reverse();
+                let stack = async (request: ChassisRequest): Promise<Response> => {
+                    return await handler(request);
+                };
+
+                for (const mw of middleware) {
+                    const oldStack = stack;
+
+                    stack = async (request: ChassisRequest) => {
+                        return await new mw().handle(request, oldStack);
+                    };
                 }
 
-                return await route.handler!(chassisRequest);
+                return await stack(chassisRequest);
             },
         });
     }

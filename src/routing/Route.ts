@@ -1,6 +1,7 @@
 import { type Method } from '@std/http/unstable-method';
 import { app } from '../helpers.ts';
-import { RouteHandler } from '../types.ts';
+import { Middleware } from '../middleware/Middleware.ts';
+import { Class, RouteHandler } from '../types.ts';
 import { RouteRegistrar } from './RouteRegistrar.ts';
 
 export class Route {
@@ -25,6 +26,11 @@ export class Route {
     public routeName?: string;
 
     /**
+     * The route's middleware.
+     */
+    public routeMiddleware: Class<Middleware>[] = [];
+
+    /**
      * Create a new route instance.
      */
     public constructor(
@@ -35,10 +41,19 @@ export class Route {
     ) {}
 
     /**
-     * Set a route name.
+     * Set the route's name.
      */
     public name(name: string): Route {
         this.routeName = name;
+
+        return this;
+    }
+
+    /**
+     * Set the route's middleware.
+     */
+    public middleware(middleware: Class<Middleware>[]): Route {
+        this.routeMiddleware.push(...middleware);
 
         return this;
     }
@@ -89,7 +104,7 @@ export class Route {
     }
 
     /**
-     * Register a route.
+     * Register the route.
      */
     protected register(method: Method, path: string, handler: RouteHandler): void {
         this.method = method;
