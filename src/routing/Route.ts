@@ -27,20 +27,35 @@ export class Route {
     public routeStack?: RouteStackHandler;
 
     /**
-     * The route's handler.
-     */
-    protected handler?: RouteHandler;
-
-    /**
      * The route's middleware.
      */
     protected routeMiddleware: Class<Middleware>[] = [];
 
     /**
+     * The route's handler.
+     */
+    protected handler?: RouteHandler;
+
+    /**
+     * The route group's prefix.
+     */
+    protected static routeGroupPrefix?: string;
+
+    /**
+     * The route group's name.
+     */
+    protected static routeGroupName?: string;
+
+    /**
+     * The route group's middleware.
+     */
+    protected static routeGroupMiddleware: Class<Middleware>[] = [];
+
+    /**
      * Set the route's name.
      */
     public name(name: string): Route {
-        this.routeName = name;
+        this.routeName = (Route.routeGroupName ?? '') + name;
 
         return this;
     }
@@ -52,6 +67,32 @@ export class Route {
         this.routeMiddleware.push(...middleware);
 
         return this;
+    }
+
+    /**
+     * Set the route group's prefix.
+     */
+    public prefix(prefix: string): Route {
+        Route.routeGroupPrefix = prefix;
+
+        return this;
+    }
+
+    /**
+     * Create a route group.
+     */
+    public group(fn: () => void): void {
+        Route.routeGroupName = this.routeName;
+        this.routeName = undefined;
+
+        Route.routeGroupMiddleware = this.routeMiddleware;
+        this.routeMiddleware = [];
+
+        fn();
+
+        Route.routeGroupPrefix = undefined;
+        Route.routeGroupName = undefined;
+        Route.routeGroupMiddleware = [];
     }
 
     /**
@@ -106,7 +147,7 @@ export class Route {
         const handler: Extract<RouteHandler, (request: ChassisRequest) => Response | Promise<Response>> =
             Array.isArray(this.handler) ? this.handler[0].prototype[this.handler[1]] : this.handler;
 
-        const middleware = [...app().getMiddleware(), ...this.routeMiddleware].reverse();
+        const middleware = [...app().getMiddleware(), ...Route.routeGroupMiddleware, ...this.routeMiddleware].reverse();
         let stack = async (request: ChassisRequest): Promise<Response> => await handler(request);
 
         for (const mw of middleware) {
@@ -122,7 +163,7 @@ export class Route {
      */
     protected register(method: Method, path: string, handler: RouteHandler): void {
         this.method = method;
-        this.path = path;
+        this.path = (Route.routeGroupPrefix ?? '') + path;
         this.handler = handler;
         this.routeStack = this.buildRouteStack();
 
