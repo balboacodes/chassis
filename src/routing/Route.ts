@@ -37,16 +37,6 @@ export class Route {
     protected routeMiddleware: Class<Middleware>[] = [];
 
     /**
-     * Create a new route instance.
-     */
-    public constructor(
-        /**
-         * The application's route registrar.
-         */
-        protected registrar: RouteRegistrar = app().resolve(RouteRegistrar),
-    ) {}
-
-    /**
      * Set the route's name.
      */
     public name(name: string): Route {
@@ -135,6 +125,7 @@ export class Route {
         this.path = path;
         this.handler = handler;
         this.routeStack = this.buildRouteStack();
-        this.registrar.register(this);
+
+        app().resolve<RouteRegistrar>(RouteRegistrar).register(this);
     }
 }
