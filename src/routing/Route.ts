@@ -1,7 +1,8 @@
 import { type Method } from '@std/http/unstable-method';
+import { ChassisRequest } from '../ChassisRequest.ts';
 import { app } from '../helpers.ts';
 import { Middleware } from '../middleware/Middleware.ts';
-import { Class, RouteHandler } from '../types.ts';
+import { Class, RouteHandler, RouteStackHandler } from '../types.ts';
 import { RouteRegistrar } from './RouteRegistrar.ts';
 
 export class Route {
@@ -16,19 +17,24 @@ export class Route {
     public path?: string;
 
     /**
-     * The route's handler.
-     */
-    public handler?: RouteHandler;
-
-    /**
      * The route's name.
      */
     public routeName?: string;
 
     /**
+     * The route's stack of middleware, followed by its handler.
+     */
+    public routeStack?: RouteStackHandler;
+
+    /**
+     * The route's handler.
+     */
+    protected handler?: RouteHandler;
+
+    /**
      * The route's middleware.
      */
-    public routeMiddleware: Class<Middleware>[] = [];
+    protected routeMiddleware: Class<Middleware>[] = [];
 
     /**
      * Create a new route instance.
@@ -104,12 +110,31 @@ export class Route {
     }
 
     /**
-     * Register the route.
+     * Build the route's stack of middleware, followed by its handler.
+     */
+    protected buildRouteStack(): RouteStackHandler {
+        const handler: Extract<RouteHandler, (request: ChassisRequest) => Response | Promise<Response>> =
+            Array.isArray(this.handler) ? this.handler[0].prototype[this.handler[1]] : this.handler;
+
+        const middleware = [...app().getMiddleware(), ...this.routeMiddleware].reverse();
+        let stack = async (request: ChassisRequest): Promise<Response> => await handler(request);
+
+        for (const mw of middleware) {
+            const oldStack = stack;
+            stack = async (request: ChassisRequest) => await new mw().handle(request, oldStack);
+        }
+
+        return stack;
+    }
+
+    /**
+     * Register the route with the registrar.
      */
     protected register(method: Method, path: string, handler: RouteHandler): void {
         this.method = method;
         this.path = path;
         this.handler = handler;
+        this.routeStack = this.buildRouteStack();
         this.registrar.register(this);
     }
 }

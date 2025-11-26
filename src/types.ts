@@ -7,6 +7,6 @@ export type Class<T = unknown> = {
     new (...args: any[]): T;
 };
 
-export type MiddlewareNextHandler = (request: ChassisRequest) => Promise<Response>;
+export type RouteStackHandler = (request: ChassisRequest) => Promise<Response>;
 
 export type RouteHandler = [Class, string] | ((request: ChassisRequest) => Response | Promise<Response>);

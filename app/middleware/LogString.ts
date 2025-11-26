@@ -1,6 +1,6 @@
 import { ChassisRequest } from '../../src/ChassisRequest.ts';
 import { Middleware } from '../../src/middleware/Middleware.ts';
-import { MiddlewareNextHandler } from '../../src/types.ts';
+import { RouteStackHandler } from '../../src/types.ts';
 
 export default class LogString extends Middleware {
     /**
@@ -8,7 +8,7 @@ export default class LogString extends Middleware {
      */
     public override async handle(
         request: ChassisRequest,
-        next: MiddlewareNextHandler,
+        next: RouteStackHandler,
     ): Promise<Response> {
         console.log('test');
 

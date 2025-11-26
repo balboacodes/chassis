@@ -1,5 +1,5 @@
 import { ChassisRequest } from '../ChassisRequest.ts';
-import { MiddlewareNextHandler } from '../types.ts';
+import { RouteStackHandler } from '../types.ts';
 
 export abstract class Middleware {
     /**
@@ -7,6 +7,6 @@ export abstract class Middleware {
      */
     public abstract handle(
         request: ChassisRequest,
-        next: MiddlewareNextHandler,
+        next: RouteStackHandler,
     ): Promise<Response>;
 }
