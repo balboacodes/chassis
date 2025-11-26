@@ -141,6 +141,35 @@ export class Route {
     }
 
     /**
+     * Register a resource route.
+     */
+    public resource(name: string, controller: Class): void {
+        this.prefix(name).name(`${name}.`).group(() => {
+            const routes = [
+                // GET	/name	index	name.index
+                { method: 'get', path: '', action: 'index', name: 'index' },
+                // GET	/name/create	create	name.create
+                { method: 'get', path: '/create', action: 'create', name: 'create' },
+                // POST	/name	store	name.store
+                { method: 'post', path: '', action: 'store', name: 'store' },
+                // GET	/name/:resource	show	name.show
+                { method: 'get', path: '/:resource', action: 'show', name: 'show' },
+                // GET	/name/:resource/edit	edit	name.edit
+                { method: 'get', path: '/:resource/edit', action: 'edit', name: 'edit' },
+                // PATCH	/name/:resource	update	name.update
+                { method: 'patch', path: '/:resource', action: 'update', name: 'update' },
+                // DELETE	/name/:resource	destroy	name.destroy
+                { method: 'delete', path: '/:resource', action: 'destroy', name: 'destroy' },
+            ];
+
+            for (const route of routes) {
+                // @ts-ignore:
+                new Route().name(route.name)[route.method](route.path, [controller, route.action]);
+            }
+        });
+    }
+
+    /**
      * Build the route's stack of middleware, followed by its handler.
      */
     protected buildRouteStack(): RouteStackHandler {

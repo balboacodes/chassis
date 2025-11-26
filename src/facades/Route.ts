@@ -44,6 +44,10 @@ interface Route {
      * Register a redirect route.
      */
     redirect(from: string, to: string): void;
+    /**
+     * Register a resource route.
+     */
+    resource(name: string, controller: Class): void;
 }
 
 export const Route = Facade.createProxy<Route>(RealRoute);
