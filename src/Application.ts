@@ -14,9 +14,9 @@ export class Application extends Container {
     public static instance: Application;
 
     /**
-     * The global middleware.
+     * The application's global middleware.
      */
-    public middleware: Class<Middleware>[] = [];
+    protected middleware: Class<Middleware>[] = [];
 
     /**
      * Create a new application instance.
@@ -27,7 +27,14 @@ export class Application extends Container {
     }
 
     /**
-     * Set the global middleware.
+     * Get the application's global middleware.
+     */
+    public getMiddleware(): Class<Middleware>[] {
+        return this.middleware;
+    }
+
+    /**
+     * Set the application's global middleware.
      */
     public withMiddleware(middleware: Class<Middleware>[]): this {
         this.middleware.push(...middleware);
@@ -35,7 +42,7 @@ export class Application extends Container {
     }
 
     /**
-     * Start application.
+     * Start the application.
      */
     public async start(): Promise<void> {
         await this.loadEnv();
@@ -44,7 +51,7 @@ export class Application extends Container {
     }
 
     /**
-     * Load .env file.
+     * Load the .env file.
      */
     protected async loadEnv(): Promise<void> {
         await load({ export: true });
