@@ -6,10 +6,7 @@ export default class LogTime extends Middleware {
     /**
      * @inheritdoc
      */
-    public override async handle(
-        request: ChassisRequest,
-        next: RouteStackHandler,
-    ): Promise<Response> {
+    public override async handle(request: ChassisRequest, next: RouteStackHandler): Promise<Response> {
         console.log(Date.now());
 
         return await next(request);

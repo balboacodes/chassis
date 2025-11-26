@@ -10,5 +10,5 @@ export default (): void => {
         Route.name('show').get('/:id', [UsersController, 'show']);
     });
     Route.redirect('/redirect', route('users.show', { id: 456 }) ?? '');
-    Route.get('/proxy', () => new Response(Config.get('app.name')));
+    Route.get('/facade', () => new Response(Config.get('app.name')));
 };

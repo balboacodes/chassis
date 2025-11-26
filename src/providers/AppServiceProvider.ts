@@ -1,5 +1,6 @@
 import { expandGlob } from '@std/fs/expand-glob';
 import { join } from '@std/path/join';
+import { App } from '../facades/App.ts';
 import { Class } from '../types.ts';
 import { ConfigServiceProvider } from './ConfigServiceProvider.ts';
 import { RouteServiceProvider } from './RouteServiceProvider.ts';
@@ -24,11 +25,11 @@ export class AppServiceProvider extends ServiceProvider {
 
         for (const provider of this.loadedServiceProviders) {
             for (const [abstract, concrete] of provider.bindings) {
-                this.app.bind(abstract, concrete);
+                App.bind(abstract, concrete);
             }
 
             for (const [abstract, concrete] of provider.singletons) {
-                this.app.singleton(abstract, concrete);
+                App.singleton(abstract, concrete);
             }
 
             await provider.register();

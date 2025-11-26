@@ -5,8 +5,5 @@ export abstract class Middleware {
     /**
      * Handle incomming requests.
      */
-    public abstract handle(
-        request: ChassisRequest,
-        next: RouteStackHandler,
-    ): Promise<Response>;
+    public abstract handle(request: ChassisRequest, next: RouteStackHandler): Promise<Response>;
 }

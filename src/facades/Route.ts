@@ -1,27 +1,49 @@
 import { Middleware } from '../middleware/Middleware.ts';
 import { Route as RealRoute } from '../routing/Route.ts';
 import { Class, RouteHandler } from '../types.ts';
+import { Facade } from './Facade.ts';
 
-export const Route = new Proxy(
-    class Route {
-        // @ts-expect-error:
-        public prefix(_prefix: string): RealRoute {}
-        // @ts-expect-error:
-        public static name(_name: string): RealRoute {}
-        // @ts-expect-error:
-        public static middleware(_middleware: Class<Middleware>[]): RealRoute {}
-        public static group(_fn: () => void): void {}
-        public static get(_path: string, _handler: RouteHandler): void {}
-        public static post(_path: string, _handler: RouteHandler): void {}
-        public static put(_path: string, _handler: RouteHandler): void {}
-        public static patch(_path: string, _handler: RouteHandler): void {}
-        public static delete(_path: string, _handler: RouteHandler): void {}
-        public static redirect(_from: string, _to: string): void {}
-    },
-    {
-        get(_target, method) {
-            // @ts-ignore:
-            return (...args: unknown[]) => new RealRoute()[method](...args);
-        },
-    },
-);
+interface Route {
+    /**
+     * Set the route group's prefix.
+     */
+    prefix(prefix: string): RealRoute;
+    /**
+     * Set the route's name.
+     */
+    name(name: string): RealRoute;
+    /**
+     * Set the route's middleware.
+     */
+    middleware(middleware: Class<Middleware>[]): RealRoute;
+    /**
+     * Create a route group.
+     */
+    group(fn: () => void): void;
+    /**
+     * Register a GET route.
+     */
+    get(path: string, handler: RouteHandler): void;
+    /**
+     * Register a POST route.
+     */
+    post(path: string, handler: RouteHandler): void;
+    /**
+     * Register a PUT route.
+     */
+    put(path: string, handler: RouteHandler): void;
+    /**
+     * Register a PATCH route.
+     */
+    patch(path: string, handler: RouteHandler): void;
+    /**
+     * Register a DELETE route.
+     */
+    delete(path: string, handler: RouteHandler): void;
+    /**
+     * Register a redirect route.
+     */
+    redirect(from: string, to: string): void;
+}
+
+export const Route = Facade.createProxy<Route>(RealRoute);

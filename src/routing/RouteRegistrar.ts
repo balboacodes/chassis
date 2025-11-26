@@ -4,19 +4,19 @@ import { Route } from './Route.ts';
 
 export class RouteRegistrar {
     /**
-     * Routes that have been registered.
+     * The routes that have been registered.
      */
     protected routes: Map<string | number, RouteType> = new Map();
 
     /**
-     * Get the routes values.
+     * Get the routes that have been registered.
      */
     public getRoutes(): Map<string | number, RouteType> {
         return this.routes;
     }
 
     /**
-     * Get the routes values.
+     * Get the values for the routes that have been registered.
      */
     public getRoutesValues(): RouteType[] {
         return this.routes.values().toArray();

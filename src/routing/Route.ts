@@ -1,6 +1,6 @@
 import { type Method } from '@std/http/unstable-method';
 import { ChassisRequest } from '../ChassisRequest.ts';
-import { app } from '../helpers.ts';
+import { App } from '../facades/App.ts';
 import { Middleware } from '../middleware/Middleware.ts';
 import { Class, RouteHandler, RouteStackHandler } from '../types.ts';
 import { RouteRegistrar } from './RouteRegistrar.ts';
@@ -147,12 +147,12 @@ export class Route {
         const handler: Extract<RouteHandler, (request: ChassisRequest) => Response | Promise<Response>> =
             Array.isArray(this.handler) ? this.handler[0].prototype[this.handler[1]] : this.handler;
 
-        const middleware = [...app().getMiddleware(), ...Route.routeGroupMiddleware, ...this.routeMiddleware].reverse();
+        const middleware = [...App.getMiddleware(), ...Route.routeGroupMiddleware, ...this.routeMiddleware].reverse();
         let stack = async (request: ChassisRequest): Promise<Response> => await handler(request);
 
         for (const mw of middleware) {
-            const oldStack = stack;
-            stack = async (request: ChassisRequest) => await new mw().handle(request, oldStack);
+            const currentStack = stack;
+            stack = async (request: ChassisRequest) => await new mw().handle(request, currentStack);
         }
 
         return stack;
@@ -167,6 +167,6 @@ export class Route {
         this.handler = handler;
         this.routeStack = this.buildRouteStack();
 
-        app().resolve<RouteRegistrar>(RouteRegistrar).register(this);
+        App.resolve<RouteRegistrar>(RouteRegistrar).register(this);
     }
 }

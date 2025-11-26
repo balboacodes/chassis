@@ -11,7 +11,7 @@ export class Application extends Container {
     /**
      * The current application instance.
      */
-    public static instance: Application;
+    protected static instance: Application;
 
     /**
      * The application's global middleware.
@@ -24,6 +24,13 @@ export class Application extends Container {
     public constructor() {
         super();
         Application.instance = this;
+    }
+
+    /**
+     * Get the application instance.
+     */
+    public static getInstance(): Application {
+        return Application.instance;
     }
 
     /**
@@ -47,6 +54,7 @@ export class Application extends Container {
     public async start(): Promise<void> {
         await this.loadEnv();
         await this.loadProviders();
+
         this.serve();
     }
 
@@ -61,7 +69,7 @@ export class Application extends Container {
      * Register and boot the service providers.
      */
     protected async loadProviders(): Promise<void> {
-        const provider = new AppServiceProvider(this);
+        const provider = new AppServiceProvider();
         await provider.register();
         await provider.boot();
     }

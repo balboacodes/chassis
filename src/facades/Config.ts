@@ -1,17 +1,15 @@
 import { Config as RealConfig } from '../Config.ts';
-import { app } from '../helpers.ts';
+import { Facade } from './Facade.ts';
 
-export const Config = new Proxy(
-    class Config {
-        // @ts-expect-error:
-        public static get<T = unknown>(_key?: string): T {}
-        // @ts-expect-error:
-        public static set(_key?: string): unknown {}
-    },
-    {
-        get(_target, method) {
-            // @ts-ignore:
-            return (...args: unknown[]) => app().resolve<RealConfig>(RealConfig)[method](...args);
-        },
-    },
-);
+interface Config {
+    /**
+     * Get an item from the config.
+     */
+    get<T = unknown>(key?: string): T;
+    /**
+     * Set a config item.
+     */
+    set(key?: string): unknown;
+}
+
+export const Config = Facade.createProxy<Config>(RealConfig);

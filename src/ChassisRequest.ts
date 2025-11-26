@@ -23,7 +23,6 @@ export class ChassisRequest extends Request {
      */
     public async input(key: string, defaultValue?: unknown): Promise<unknown> {
         const all = await this.all();
-
         return all[key] ?? defaultValue;
     }
 
@@ -38,7 +37,6 @@ export class ChassisRequest extends Request {
         defaultValue?: T,
     ): Record<string, string> | string | undefined | T {
         const entries = Object.fromEntries(new URL(this.url).searchParams.entries());
-
         return key === undefined ? entries : (entries[key] ?? defaultValue);
     }
 

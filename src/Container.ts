@@ -30,7 +30,7 @@ export class Container {
     /**
      * Resolve a container binding.
      */
-    public resolve<T>(abstract: Abstract, parameters: unknown[] = []): T {
+    public resolve<T = unknown>(abstract: Abstract, parameters: unknown[] = []): T {
         const hasSingleton = this.singletons.has(abstract);
         const singleton = this.singletons.get(abstract);
 

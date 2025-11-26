@@ -1,6 +1,7 @@
 import { expandGlob } from '@std/fs';
 import { join } from '@std/path';
 import { Config } from '../Config.ts';
+import { App } from '../facades/App.ts';
 import { ServiceProvider } from './ServiceProvider.ts';
 
 export class ConfigServiceProvider extends ServiceProvider {
@@ -19,6 +20,6 @@ export class ConfigServiceProvider extends ServiceProvider {
             items[name] = config.default;
         }
 
-        this.app.singleton(Config, () => new Config(items));
+        App.singleton(Config, () => new Config(items));
     }
 }

@@ -1,13 +1,6 @@
-import { Application } from './Application.ts';
+import { App } from './facades/App.ts';
 import { RouteRegistrar } from './routing/RouteRegistrar.ts';
 import { Class } from './types.ts';
-
-/**
- * Get the current application instance.
- */
-export function app(): Application {
-    return Application.instance;
-}
 
 /**
  * Determine if a value is a class.
@@ -20,7 +13,7 @@ export function isClass(value: unknown): value is Class {
  * Get a named route.
  */
 export function route(name: string, parameters?: Record<string, number | string>) {
-    const routes = app().resolve<RouteRegistrar>(RouteRegistrar).getRoutes();
+    const routes = App.resolve<RouteRegistrar>(RouteRegistrar).getRoutes();
 
     let route = routes.get(name)?.pattern.pathname;
 

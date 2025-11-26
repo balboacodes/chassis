@@ -1,4 +1,3 @@
-import { Application } from '../Application.ts';
 import { Abstract } from '../types.ts';
 
 export abstract class ServiceProvider {
@@ -11,16 +10,6 @@ export abstract class ServiceProvider {
      * The singletons to register with the container.
      */
     public singletons: Map<Abstract, unknown> = new Map();
-
-    /**
-     * Create a service provider instance.
-     */
-    public constructor(
-        /**
-         * The current application instance.
-         */
-        protected app: Application,
-    ) {}
 
     /**
      * Register the service provider.
