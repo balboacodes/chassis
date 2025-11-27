@@ -7,41 +7,42 @@ import { AppServiceProvider } from './providers/AppServiceProvider.ts';
 import { RouteRegistrar } from './routing/RouteRegistrar.ts';
 import { Class } from './types.ts';
 
-export class Application extends Container {
+export class App extends Container {
     /**
-     * The current application instance.
+     * The current app instance.
      */
-    protected static instance: Application;
+    protected static instance: App;
 
     /**
-     * The application's global middleware.
+     * The app's global middleware.
      */
     protected middleware: Class<Middleware>[] = [];
 
     /**
-     * Create a new application instance.
+     * Create a new app instance.
      */
     public constructor() {
         super();
-        Application.instance = this;
+        App.instance = this;
+        this.singleton('chassis.app', this);
     }
 
     /**
-     * Get the application instance.
+     * Get the app instance.
      */
-    public static getInstance(): Application {
-        return Application.instance;
+    public static getInstance(): App {
+        return App.instance;
     }
 
     /**
-     * Get the application's global middleware.
+     * Get the app's global middleware.
      */
     public getMiddleware(): Class<Middleware>[] {
         return this.middleware;
     }
 
     /**
-     * Set the application's global middleware.
+     * Set the app's global middleware.
      */
     public withMiddleware(middleware: Class<Middleware>[]): this {
         this.middleware.push(...middleware);
@@ -49,7 +50,7 @@ export class Application extends Container {
     }
 
     /**
-     * Start the application.
+     * Start the app.
      */
     public async start(): Promise<void> {
         await this.loadEnv();
@@ -80,11 +81,11 @@ export class Application extends Container {
     protected serve(): void {
         Deno.serve(
             {
-                hostname: this.resolve<Config>(Config).get<string>('app.url'),
-                port: this.resolve<Config>(Config).get<number>('app.port'),
+                hostname: this.resolve<Config>('chassis.config').get<string>('app.url'),
+                port: this.resolve<Config>('chassis.config').get<number>('app.port'),
             },
             route(
-                this.resolve<RouteRegistrar>(RouteRegistrar).getRoutesValues(),
+                this.resolve<RouteRegistrar>('chassis.route-registrar').getRoutesValues(),
                 () => new Response('Not found', { status: 404 }),
             ),
         );

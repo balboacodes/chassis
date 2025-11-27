@@ -13,7 +13,7 @@ export function isClass(value: unknown): value is Class {
  * Get a named route.
  */
 export function route(name: string, parameters?: Record<string, number | string>) {
-    const routes = App.resolve<RouteRegistrar>(RouteRegistrar).getRoutes();
+    const routes = App.resolve<RouteRegistrar>('chassis.route-registrar').getRoutes();
 
     let route = routes.get(name)?.pattern.pathname;
 

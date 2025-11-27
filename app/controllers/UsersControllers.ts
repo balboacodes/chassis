@@ -1,7 +1,7 @@
 import { ChassisRequest } from '../../src/ChassisRequest.ts';
 
 export class UsersController {
-    public index(request: ChassisRequest): Response {
+    public index(_request: ChassisRequest): Response {
         return new Response('index');
     }
 

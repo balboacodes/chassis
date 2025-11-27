@@ -20,6 +20,6 @@ export class ConfigServiceProvider extends ServiceProvider {
             items[name] = config.default;
         }
 
-        App.singleton(Config, () => new Config(items));
+        App.singleton('chassis.config', () => new Config(items));
     }
 }

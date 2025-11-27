@@ -9,14 +9,14 @@ export class RouteServiceProvider extends ServiceProvider {
      * @inheritdoc
      */
     public override bindings: Map<Abstract, unknown> = new Map([
-        [Route, () => new Route()],
+        ['chassis.route', () => new Route()],
     ]);
 
     /**
      * @inheritdoc
      */
     public override singletons: Map<Abstract, unknown> = new Map([
-        [RouteRegistrar, RouteRegistrar],
+        ['chassis.route-registrar', RouteRegistrar],
     ]);
 
     /**

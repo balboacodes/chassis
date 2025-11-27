@@ -196,6 +196,6 @@ export class Route {
         this.handler = handler;
         this.routeStack = this.buildRouteStack();
 
-        App.resolve<RouteRegistrar>(RouteRegistrar).register(this);
+        App.resolve<RouteRegistrar>('chassis.route-registrar').register(this);
     }
 }

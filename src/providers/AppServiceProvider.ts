@@ -58,7 +58,7 @@ export class AppServiceProvider extends ServiceProvider {
         }
 
         for (const provider of this.serviceProviders) {
-            this.loadedServiceProviders.push(new provider(this.app));
+            this.loadedServiceProviders.push(new provider(App.resolve('chassis.app')));
         }
     }
 }

@@ -4,10 +4,10 @@ import { Abstract } from '../../src/types.ts';
 
 export default class AppServiceProvider extends ServiceProvider {
     public override singletons: Map<Abstract, unknown> = new Map([
-        [Symbol.for('appserviceprovidersingleton'), () => 'testing'],
+        [Symbol.for('singleton'), () => 'testing'],
     ]);
 
     public override register(): void {
-        App.bind(Symbol.for('appserviceprovider'), 123);
+        App.bind(Symbol.for('register'), 123);
     }
 }

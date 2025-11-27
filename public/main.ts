@@ -1,3 +1,3 @@
-import { Application } from '../src/Application.ts';
+import { App } from '../src/App.ts';
 
-await new Application().withMiddleware([]).start();
+await new App().withMiddleware([]).start();
