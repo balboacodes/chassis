@@ -19,15 +19,6 @@ export class App extends Container {
     protected middleware: Class<Middleware>[] = [];
 
     /**
-     * Create a new app instance.
-     */
-    public constructor() {
-        super();
-        App.instance = this;
-        this.singleton('chassis.app', this);
-    }
-
-    /**
      * Get the app instance.
      */
     public static getInstance(): App {
@@ -53,6 +44,9 @@ export class App extends Container {
      * Start the app.
      */
     public async start(): Promise<void> {
+        App.instance = this;
+        App.getInstance().singleton('chassis.app', App.getInstance());
+
         await this.loadEnv();
         await this.loadProviders();
 
