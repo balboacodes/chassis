@@ -6,6 +6,6 @@ import { route } from '../src/helpers.ts';
 export default (): void => {
     Route.get('/', () => new Response('home'));
     Route.middleware([]).resource('users', UsersController);
-    Route.redirect('/redirect', route('users.show', { id: 456 }) ?? '');
+    Route.redirect('/redirect', route('users.show', { resource: 456 }) ?? '');
     Route.get('/facade', () => new Response(Config.get('app.name')));
 };
