@@ -44,8 +44,8 @@ export class App extends Container {
      * Start the app.
      */
     public async start(): Promise<void> {
+        this.singleton('chassis.app', this);
         App.instance = this;
-        App.getInstance().singleton('chassis.app', App.getInstance());
 
         await this.loadEnv();
         await this.loadProviders();

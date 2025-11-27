@@ -4,7 +4,7 @@ import { Route } from '../src/facades/Route.ts';
 import { route } from '../src/helpers.ts';
 
 export default (): void => {
-    Route.get('/', () => new Response('home'));
+    Route.name('home').get('/home', async (request) => Response.json(await request.filled('test')));
     Route.middleware([]).resource('users', UsersController);
     Route.redirect('/redirect', route('users.show', { resource: 456 }) ?? '');
     Route.get('/facade', () => new Response(Config.get('app.name')));

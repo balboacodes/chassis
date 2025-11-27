@@ -29,8 +29,8 @@ export class RouteRegistrar {
         this.routes.set(route.routeName ?? this.routes.size + 1, {
             method: route.method,
             pattern: new URLPattern({ pathname: this.normalizePath(route.path!) }),
-            handler: async (req, params, _info) => {
-                const chassisRequest = new ChassisRequest(req, params);
+            handler: async (req, params, info) => {
+                const chassisRequest = new ChassisRequest(req, params, info);
 
                 return await route.routeStack!(chassisRequest);
             },
