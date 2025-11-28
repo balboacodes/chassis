@@ -1,4 +1,4 @@
-import { ChassisRequest } from '../ChassisRequest.ts';
+import { ChassisRequest } from '../http/ChassisRequest.ts';
 import { RouteStackHandler } from '../types.ts';
 
 export abstract class Middleware {

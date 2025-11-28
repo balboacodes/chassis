@@ -1,6 +1,8 @@
 import { type Method } from '@std/http/unstable-method';
-import { ChassisRequest } from '../ChassisRequest.ts';
 import { App } from '../facades/App.ts';
+import { redirect } from '../helpers.ts';
+import { ChassisRequest } from '../http/ChassisRequest.ts';
+import { Redirect } from '../http/Redirect.ts';
 import { Middleware } from '../middleware/Middleware.ts';
 import { Class, RouteHandler, RouteStackHandler } from '../types.ts';
 import { RouteRegistrar } from './RouteRegistrar.ts';
@@ -134,10 +136,7 @@ export class Route {
      * Register a redirect route.
      */
     public redirect(from: string, to: string): void {
-        this.register('GET', from, (request) => {
-            const origin = new URL(request.url).origin;
-            return Response.redirect(new URL(to, origin));
-        });
+        this.register('GET', from, (request) => new Redirect(request).to(to));
     }
 
     /**
@@ -173,8 +172,9 @@ export class Route {
      * Build the route's stack of middleware, followed by its handler.
      */
     protected buildRouteStack(): RouteStackHandler {
-        const handler: Extract<RouteHandler, (request: ChassisRequest) => Response | Promise<Response>> =
-            Array.isArray(this.handler) ? this.handler[0].prototype[this.handler[1]] : this.handler;
+        const handler: Exclude<RouteHandler, [Class, string]> = Array.isArray(this.handler)
+            ? this.handler[0].prototype[this.handler[1]]
+            : this.handler;
 
         const middleware = [...App.getMiddleware(), ...Route.routeGroupMiddleware, ...this.routeMiddleware].reverse();
         let stack = async (request: ChassisRequest): Promise<Response> => await handler(request);

@@ -1,8 +1,9 @@
 import { load } from '@std/dotenv';
 import { route } from '@std/http/unstable-route';
-import { Config } from './Config.ts';
 import { Container } from './Container.ts';
+import { Config } from './facades/Config.ts';
 import { Middleware } from './middleware/Middleware.ts';
+import { SetPreviousUrl } from './middleware/SetPreviousUrl.ts';
 import { AppServiceProvider } from './providers/AppServiceProvider.ts';
 import { RouteRegistrar } from './routing/RouteRegistrar.ts';
 import { Class } from './types.ts';
@@ -16,7 +17,7 @@ export class App extends Container {
     /**
      * The app's global middleware.
      */
-    protected middleware: Class<Middleware>[] = [];
+    protected middleware: Class<Middleware>[] = [SetPreviousUrl];
 
     /**
      * Get the app instance.
@@ -74,10 +75,7 @@ export class App extends Container {
      */
     protected serve(): void {
         Deno.serve(
-            {
-                hostname: this.resolve<Config>('chassis.config').get<string>('app.url'),
-                port: this.resolve<Config>('chassis.config').get<number>('app.port'),
-            },
+            { hostname: Config.get<string>('app.hostname'), port: Config.get<number>('app.port') },
             route(
                 this.resolve<RouteRegistrar>('chassis.route-registrar').getRoutesValues(),
                 () => new Response('Not found', { status: 404 }),

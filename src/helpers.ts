@@ -1,4 +1,5 @@
 import { App } from './facades/App.ts';
+import { Config } from './facades/Config.ts';
 import { RouteRegistrar } from './routing/RouteRegistrar.ts';
 import { Class } from './types.ts';
 
@@ -7,6 +8,22 @@ import { Class } from './types.ts';
  */
 export function isClass(value: unknown): value is Class {
     return typeof value === 'function' && value.toString().startsWith('class ');
+}
+
+/**
+ * Parse the `APP_KEY` `.env` variable into a `CryptoKey`.
+ */
+export async function parseAppKey(): Promise<CryptoKey> {
+    const keyBase64 = Config.get<string>('app.key');
+    const buffer = Uint8Array.fromBase64(keyBase64).buffer;
+
+    return await crypto.subtle.importKey(
+        'raw',
+        buffer,
+        { name: 'HMAC', hash: 'SHA-256' },
+        true,
+        ['sign', 'verify'],
+    );
 }
 
 /**

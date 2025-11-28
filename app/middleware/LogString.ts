@@ -1,4 +1,4 @@
-import { ChassisRequest } from '../../src/ChassisRequest.ts';
+import { ChassisRequest } from '../../src/http/ChassisRequest.ts';
 import { Middleware } from '../../src/middleware/Middleware.ts';
 import { RouteStackHandler } from '../../src/types.ts';
 

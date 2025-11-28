@@ -1,5 +1,5 @@
 import { type Route as RouteType } from '@std/http/unstable-route';
-import { ChassisRequest } from '../ChassisRequest.ts';
+import { ChassisRequest } from '../http/ChassisRequest.ts';
 import { Route } from './Route.ts';
 
 export class RouteRegistrar {
@@ -29,8 +29,8 @@ export class RouteRegistrar {
         this.routes.set(route.routeName ?? this.routes.size + 1, {
             method: route.method,
             pattern: new URLPattern({ pathname: this.normalizePath(route.path!) }),
-            handler: async (req, params, info) => {
-                const chassisRequest = new ChassisRequest(req, params, info);
+            handler: async (request, params, info) => {
+                const chassisRequest = new ChassisRequest(request, params, info);
 
                 return await route.routeStack!(chassisRequest);
             },

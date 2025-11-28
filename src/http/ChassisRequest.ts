@@ -1,7 +1,6 @@
 import { filled, Str } from '@balboacodes/laravel-helpers';
-import { accepts } from '@std/http/negotiation';
-import { App } from './facades/App.ts';
-import { RouteRegistrar } from './routing/RouteRegistrar.ts';
+import { App } from '../facades/App.ts';
+import { RouteRegistrar } from '../routing/RouteRegistrar.ts';
 
 export class ChassisRequest extends Request {
     /**
@@ -88,58 +87,14 @@ export class ChassisRequest extends Request {
     }
 
     /**
-     * Get the IP address of the client that made the request.
+     * Get the IP address of the client that made the request. It will check the X-Forwarded-For and Forwarded headers
+     * before falling back to the actual IP that sent the request.
      */
     public ip(): string | undefined {
         return this.headers.get('X-Forwarded-For') ??
             this.headers.get('Forwarded') ??
             // @ts-ignore:
             this.serverHandlerInfo?.remoteAddr.hostname;
-    }
-
-    /**
-     * Get all of the content types accepted by the request, in order of preference.
-     */
-    public getAcceptableContentTypes(): string[] {
-        return accepts(this);
-    }
-
-    /**
-     * Determine if any of the content types are accepted by the request.
-     */
-    public accepts(contentTypes: string[]): boolean {
-        for (const type of contentTypes) {
-            if (this.getAcceptableContentTypes().includes(type)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Determine which content type is most preferred by the request.
-     */
-    public prefers(contentTypes: string[]): string | null {
-        const accepts = this.getAcceptableContentTypes();
-        let preferredTypeIndex;
-
-        for (const type of contentTypes) {
-            const index = accepts.indexOf(type);
-
-            if (index !== -1 && (preferredTypeIndex === undefined || index < preferredTypeIndex)) {
-                preferredTypeIndex = index;
-            }
-        }
-
-        return preferredTypeIndex !== undefined ? accepts[preferredTypeIndex] : null;
-    }
-
-    /**
-     * Determine if the incoming request expects a JSON response over HTML.
-     */
-    public expectsJson(): boolean {
-        return this.prefers(['application/json', 'text/html']) === 'application/json';
     }
 
     /**
