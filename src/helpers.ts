@@ -29,17 +29,19 @@ export async function parseAppKey(): Promise<CryptoKey> {
 /**
  * Get a named route.
  */
-export function route(name: string, parameters?: Record<string, number | string>) {
+export function route(name: string, parameters?: Record<string, number | string>): string {
     const routes = App.resolve<RouteRegistrar>('chassis.route-registrar').getRoutes();
 
     let route = routes.get(name)?.pattern.pathname;
 
+    if (route === undefined) throw new Error(`No route exists with the name: ${name}`);
+
     for (const [parameter, value] of Object.entries(parameters ?? {})) {
-        route = route?.replace(`:${parameter}`, String(value));
+        route = route.replace(`:${parameter}`, String(value));
     }
 
-    // Remove optional trailing slash and any parameters not replaced
-    route = route?.replace('{/}?', '').replaceAll(/\/:\w+\??|\?/g, '');
+    // Remove optional trailing slash, any parameters not replaced, and any remaining question marks
+    route = route.replace('{/}?', '').replaceAll(/\/:\w+\??|\?/g, '');
 
     return route;
 }

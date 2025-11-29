@@ -4,9 +4,10 @@ import { Route } from '../src/facades/Route.ts';
 import { Redirect } from '../src/http/Redirect.ts';
 
 export default (): void => {
-    Route.name('home').get('/', () => new Response('home'));
+    Route.name('home').get('/', (request) => new Redirect(request).route('users.index'));
     Route.middleware([]).resource('users', UsersController);
     Route.redirect('/redirect', '/');
     Route.get('/facade', () => new Response(Config.get('app.name')));
     Route.get('/back', (request) => new Redirect(request).back());
+    Route.get('/with', async (request) => (await new Redirect(request).with('test', 'testing-flash')).to('/facade'));
 };

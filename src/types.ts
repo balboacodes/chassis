@@ -7,9 +7,10 @@ export type Class<T = unknown> = {
     new (...args: any[]): T;
 };
 
-export type RouteStackHandler = Extract<RouteHandler, (request: ChassisRequest) => Promise<Response>>;
+export type ControllerHandler = [Class, string];
 
-export type RouteHandler =
-    | [Class, string]
-    | ((request: ChassisRequest) => Response)
-    | ((request: ChassisRequest) => Promise<Response>);
+export type ResponseHandler = (request: ChassisRequest) => Response;
+
+export type AsyncResponseHandler = (request: ChassisRequest) => Promise<Response>;
+
+export type RouteHandler = ControllerHandler | ResponseHandler | AsyncResponseHandler;

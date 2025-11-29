@@ -1,10 +1,9 @@
 import { type Method } from '@std/http/unstable-method';
 import { App } from '../facades/App.ts';
-import { redirect } from '../helpers.ts';
 import { ChassisRequest } from '../http/ChassisRequest.ts';
 import { Redirect } from '../http/Redirect.ts';
 import { Middleware } from '../middleware/Middleware.ts';
-import { Class, RouteHandler, RouteStackHandler } from '../types.ts';
+import { AsyncResponseHandler, Class, ControllerHandler, RouteHandler } from '../types.ts';
 import { RouteRegistrar } from './RouteRegistrar.ts';
 
 export class Route {
@@ -26,7 +25,7 @@ export class Route {
     /**
      * The route's stack of middleware, followed by its handler.
      */
-    public routeStack?: RouteStackHandler;
+    public routeStack?: AsyncResponseHandler;
 
     /**
      * The route's middleware.
@@ -171,8 +170,8 @@ export class Route {
     /**
      * Build the route's stack of middleware, followed by its handler.
      */
-    protected buildRouteStack(): RouteStackHandler {
-        const handler: Exclude<RouteHandler, [Class, string]> = Array.isArray(this.handler)
+    protected buildRouteStack(): AsyncResponseHandler {
+        const handler: Exclude<RouteHandler, ControllerHandler> = Array.isArray(this.handler)
             ? this.handler[0].prototype[this.handler[1]]
             : this.handler;
 

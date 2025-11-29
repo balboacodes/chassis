@@ -1,9 +1,9 @@
 import { ChassisRequest } from '../http/ChassisRequest.ts';
-import { RouteStackHandler } from '../types.ts';
+import { AsyncResponseHandler } from '../types.ts';
 
 export abstract class Middleware {
     /**
      * Handle incomming requests.
      */
-    public abstract handle(request: ChassisRequest, next: RouteStackHandler): Promise<Response>;
+    public abstract handle(request: ChassisRequest, next: AsyncResponseHandler): Promise<Response>;
 }

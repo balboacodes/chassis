@@ -2,6 +2,7 @@ import { load } from '@std/dotenv';
 import { route } from '@std/http/unstable-route';
 import { Container } from './Container.ts';
 import { Config } from './facades/Config.ts';
+import { ClearFlashData } from './middleware/ClearFlashData.ts';
 import { Middleware } from './middleware/Middleware.ts';
 import { SetPreviousUrl } from './middleware/SetPreviousUrl.ts';
 import { AppServiceProvider } from './providers/AppServiceProvider.ts';
@@ -17,7 +18,7 @@ export class App extends Container {
     /**
      * The app's global middleware.
      */
-    protected middleware: Class<Middleware>[] = [SetPreviousUrl];
+    protected middleware: Class<Middleware>[] = [ClearFlashData, SetPreviousUrl];
 
     /**
      * Get the app instance.
