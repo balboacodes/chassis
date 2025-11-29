@@ -1,7 +1,6 @@
 import { getCookies, setCookie } from '@std/http/cookie';
-import { parseSignedCookie, signCookie, verifySignedCookie } from '@std/http/unstable-signed-cookie';
 import { Config } from '../facades/Config.ts';
-import { parseAppKey, route } from '../helpers.ts';
+import { route } from '../helpers.ts';
 import { ChassisRequest } from './ChassisRequest.ts';
 
 export class Redirect {
@@ -43,14 +42,12 @@ export class Redirect {
     /**
      * Redirect back to the previous URL.
      */
-    public async back(): Promise<Response> {
-        const key = await parseAppKey();
+    public back(): Response {
         const previousUrl = getCookies(this.request.headers)['previous-url'];
 
         if (previousUrl === undefined) throw new Error('Previous URL not set');
-        if (!await verifySignedCookie(previousUrl, key)) throw new Error('Previous URL could not be verified');
 
-        const redirect = Response.redirect(parseSignedCookie(previousUrl));
+        const redirect = Response.redirect(previousUrl);
         const headers = new Headers(redirect.headers);
 
         for (const [key, value] of this.flashHeaders.entries()) {
@@ -74,17 +71,16 @@ export class Redirect {
     /**
      * Flash the given data to the session before redirecting.
      */
-    public async with(key: string | Record<string, string>, value?: string): Promise<this> {
+    public with(key: string | Record<string, string>, value?: string): this {
         if (typeof key === 'string' && value === undefined) {
             throw new Error('Value is required');
         }
 
-        const appKey = await parseAppKey();
         key = (typeof key === 'string' ? { [key]: value } : key) as Record<string, string>;
 
         for (const [k, v] of Object.entries(key)) {
-            const flashData = await signCookie(v, appKey);
-            setCookie(this.flashHeaders, { name: `flash.${k}`, value: flashData });
+            setCookie(this.flashHeaders, { name: `flash.${k}`, value: v });
+            setCookie(this.flashHeaders, { name: `flash.1`, value: 'aaa' });
         }
 
         return this;
