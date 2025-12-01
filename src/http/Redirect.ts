@@ -14,7 +14,7 @@ export class Redirect {
      */
     public constructor(
         /**
-         * The current request.
+         * The current request instance.
          */
         protected request: ChassisRequest,
     ) {}
@@ -94,12 +94,5 @@ export class Redirect {
         }
 
         return this;
-    }
-
-    /**
-     * Redirect to an external URL.
-     */
-    public away(url: string): Response {
-        return Response.redirect(url);
     }
 }
