@@ -1,6 +1,5 @@
 import { Arr } from '@balboacodes/laravel-helpers';
 import { Cookie, setCookie } from '@std/http/cookie';
-import { serveFile } from '@std/http/file-server';
 import { type Header } from '@std/http/unstable-header';
 import { join } from '@std/path/join';
 import { ChassisRequest } from './ChassisRequest.ts';
@@ -45,15 +44,15 @@ export class ChassisResponse extends Response {
     /**
      * Add cookies to the response.
      */
-    public cookie(cookie: Cookie | Cookie[]): Response {
+    public cookie(cookie: Cookie | Cookie[]): ChassisResponse {
         cookie = Arr.wrap(cookie);
         const headers = new Headers(this.headers);
 
         for (const c of cookie) {
-            setCookie(headers, c);
+            setCookie(headers, { ...c, path: '/' });
         }
 
-        return new Response(this.body, {
+        return new ChassisResponse(this.request, this.body, {
             status: this.status,
             statusText: this.statusText,
             headers,
@@ -63,18 +62,17 @@ export class ChassisResponse extends Response {
     /**
      * Create a view response.
      */
-    public async view(view: string): Promise<Response> {
-        const { headers, body, status, statusText } = await serveFile(
-            this.request,
-            join(Deno.cwd(), 'resources/views', view),
-        );
-        const newHeaders = new Headers(this.headers);
+    public async view(view: string, data: Record<string, unknown> = {}): Promise<Response> {
+        let file = await Deno.readTextFile(join(Deno.cwd(), 'resources/views', `${view}.html`));
 
-        for (const [name, value] of headers) {
-            newHeaders.append(name, value);
+        for (const [key, value] of Object.entries(data)) {
+            file = file.replaceAll(new RegExp(`{{\\s*${key}\\s*}}`, 'g'), String(value));
         }
 
-        return new Response(body, { status, statusText, headers });
+        const headers = new Headers(this.headers);
+        headers.append('Content-Type', 'text/html');
+
+        return new Response(file, { headers });
     }
 
     /**
@@ -82,6 +80,7 @@ export class ChassisResponse extends Response {
      */
     // @ts-ignore:
     public override json(data: unknown): Response {
-        return Response.json(data, { status: this.status, statusText: this.statusText, headers: this.headers });
+        const { status, statusText, headers } = this;
+        return Response.json(data, { status, statusText, headers });
     }
 }

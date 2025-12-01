@@ -4,7 +4,7 @@ import { ChassisResponse } from '../src/http/ChassisResponse.ts';
 import { Redirect } from '../src/http/Redirect.ts';
 
 export default (): void => {
-    Route.name('home').get('/', (request) => new ChassisResponse(request).view('home.html'));
+    Route.name('home').get('/', (request) => new ChassisResponse(request).view('home'));
     Route.middleware([]).resource('users', UsersController);
     Route.redirect('/redirect', '/');
     Route.get('/back', (request) => new Redirect(request).back());

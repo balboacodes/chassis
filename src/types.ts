@@ -1,4 +1,5 @@
 import { ChassisRequest } from './http/ChassisRequest.ts';
+import { ChassisResponse } from './http/ChassisResponse.ts';
 
 export type Abstract = string | symbol | Class;
 
@@ -11,6 +12,6 @@ export type ControllerHandler = [Class, string];
 
 export type ResponseHandler = (request: ChassisRequest) => Response;
 
-export type AsyncResponseHandler = (request: ChassisRequest) => Promise<Response>;
+export type AsyncResponseHandler = (request: ChassisRequest) => Promise<Response> | Promise<ChassisResponse>;
 
 export type RouteHandler = ControllerHandler | ResponseHandler | AsyncResponseHandler;

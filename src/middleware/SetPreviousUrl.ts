@@ -12,7 +12,7 @@ export class SetPreviousUrl extends Middleware {
         const headers = new Headers(response.headers);
 
         if (request.method === 'GET') {
-            setCookie(headers, { name: 'previous-url', value: request.url });
+            setCookie(headers, { name: 'previous-url', path: '/', value: request.url });
         }
 
         // Must return a copy of the response with updated headers because the headers are immutable once a response

@@ -79,7 +79,7 @@ export class Redirect {
         key = (typeof key === 'string' ? { [key]: value } : key) as Record<string, string>;
 
         for (const [k, v] of Object.entries(key)) {
-            setCookie(this.flashHeaders, { name: `flash.${k}`, value: v });
+            setCookie(this.flashHeaders, { name: `flash.${k}`, path: '/', value: v });
         }
 
         return this;
@@ -90,7 +90,7 @@ export class Redirect {
      */
     public async withInput(): Promise<this> {
         for (const [key, value] of Object.entries(await this.request.all())) {
-            setCookie(this.flashHeaders, { name: `flash.${key}`, value: String(value) });
+            setCookie(this.flashHeaders, { name: `flash.${key}`, path: '/', value: String(value) });
         }
 
         return this;

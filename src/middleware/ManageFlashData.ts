@@ -17,9 +17,9 @@ export class ManageFlashData extends Middleware {
             if (key.startsWith('stale.flash.')) {
                 if (Number.parseInt(value)) {
                     deleteCookie(headers, key.substring(6));
-                    deleteCookie(headers, key);
+                    deleteCookie(headers, key, { path: '/' });
                 } else {
-                    setCookie(headers, { name: key, value: '1' });
+                    setCookie(headers, { name: key, path: '/', value: '1' });
                 }
             }
         }
@@ -27,7 +27,7 @@ export class ManageFlashData extends Middleware {
         // Add stale entry to set cookies entries
         for (const cookie of Object.values(getSetCookies(headers))) {
             if (cookie.name.startsWith('flash.') && cookie.value) {
-                setCookie(headers, { name: `stale.${cookie.name}`, value: '0' });
+                setCookie(headers, { name: `stale.${cookie.name}`, path: '/', value: '0' });
             }
         }
 
