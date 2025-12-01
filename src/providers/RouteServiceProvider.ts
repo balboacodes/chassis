@@ -23,7 +23,7 @@ export class RouteServiceProvider extends ServiceProvider {
      * @inheritdoc
      */
     public override async register(): Promise<void> {
-        const path = join(Deno.cwd(), '/routes/web.ts');
+        const path = join(Deno.cwd(), 'routes/web.ts');
         (await import(path)).default();
     }
 }

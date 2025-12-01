@@ -49,7 +49,7 @@ export class AppServiceProvider extends ServiceProvider {
      * Load the service providers.
      */
     protected async loadProviders(): Promise<void> {
-        const path = join(Deno.cwd(), '/app/providers/*.ts');
+        const path = join(Deno.cwd(), 'app/providers/*.ts');
         const files = await Array.fromAsync(expandGlob(path));
 
         for (const file of files) {

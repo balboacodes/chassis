@@ -9,7 +9,7 @@ export class ConfigServiceProvider extends ServiceProvider {
      * @inheritdoc
      */
     public override async register(): Promise<void> {
-        const path = join(Deno.cwd(), '/config/*.ts');
+        const path = join(Deno.cwd(), 'config/*.ts');
         const files = await Array.fromAsync(expandGlob(path));
         const items: Record<string, unknown> = {};
 

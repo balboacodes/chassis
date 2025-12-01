@@ -1,27 +1,12 @@
 import { ChassisRequest } from '../../src/http/ChassisRequest.ts';
+import { ChassisResponse } from '../../src/http/ChassisResponse.ts';
 
 export class UsersController {
-    public index(): Response {
-        return new Response(
-            `
-            <!doctype html>
-            <html>
-                <head>
-                <title>Users</title>
-                </head>
-                <body>
-                  <h1>Users</h1>
-                  <a href="/back">Back</a>
-                </body>
-            </html>
-        `,
-            {
-                headers: { 'Content-Type': 'html' },
-            },
-        );
+    public index(request: ChassisRequest): Promise<Response> {
+        return new ChassisResponse(request).view('users/index.html');
     }
 
-    public async show(request: ChassisRequest): Promise<Response> {
-        return Response.json(await request.all());
+    public show(request: ChassisRequest): Response {
+        return new ChassisResponse(request).json({ test: 123333 });
     }
 }
