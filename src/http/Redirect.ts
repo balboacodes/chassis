@@ -80,9 +80,26 @@ export class Redirect {
 
         for (const [k, v] of Object.entries(key)) {
             setCookie(this.flashHeaders, { name: `flash.${k}`, value: v });
-            setCookie(this.flashHeaders, { name: `flash.1`, value: 'aaa' });
         }
 
         return this;
+    }
+
+    /**
+     * Flash the request's input data to the session before redirecting.
+     */
+    public async withInput(): Promise<this> {
+        for (const [key, value] of Object.entries(await this.request.all())) {
+            setCookie(this.flashHeaders, { name: `flash.${key}`, value: String(value) });
+        }
+
+        return this;
+    }
+
+    /**
+     * Redirect to an external URL.
+     */
+    public away(url: string): Response {
+        return Response.redirect(url);
     }
 }

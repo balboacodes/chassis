@@ -4,11 +4,20 @@ import { RouteRegistrar } from '../routing/RouteRegistrar.ts';
 
 export class ChassisRequest extends Request {
     /**
-     * Create a new Chassis request.
+     * Create a new Chassis request instance.
      */
     public constructor(
-        request: Request,
+        /**
+         * The underlying request instance.
+         */
+        protected request: Request,
+        /**
+         * The object returned from calling `URLPattern.exec()` on the request's URL.
+         */
         protected params: URLPatternResult | undefined,
+        /**
+         * Additional information for an HTTP request and its connection.
+         */
         protected serverHandlerInfo: Deno.ServeHandlerInfo | undefined,
     ) {
         super(request);

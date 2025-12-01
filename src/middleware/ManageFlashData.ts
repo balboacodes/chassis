@@ -3,7 +3,7 @@ import { ChassisRequest } from '../http/ChassisRequest.ts';
 import { AsyncResponseHandler } from '../types.ts';
 import { Middleware } from './Middleware.ts';
 
-export class ClearFlashData extends Middleware {
+export class ManageFlashData extends Middleware {
     /**
      * Handle incomming requests.
      */
@@ -12,7 +12,7 @@ export class ClearFlashData extends Middleware {
         const headers = new Headers(response.headers);
         const cookies = getCookies(request.headers);
 
-        // delete / mark stale entries for deletion
+        // Delete / mark stale entries for deletion
         for (const [key, value] of Object.entries(cookies)) {
             if (key.startsWith('stale.flash.')) {
                 if (Number.parseInt(value)) {
@@ -24,7 +24,7 @@ export class ClearFlashData extends Middleware {
             }
         }
 
-        // add stale entry to set cookies entries
+        // Add stale entry to set cookies entries
         for (const cookie of Object.values(getSetCookies(headers))) {
             if (cookie.name.startsWith('flash.') && cookie.value) {
                 setCookie(headers, { name: `stale.${cookie.name}`, value: '0' });
