@@ -1,6 +1,6 @@
 import { expandGlob } from '@std/fs';
 import { join } from '@std/path';
-import { Config } from '../Config.ts';
+import { Repository } from '../config/Repository.ts';
 import { App } from '../facades/App.ts';
 import { ServiceProvider } from './ServiceProvider.ts';
 
@@ -20,6 +20,6 @@ export class ConfigServiceProvider extends ServiceProvider {
             items[name] = config.default;
         }
 
-        App.singleton('chassis.config', () => new Config(items));
+        App.singleton('chassis.config', () => new Repository(items));
     }
 }

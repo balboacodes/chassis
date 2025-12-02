@@ -1,4 +1,4 @@
-import { Config as RealConfig } from '../Config.ts';
+import { Repository } from '../config/Repository.ts';
 import { Facade } from './Facade.ts';
 
-export const Config = Facade.create<RealConfig>('chassis.config');
+export const Config = Facade.create<Repository>('chassis.config');
