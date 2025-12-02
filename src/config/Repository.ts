@@ -1,6 +1,8 @@
 import { Arr, Collection } from '@balboacodes/laravel-helpers';
 
 export class Repository {
+    // use Macroable;
+
     /**
      * Create a new configuration repository.
      */
