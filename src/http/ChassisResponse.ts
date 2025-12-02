@@ -1,4 +1,5 @@
 import { Arr } from '@balboacodes/laravel-helpers';
+import { escape } from '@std/html/entities';
 import { Cookie, setCookie } from '@std/http/cookie';
 import { type Header } from '@std/http/unstable-header';
 import { join } from '@std/path/join';
@@ -64,9 +65,11 @@ export class ChassisResponse extends Response {
      */
     public async view(view: string, data: Record<string, unknown> = {}): Promise<Response> {
         let file = await Deno.readTextFile(join(Deno.cwd(), 'resources/views', `${view}.html`));
-
         for (const [key, value] of Object.entries(data)) {
-            file = file.replaceAll(new RegExp(`{{\\s*${key}\\s*}}`, 'g'), String(value));
+            file = file.replaceAll(
+                new RegExp('\\$\\{\\s*' + RegExp.escape(key) + '\\s*\\}', 'g'),
+                escape(String(value)),
+            );
         }
 
         const headers = new Headers(this.headers);
