@@ -1,6 +1,5 @@
 import { expandGlob } from '@std/fs/expand-glob';
 import { join } from '@std/path/join';
-import { CookieServiceProvider } from '../cookie/CookieServiceProvider.ts';
 import { App } from '../facades/App.ts';
 import { Class } from '../types.ts';
 import { ConfigServiceProvider } from './ConfigServiceProvider.ts';
@@ -11,11 +10,7 @@ export class AppServiceProvider extends ServiceProvider {
     /**
      * The service providers to load.
      */
-    protected serviceProviders: Class<ServiceProvider>[] = [
-        ConfigServiceProvider,
-        CookieServiceProvider,
-        RouteServiceProvider,
-    ];
+    protected serviceProviders: Class<ServiceProvider>[] = [ConfigServiceProvider, RouteServiceProvider];
 
     /**
      * The service providers that have been loaded.
