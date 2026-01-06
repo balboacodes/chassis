@@ -4,13 +4,27 @@
 
 ## About
 
+Chassis is an experimental [Laravel-style](https://github.com/laravel/laravel) framework built for [Deno](https://github.com/denoland/deno). It currently has basic support for:
+
+- service container
+- service providers
+- routes
+- middleware
+- `.env` and config files
+- App, Config, and Route facades
+- route helper
+
 ## Installation
 
-`npm i @balboacodes/chassis`
+TBD
 
 ## Usage
 
+TBD
+
 ## Documentation
+
+TBD
 
 ## Related
 
