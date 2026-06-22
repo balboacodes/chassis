@@ -93,6 +93,7 @@ export default (): void => {
 import {
   AsyncResponseHandler,
   ChassisRequest,
+  ChassisResponse,
   Middleware,
 } from "@balboacodes/chassis";
 
@@ -103,7 +104,7 @@ export default class LogTime extends Middleware {
   public override async handle(
     request: ChassisRequest,
     next: AsyncResponseHandler,
-  ): Promise<Response> {
+  ): Promise<Response | ChassisResponse> {
     console.log(Date.now());
 
     return await next(request);
