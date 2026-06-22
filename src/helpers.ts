@@ -11,22 +11,6 @@ export function isClass(value: unknown): value is Class {
 }
 
 /**
- * Parse the `APP_KEY` `.env` variable into a `CryptoKey`.
- */
-export async function parseAppKey(): Promise<CryptoKey> {
-    const keyBase64 = Config.get<string>('app.key');
-    const buffer = Uint8Array.fromBase64(keyBase64).buffer;
-
-    return await crypto.subtle.importKey(
-        'raw',
-        buffer,
-        { name: 'HMAC', hash: 'SHA-256' },
-        true,
-        ['sign', 'verify'],
-    );
-}
-
-/**
  * Get a named route.
  */
 export function route(name: string, parameters?: Record<string, number | string>): string {
