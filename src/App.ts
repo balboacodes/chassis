@@ -1,5 +1,5 @@
 import { load } from '@std/dotenv';
-import { route } from '@std/http/unstable-route';
+import { Route, route } from '@std/http/unstable-route';
 import { Container } from './Container.ts';
 import { Config } from './facades/Config.ts';
 import { ManageFlashData } from './middleware/ManageFlashData.ts';
@@ -78,7 +78,7 @@ export class App extends Container {
         Deno.serve(
             { hostname: Config.get<string>('app.hostname'), port: Config.get<number>('app.port') },
             route(
-                this.resolve<RouteRegistrar>('chassis.route-registrar').getRoutesValues(),
+                this.resolve<RouteRegistrar>('chassis.route-registrar').getRoutesValues() as Route[],
                 () => new Response('Not found', { status: 404 }),
             ),
         );

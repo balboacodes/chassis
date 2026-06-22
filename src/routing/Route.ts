@@ -176,7 +176,7 @@ export class Route {
             : this.handler;
 
         const middleware = [...App.getMiddleware(), ...Route.routeGroupMiddleware, ...this.routeMiddleware].reverse();
-        let stack = async (request: ChassisRequest): Promise<Response> => await handler(request);
+        let stack: AsyncResponseHandler = async (request: ChassisRequest) => await handler(request);
 
         for (const mw of middleware) {
             const currentStack = stack;

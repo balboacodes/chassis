@@ -1,5 +1,4 @@
 import { App } from './facades/App.ts';
-import { Config } from './facades/Config.ts';
 import { RouteRegistrar } from './routing/RouteRegistrar.ts';
 import { Class } from './types.ts';
 

@@ -1,24 +1,24 @@
-import { type Route as RouteType } from '@std/http/unstable-route';
 import { ChassisRequest } from '../http/ChassisRequest.ts';
 import { Route } from './Route.ts';
+import { ChassisRouteType } from '../types.ts';
 
 export class RouteRegistrar {
     /**
      * The routes that have been registered.
      */
-    protected routes: Map<string | number, RouteType> = new Map();
+    protected routes: Map<string | number, ChassisRouteType> = new Map();
 
     /**
      * Get the routes that have been registered.
      */
-    public getRoutes(): Map<string | number, RouteType> {
+    public getRoutes(): Map<string | number, ChassisRouteType> {
         return this.routes;
     }
 
     /**
      * Get the values for the routes that have been registered.
      */
-    public getRoutesValues(): RouteType[] {
+    public getRoutesValues(): ChassisRouteType[] {
         return this.routes.values().toArray();
     }
 
