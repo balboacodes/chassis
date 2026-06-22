@@ -1,6 +1,7 @@
 # Contributing
 
-Contributions are welcome and are accepted via pull requests. Please review the process and guidelines before submitting any pull requests.
+Contributions are welcome and are accepted via pull requests. Please review the
+process and guidelines before submitting any pull requests.
 
 ## Process
 
@@ -13,4 +14,5 @@ Contributions are welcome and are accepted via pull requests. Please review the 
 ## Guidelines
 
 - Ensure code is formatted by running `npm run format`
-- Create passing tests for new features and make sure existing tests are passing by running `npm run test`
+- Create passing tests for new features and make sure existing tests are passing
+  by running `npm run test`

@@ -1,4 +1,4 @@
-import { App as RealApp } from '../App.ts';
-import { Facade } from './Facade.ts';
+import type { App as RealApp } from "../App.ts";
+import { Facade } from "./Facade.ts";
 
-export const App = Facade.create<RealApp>('chassis.app');
+export const App = Facade.create<RealApp>("chassis.app");

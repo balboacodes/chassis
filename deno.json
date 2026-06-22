@@ -22,20 +22,10 @@
     "lint": "deno lint",
     "test": "deno test"
   },
-  "fmt": {
-    "include": ["."],
-    "indentWidth": 4,
-    "lineWidth": 120,
-    "singleQuote": true
-  },
-  "lint": {
-    "include": ["."],
-    "rules": {
-      "tags": ["recommended"]
-    }
-  },
   "test": {
     "include": ["tests/"]
   },
+  "lock": { "frozen": true },
+  "minimumDependencyAge": "P7D",
   "vendor": true
 }

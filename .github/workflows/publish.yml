@@ -1,41 +1,41 @@
 name: publish
 
 on:
-    release:
-        types:
-            - released
+  release:
+    types:
+      - released
 
 permissions:
-    id-token: write # Required for OIDC
-    contents: read
+  id-token: write # Required for OIDC
+  contents: read
 
 jobs:
-    publish:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v5
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-            - name: Setup Node
-              uses: actions/setup-node@v6
-              with:
-                  node-version: 20
-                  registry-url: 'https://registry.npmjs.org'
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
 
-            # Ensure npm 11.5.1 or later is installed
-            - name: Update npm
-              run: npm install -g npm@latest
+      # Ensure npm 11.5.1 or later is installed
+      - name: Update npm
+        run: npm install -g npm@latest
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Execute tests
-              run: npm run test
+      - name: Execute tests
+        run: npm run test
 
-            - name: Build
-              run: npm run build
+      - name: Build
+        run: npm run build
 
-            - name: Publish
-              run: npm publish --provenance --access public
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM }}
+      - name: Publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM }}
